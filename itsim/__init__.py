@@ -1,5 +1,6 @@
+from functools import total_ordering
 from ipaddress import IPv4Address, IPv6Address, ip_address
-from typing import Union, Optional
+from typing import Union, Optional, Any
 
 
 Address = Union[IPv4Address, IPv6Address]
@@ -28,6 +29,36 @@ def as_port(ap: PortRepr) -> Port:
     return ap
 
 
-# class Location(object):
+@total_ordering
+class Location(object):
 
-#     def __init__(self,
+    def __init__(self, address: AddressRepr = None, port: PortRepr = None) -> None:
+        super().__init__()
+        self._address = as_address(address)
+        self._port = as_port(port)
+
+    @property
+    def address(self) -> Address:
+        return self._address
+
+    @property
+    def port(self) -> Port:
+        return self._port
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Location):
+            return False
+        return self.address == other.address and self.port == other.port
+
+    def __str__(self) -> str:
+        return f"({str(self.address)}, {str(self.port)})"
+
+    def __repr__(self) -> str:
+        return repr(str(self))
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, Location):
+            return False
+        if self.address == other.address:
+            return self.port < other.port
+        return self.address < other.address

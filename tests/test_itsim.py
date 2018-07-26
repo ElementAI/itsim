@@ -2,7 +2,7 @@ from ipaddress import ip_address
 
 import pytest
 
-from itsim import as_address, as_port
+from itsim import as_address, as_port, Location
 
 
 def test_none_as_address():
@@ -46,3 +46,47 @@ def test_invalid_int_as_port():
         with pytest.raises(ValueError):
             as_port(n)
             pytest.fail()
+
+
+def test_location_none_none():
+    loc = Location()
+    assert loc.address == as_address(None)
+    assert loc.port == as_port(None)
+
+
+def test_location_none_address():
+    assert Location(port=9887) == Location(None, 9887)
+
+
+def test_location_none_port():
+    assert Location("192.168.203.1") == Location("192.168.203.1", None)
+
+
+def test_location_sane():
+    loc = Location("192.168.203.1", 9887)
+    assert loc.address == as_address("192.168.203.1")
+    assert loc.port == as_port(9887)
+    assert loc != Location("192.168.203.1", 9087)
+
+
+def test_location_cmp_sane():
+    left = Location("192.168.203.4", 9887)
+    right = Location("200.1.1.1", 34)
+    assert left < right
+    assert not (left > right)
+    assert left <= right
+    assert not (left >= right)
+
+
+def test_location_cmp_address_equal():
+    assert Location("192.168.203.4", 9000) < Location("192.168.203.4", 9887)
+
+
+def test_location_cmp_port_equal():
+    assert Location("1.2.3.4", 9000) < Location("192.168.203.4", 9000)
+
+
+def test_location_cmp_same():
+    loc = Location("192.45.56.23", 45)
+    assert loc == loc
+    assert not (loc < loc)
