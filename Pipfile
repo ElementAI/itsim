@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+greensim = "*"
+
+[dev-packages]
+pytest = "*"
+pytest-cov = {version = ">=2.5.1", index = "pypi"}
+flake8 = "*"
+mypy = "*"
+pudb = "*"
+twine = "*"
+setuptools = "*"
+wheel = "*"
+
+[requires]
+python_version = "3.6"
