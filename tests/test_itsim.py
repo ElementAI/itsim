@@ -96,6 +96,12 @@ def test_location_cmp_sane():
     assert not (left >= right)
 
 
+def test_location_cmp_whatever():
+    with pytest.raises(ValueError):
+        assert Location("asdf.com", 80) < ("asdf.com", 80)
+        pytest.fail()
+
+
 def test_location_cmp_address_equal():
     assert Location("192.168.203.4", 9000) < Location("192.168.203.4", 9887)
 
@@ -108,3 +114,22 @@ def test_location_cmp_same():
     loc = Location("192.45.56.23", 45)
     assert loc == loc
     assert not (loc < loc)
+
+
+def test_location_eq_whatever():
+    with pytest.raises(ValueError):
+        assert not Location("asdf.com", 9887) == ("asdf.com", 9887)
+        pytest.fail()
+
+
+def test_location_str():
+    assert str(Location("195.78.23.3", 1025)) == "195.78.23.3:1025"
+
+
+def test_location_repr():
+    assert repr(Location("195.78.23.3", 1025)) == repr("195.78.23.3:1025")
+
+
+def test_location_hash():
+    loc = Location("google.ca", 25)
+    assert hash(loc) == hash(str(loc))

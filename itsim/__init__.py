@@ -59,7 +59,7 @@ class Location(object):
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Location):
-            return False
+            raise ValueError(f"Cannot compare for equality {str(self)} to {str(other)} (type {type(other)}).")
         return self.host == other.host and self.port == other.port
 
     def __str__(self) -> str:
@@ -73,7 +73,7 @@ class Location(object):
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, Location):
-            return False
+            raise ValueError(f"Cannot compare for order {str(self)} to {str(other)} (type {type(other)}).")
         if self.host == other.host:
             return self.port < other.port
         return str(self.host) < str(other.host)
