@@ -1,0 +1,29 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6.1
+    working_directory: ~/itsim
+    steps:
+      - checkout
+      - run:
+          name: Install virtualenv
+          command: |
+            sudo pip install pipenv
+      - restore_cache:
+          name: Restore cache for dependencies
+          key: tests-v1-{{ checksum "Pipfile" }}
+      - run:
+          name: Install dependencies
+          command: |
+            pipenv install --dev
+      - save_cache:
+          name: Save cache for dependencies
+          key: tests-v1-{{ checksum "Pipfile" }}
+          paths:
+            - ~/.local/share/virtualenvs/
+      - run:
+          name: Run unit tests
+          command: |
+            pipenv run ./runtests
