@@ -18,3 +18,16 @@ def as_address(ar: AddressRepr) -> Address:
     elif isinstance(ar, str):
         return ip_address(ar)
     return ar
+
+
+def as_port(ap: PortRepr) -> Port:
+    if ap is None:
+        return 0
+    if ap < 0 or ap >= 2 ** 16:
+        raise ValueError(f"Given integer value {ap} does not correspond to a valid port.")
+    return ap
+
+
+# class Location(object):
+
+#     def __init__(self,
