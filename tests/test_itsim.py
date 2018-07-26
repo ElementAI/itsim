@@ -2,7 +2,7 @@ from ipaddress import ip_address
 
 import pytest
 
-from itsim import as_address, as_port, Location
+from itsim import as_address, as_host, as_port, Location
 
 
 def test_none_as_address():
@@ -48,9 +48,27 @@ def test_invalid_int_as_port():
             pytest.fail()
 
 
+def test_none_as_host():
+    assert as_host(None) == as_address(None)
+
+
+def test_address_as_host():
+    assert as_host("10.1.45.12") == as_address("10.1.45.12")
+
+
+def test_domain_as_host():
+    assert as_host("github.com") == "github.com"
+
+
+def test_empty_as_host():
+    with pytest.raises(ValueError):
+        assert as_host("")
+        pytest.fail()
+
+
 def test_location_none_none():
     loc = Location()
-    assert loc.address == as_address(None)
+    assert loc.host == as_address(None)
     assert loc.port == as_port(None)
 
 
@@ -63,8 +81,8 @@ def test_location_none_port():
 
 
 def test_location_sane():
-    loc = Location("192.168.203.1", 9887)
-    assert loc.address == as_address("192.168.203.1")
+    loc = Location("calendar.google.com", 9887)
+    assert loc.host == as_host("calendar.google.com")
     assert loc.port == as_port(9887)
     assert loc != Location("192.168.203.1", 9087)
 

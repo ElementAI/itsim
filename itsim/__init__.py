@@ -7,6 +7,8 @@ Address = Union[IPv4Address, IPv6Address]
 AddressRepr = Union[None, str, int, Address]
 PortRepr = Optional[int]
 Port = int
+HostRepr = AddressRepr
+Host = Union[Address, str]
 
 
 def as_address(ar: AddressRepr) -> Address:
@@ -21,25 +23,35 @@ def as_address(ar: AddressRepr) -> Address:
     return ar
 
 
-def as_port(ap: PortRepr) -> Port:
-    if ap is None:
+def as_port(pr: PortRepr) -> Port:
+    if pr is None:
         return 0
-    if ap < 0 or ap >= 2 ** 16:
-        raise ValueError(f"Given integer value {ap} does not correspond to a valid port.")
-    return ap
+    if pr < 0 or pr >= 2 ** 16:
+        raise ValueError(f"Given integer value {pr} does not correspond to a valid port.")
+    return pr
+
+
+def as_host(hr: HostRepr) -> Host:
+    try:
+        return as_address(hr)
+    except ValueError:
+        if isinstance(hr, str) and len(hr) > 0:
+            return hr
+        else:
+            raise
 
 
 @total_ordering
 class Location(object):
 
-    def __init__(self, address: AddressRepr = None, port: PortRepr = None) -> None:
+    def __init__(self, host: HostRepr = None, port: PortRepr = None) -> None:
         super().__init__()
-        self._address = as_address(address)
+        self._host = as_host(host)
         self._port = as_port(port)
 
     @property
-    def address(self) -> Address:
-        return self._address
+    def host(self) -> Host:
+        return self._host
 
     @property
     def port(self) -> Port:
@@ -48,17 +60,20 @@ class Location(object):
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Location):
             return False
-        return self.address == other.address and self.port == other.port
+        return self.host == other.host and self.port == other.port
 
     def __str__(self) -> str:
-        return f"({str(self.address)}, {str(self.port)})"
+        return f"{str(self.host)}:{str(self.port)}"
 
     def __repr__(self) -> str:
         return repr(str(self))
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
     def __lt__(self, other) -> bool:
         if not isinstance(other, Location):
             return False
-        if self.address == other.address:
+        if self.host == other.host:
             return self.port < other.port
-        return self.address < other.address
+        return str(self.host) < str(other.host)
