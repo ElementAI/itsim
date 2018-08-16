@@ -1,16 +1,20 @@
 from collections import OrderedDict
-from typing import cast, MutableMapping, List, Iterable
+from ipaddress import _BaseAddress
+from itertools import dropwhile
+from numbers import Real
+from typing import cast, Any, MutableMapping, List, Iterable, Optional
 
-from greensim import Simulator
-from greensim.random import VarRandom
-from itsim import MS, S, CidrRepr, as_cidr, Address
+from greensim import Simulator, advance
+from greensim.random import VarRandom, bounded, expo
+
+from itsim import MS, S, MBPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address, Packet, _Node
 
 
 class AddressError(Exception):
 
-    def __init__(self, address):
+    def __init__(self, value: Any) -> None:
         super().__init__()
-        self.address = address
+        self.value_for_address = value
 
 
 class InvalidAddress(AddressError):
@@ -44,8 +48,8 @@ class Network(object):
         self._cidr = as_cidr(cidr)
         self._latency = bounded(latency, lower=0)
         self._bandwidth = bounded(bandwidth, lower=0.125)  # 1 bit / s  X-O
-        self._nodes: MutableMapping[Address, "Node"] = OrderedDict()
-        self._forwarders: MutableMapping[Cidr, "Node"] = OrderedDict()
+        self._nodes: MutableMapping[Address, _Node] = OrderedDict()
+        self._forwarders: MutableMapping[Cidr, _Node] = OrderedDict()
         self._addresses_free: List[Address] = []
         self._top_free: Iterable[Address] = (
             addr
@@ -63,7 +67,7 @@ class Network(object):
     def sim(self) -> Simulator:
         return self._sim
 
-    def link(self, node: "Node", ar: AddressRepr = None, *forward_to: CidrRepr) -> Address:
+    def link(self, node: _Node, ar: AddressRepr = None, *forward_to: CidrRepr) -> Address:
         if ar is None:
             address = self._get_address_free()
         else:
@@ -87,7 +91,7 @@ class Network(object):
             for cidr, node in self._forwarders.items():
                 if address in node.addresses:
                     del self._forwarders[cidr]
-            self._nodes[address].unlink_from(self, address)
+            self._nodes[address].unlink_from(address)
             del self._nodes[address]
             self._addresses_free.append(address)
 
@@ -106,13 +110,13 @@ class Network(object):
     def address_broadcast(self):
         return self._cidr.broadcast_address
 
-    def transmit(self, packet: Packet, receiver_maybe: Optional["Node"] = None) -> None:
-        if not isinstance(packet.dest.host, Address):
+    def transmit(self, packet: Packet, receiver_maybe: Optional[_Node] = None) -> None:
+        if not isinstance(packet.dest.host, _BaseAddress):
             raise InvalidAddress(packet.dest.host)
 
-        receivers: Iterable["Node"]
+        receivers: Iterable[_Node]
         if receiver_maybe is not None:
-            receivers = [cast("Node", receiver_maybe)]
+            receivers = [cast(_Node, receiver_maybe)]
         if packet.dest.host == self.address_broadcast:
             receivers = self._nodes.values()
         elif packet.dest.host in self._nodes:
@@ -126,8 +130,8 @@ class Network(object):
                 node.receive(packet)
         self.sim.add(transmission)
 
-    def _get_forwarder(self, dest: Address) -> "Node":
-        candidates = [(cidr, node) for cidr, node in self._forwards if dest in cidr]
+    def _get_forwarder(self, dest: Address) -> _Node:
+        candidates = [(cidr, node) for cidr, node in self._forwarders.items() if dest in cidr]
         if len(candidates) == 0:
             raise CannotForward(dest)
         return max(candidates, key=lambda cidr_node: cidr_node[0])[1]
@@ -140,5 +144,10 @@ class Internet(Network):
         sim: Simulator,
         latency: Optional[VarRandom[Real]] = None,
         bandwidth: Optional[VarRandom[Real]] = None
-    ):
-        super().__init__(sim, "0.0.0.0/0", latency or bounded(expo(1 * S), lower=20*MS), bandwidth or expo(10 * MBPS))
+    ) -> None:
+        super().__init__(
+            sim,
+            cidr="0.0.0.0/0",
+            latency=latency or bounded(expo(1 * S), lower=20 * MS),
+            bandwidth=bandwidth or expo(10 * MBPS)
+        )

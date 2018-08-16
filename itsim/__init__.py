@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod, abstractproperty
 from functools import total_ordering
-from ipaddress import IPv4Address, IPv6Address, ip_address, ip_network
-from typing import Union, Optional, Any
+from ipaddress import IPv4Address, IPv6Address, IPv4Network, IPv6Network, ip_address, ip_network, _BaseNetwork
+from typing import Union, Optional, Any, Iterable
 
 
 # Time correspondance convention: 1.0 simulated time == 1.0 second
@@ -48,7 +49,7 @@ def as_address(ar: AddressRepr) -> Address:
 
 
 def as_cidr(cr: CidrRepr) -> Cidr:
-    if isinstance(cr, Cidr):
+    if isinstance(cr, _BaseNetwork):
         return cr
     return ip_network(cr)
 
@@ -107,3 +108,23 @@ class Location(object):
         if self.host == other.host:
             return self.port < other.port
         return str(self.host) < str(other.host)
+
+
+class Packet(object):  # Unimplemented yet
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.dest = Location()  # TBD
+
+
+class _Node(ABC):
+
+    @abstractproperty
+    def addresses(self) -> Iterable[Address]:
+        raise NotImplementedError("Meant to be implemented by class itsim.node.Node.")
+        return []
+
+    @abstractmethod
+    def unlink_from(self, ar: AddressRepr) -> "_Node":
+        raise NotImplementedError("Meant to be implemented by class itsim.node.Node.")
+        return self

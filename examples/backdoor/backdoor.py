@@ -59,7 +59,7 @@ if __name__ == '__main__':
     router = Router(net_local, internet)
     workstations = [
         Endpoint(f"Workstation-{n+1}", net_local).install(
-            random_network_activity(expo(,
+            random_network_activity,  # INCOMPLETE
             random_network_activity,
             agent_monitoring
         )
