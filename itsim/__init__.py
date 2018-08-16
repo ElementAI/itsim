@@ -1,6 +1,28 @@
 from functools import total_ordering
-from ipaddress import IPv4Address, IPv6Address, ip_address
+from ipaddress import IPv4Address, IPv6Address, ip_address, ip_network
 from typing import Union, Optional, Any
+
+
+# Time correspondance convention: 1.0 simulated time == 1.0 second
+S = 1.0
+MIN = 60 * S
+H = 60 * MIN
+D = 24 * H
+W = 7 * D
+MS = S / 1000.0
+US = MS / 1000.0
+NS = US / 1000.0
+
+# Bandwidth units: B == bit, not byte
+KBPS = 1024 / 8
+MBPS = 1024 * KBPS
+GBPS = 1024 * MBPS
+
+# Size units: B == byte
+B = 1
+KB = 1024 * B
+MB = 1024 * KB
+GB = 1024 * MB
 
 
 Address = Union[IPv4Address, IPv6Address]
@@ -9,6 +31,8 @@ PortRepr = Optional[int]
 Port = int
 HostRepr = AddressRepr
 Host = Union[Address, str]
+Cidr = Union[IPv4Network, IPv6Network]
+CidrRepr = Union[str, Cidr]
 
 
 def as_address(ar: AddressRepr) -> Address:
@@ -21,6 +45,12 @@ def as_address(ar: AddressRepr) -> Address:
     elif isinstance(ar, str):
         return ip_address(ar)
     return ar
+
+
+def as_cidr(cr: CidrRepr) -> Cidr:
+    if isinstance(cr, Cidr):
+        return cr
+    return ip_network(cr)
 
 
 def as_port(pr: PortRepr) -> Port:
