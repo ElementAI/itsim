@@ -3,7 +3,7 @@
   <packageImport xmi:type="uml:PackageImport" xmi:id="_OsufkKFXEei987-J58yDJQ">
     <importedPackage xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
   </packageImport>
-  <packagedElement xmi:type="uml:Class" xmi:id="_HyeNwKFYEei987-J58yDJQ" name="SimulationObject" visibility="public">
+  <packagedElement xmi:type="uml:Class" xmi:id="_HyeNwKFYEei987-J58yDJQ" name="ITObject" visibility="public">
     <ownedAttribute xmi:type="uml:Property" xmi:id="_Tq3_IKFYEei987-J58yDJQ" name="malicious">
       <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
     </ownedAttribute>
@@ -47,7 +47,25 @@
     </ownedOperation>
     <ownedOperation xmi:type="uml:Operation" xmi:id="_ndbDIKGFEeia2vLJh0Dblg" name="bind">
       <ownedParameter xmi:type="uml:Parameter" xmi:id="_qeJpMKGFEeia2vLJh0Dblg" name="location" type="_i4eEgKF1Eeia2vLJh0Dblg"/>
-      <ownedParameter xmi:type="uml:Parameter" xmi:id="_s8pE4KGFEeia2vLJh0Dblg" name="socket" type="__A5HwKF1Eeia2vLJh0Dblg" direction="return"/>
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_E6eB0KJIEeicz60cRlE-Eg" name="status" direction="return">
+        <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+      </ownedParameter>
+    </ownedOperation>
+    <ownedOperation xmi:type="uml:Operation" xmi:id="_3rjJcKJHEeicz60cRlE-Eg" name="tcp_connect">
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_9pSTMKJHEeicz60cRlE-Eg" name="dest" type="_2uioUKF7Eeia2vLJh0Dblg"/>
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_As08sKJIEeicz60cRlE-Eg" name="src" type="_2uioUKF7Eeia2vLJh0Dblg">
+        <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_VH4EkKJIEeicz60cRlE-Eg"/>
+        <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_VH7u8KJIEeicz60cRlE-Eg" value="1"/>
+      </ownedParameter>
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_II00MKJIEeicz60cRlE-Eg" name="conn" type="_dc4JEKF2Eeia2vLJh0Dblg" direction="return"/>
+    </ownedOperation>
+    <ownedOperation xmi:type="uml:Operation" xmi:id="_NV59EKJIEeicz60cRlE-Eg" name="udp_connect">
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_YIJXoKJIEeicz60cRlE-Eg" name="dest" type="_2uioUKF7Eeia2vLJh0Dblg"/>
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_aD9kEKJIEeicz60cRlE-Eg" name="src" type="_2uioUKF7Eeia2vLJh0Dblg">
+        <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_aqzhoKJIEeicz60cRlE-Eg"/>
+        <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_aq2k8KJIEeicz60cRlE-Eg" value="1"/>
+      </ownedParameter>
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_eCZvkKJIEeicz60cRlE-Eg" name="conn" type="_cI8cAKF2Eeia2vLJh0Dblg" direction="return"/>
     </ownedOperation>
   </packagedElement>
   <packagedElement xmi:type="uml:Class" xmi:id="_zved4KF1Eeia2vLJh0Dblg" name="Packet">
@@ -57,6 +75,7 @@
     <ownedAttribute xmi:type="uml:Property" xmi:id="_8MnCQKF1Eeia2vLJh0Dblg" name="bytes">
       <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
     </ownedAttribute>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_0Gyz0KJIEeicz60cRlE-Eg" name="payload" type="_5pK-oKJFEeicz60cRlE-Eg"/>
   </packagedElement>
   <packagedElement xmi:type="uml:Class" xmi:id="__A5HwKF1Eeia2vLJh0Dblg" name="Socket">
     <generalization xmi:type="uml:Generalization" xmi:id="_qXsc4KF6Eeia2vLJh0Dblg" general="_HyeNwKFYEei987-J58yDJQ"/>
@@ -67,14 +86,26 @@
       <ownedParameter xmi:type="uml:Parameter" xmi:id="_PD_X8KF2Eeia2vLJh0Dblg" name="dest" type="_i4eEgKF1Eeia2vLJh0Dblg"/>
       <ownedParameter xmi:type="uml:Parameter" xmi:id="_Q9OKcKF2Eeia2vLJh0Dblg" name="self" type="__A5HwKF1Eeia2vLJh0Dblg" direction="return"/>
     </ownedOperation>
-    <ownedOperation xmi:type="uml:Operation" xmi:id="_R65ToKF2Eeia2vLJh0Dblg" name="send">
-      <ownedParameter xmi:type="uml:Parameter" xmi:id="_VELYwKF2Eeia2vLJh0Dblg" name="datagram" type="_zved4KF1Eeia2vLJh0Dblg"/>
-      <ownedParameter xmi:type="uml:Parameter" xmi:id="_XhIjYKF2Eeia2vLJh0Dblg" name="success">
+    <ownedOperation xmi:type="uml:Operation" xmi:id="_R65ToKF2Eeia2vLJh0Dblg" name="send" visibility="private">
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_VELYwKF2Eeia2vLJh0Dblg" name="datagram" type="_5pK-oKJFEeicz60cRlE-Eg">
+        <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_88mBwKJGEeicz60cRlE-Eg"/>
+        <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_88psIKJGEeicz60cRlE-Eg" value="1"/>
+      </ownedParameter>
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_XhIjYKF2Eeia2vLJh0Dblg" name="success" direction="return">
+        <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+      </ownedParameter>
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_CK3dcKJHEeicz60cRlE-Eg" name="n_bytes">
         <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
       </ownedParameter>
     </ownedOperation>
     <ownedOperation xmi:type="uml:Operation" xmi:id="_YbsuMKF2Eeia2vLJh0Dblg" name="recv">
-      <ownedParameter xmi:type="uml:Parameter" xmi:id="_bO_VMKF2Eeia2vLJh0Dblg" name="datagram" type="_zved4KF1Eeia2vLJh0Dblg" direction="return"/>
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_bO_VMKF2Eeia2vLJh0Dblg" name="datagram" type="_5pK-oKJFEeicz60cRlE-Eg" direction="return">
+        <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_GbUmAKJHEeicz60cRlE-Eg"/>
+        <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_GbXpUKJHEeicz60cRlE-Eg" value="1"/>
+      </ownedParameter>
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_JK5xsKJHEeicz60cRlE-Eg" name="n_bytes" direction="return">
+        <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+      </ownedParameter>
     </ownedOperation>
   </packagedElement>
   <packagedElement xmi:type="uml:Class" xmi:id="_AnRPsKF2Eeia2vLJh0Dblg" name="Network">
@@ -138,17 +169,45 @@
   <packagedElement xmi:type="uml:Realization" xmi:id="_NtKLEKF6Eeia2vLJh0Dblg" client="_HyeNwKFYEei987-J58yDJQ" supplier="_scLZ8KF2Eeia2vLJh0Dblg"/>
   <packagedElement xmi:type="uml:Class" xmi:id="_2uioUKF7Eeia2vLJh0Dblg" name="Address">
     <generalization xmi:type="uml:Generalization" xmi:id="_Gjfu0KF8Eeia2vLJh0Dblg" general="_HyeNwKFYEei987-J58yDJQ"/>
-    <ownedAttribute xmi:type="uml:Property" xmi:id="_6Pb8MKF7Eeia2vLJh0Dblg" name="IP4">
-      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-    </ownedAttribute>
-    <ownedAttribute xmi:type="uml:Property" xmi:id="__yAM4KF7Eeia2vLJh0Dblg" name="IP6">
-      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-    </ownedAttribute>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_6Pb8MKF7Eeia2vLJh0Dblg" name="IP4" type="_V5qOMKJFEeicz60cRlE-Eg"/>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="__yAM4KF7Eeia2vLJh0Dblg" name="IP6" type="_eRCI0KJFEeicz60cRlE-Eg"/>
+    <ownedOperation xmi:type="uml:Operation" xmi:id="_ss-1AKJFEeicz60cRlE-Eg" name="resolve">
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_v_fHkKJFEeicz60cRlE-Eg" name="address" type="_QHwhAKJFEeicz60cRlE-Eg" direction="return"/>
+    </ownedOperation>
   </packagedElement>
   <packagedElement xmi:type="uml:Class" xmi:id="_2XkuQKGFEeia2vLJh0Dblg" name="Cidr">
     <generalization xmi:type="uml:Generalization" xmi:id="_sbYVcKGGEeia2vLJh0Dblg" general="_HyeNwKFYEei987-J58yDJQ"/>
-    <ownedAttribute xmi:type="uml:Property" xmi:id="_8I0UIKGFEeia2vLJh0Dblg" name="IP4" type="_HyeNwKFYEei987-J58yDJQ"/>
-    <ownedAttribute xmi:type="uml:Property" xmi:id="_-6RvIKGFEeia2vLJh0Dblg" name="IP6" type="_HyeNwKFYEei987-J58yDJQ"/>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_8I0UIKGFEeia2vLJh0Dblg" name="IPv4Cidr" type="_HyeNwKFYEei987-J58yDJQ"/>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_-6RvIKGFEeia2vLJh0Dblg" name="IPv6Cidr" type="_HyeNwKFYEei987-J58yDJQ"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_QHwhAKJFEeicz60cRlE-Eg" name="_BaseAddress"/>
+  <packagedElement xmi:type="uml:Class" xmi:id="_V5qOMKJFEeicz60cRlE-Eg" name="IPv4Address">
+    <generalization xmi:type="uml:Generalization" xmi:id="_gEPy4KJFEeicz60cRlE-Eg" general="_QHwhAKJFEeicz60cRlE-Eg"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_eRCI0KJFEeicz60cRlE-Eg" name="IPv6Address">
+    <generalization xmi:type="uml:Generalization" xmi:id="_g6DZgKJFEeicz60cRlE-Eg" general="_QHwhAKJFEeicz60cRlE-Eg"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_xci7cKJFEeicz60cRlE-Eg" name="Domain">
+    <generalization xmi:type="uml:Generalization" xmi:id="_2HkgIKJFEeicz60cRlE-Eg" general="_2uioUKF7Eeia2vLJh0Dblg"/>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_zS8cYKJFEeicz60cRlE-Eg" name="hostname">
+      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+    </ownedAttribute>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_5pK-oKJFEeicz60cRlE-Eg" name="Payload">
+    <generalization xmi:type="uml:Generalization" xmi:id="_RyoR8KJGEeicz60cRlE-Eg" general="_HyeNwKFYEei987-J58yDJQ"/>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_M_ujoKJGEeicz60cRlE-Eg" name="entries" type="_8NmDMKJFEeicz60cRlE-Eg">
+      <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_PU_K0KJGEeicz60cRlE-Eg"/>
+      <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_PVBnEKJGEeicz60cRlE-Eg" value="*"/>
+    </ownedAttribute>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_8NmDMKJFEeicz60cRlE-Eg" name="PayloadDictionaryItem">
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_G8HbYKJGEeicz60cRlE-Eg" name="key" type="_-7M48KJFEeicz60cRlE-Eg"/>
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_J3LeUKJGEeicz60cRlE-Eg" name="value"/>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Class" xmi:id="_-7M48KJFEeicz60cRlE-Eg" name="PayloadDictionaryTypeLabel">
+    <ownedAttribute xmi:type="uml:Property" xmi:id="_D8MGkKJGEeicz60cRlE-Eg" name="name">
+      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+    </ownedAttribute>
   </packagedElement>
   <profileApplication xmi:type="uml:ProfileApplication" xmi:id="_7pNykKF7Eeia2vLJh0Dblg">
     <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_7pPAsKF7Eeia2vLJh0Dblg" source="http://www.eclipse.org/uml2/2.0.0/UML">
