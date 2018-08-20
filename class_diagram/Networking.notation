@@ -111,6 +111,10 @@
         <element xmi:type="uml:Operation" href="Networking.uml#_NV59EKJIEeicz60cRlE-Eg"/>
         <layoutConstraint xmi:type="notation:Location" xmi:id="_NWJ0saJIEeicz60cRlE-Eg"/>
       </children>
+      <children xmi:type="notation:Shape" xmi:id="_Lqvd8KTIEeieT5c9jEAXog" type="Operation_ClassOperationLabel">
+        <element xmi:type="uml:Operation" href="Networking.uml#_Lp0Q4KTIEeieT5c9jEAXog"/>
+        <layoutConstraint xmi:type="notation:Location" xmi:id="_Lqvd8aTIEeieT5c9jEAXog"/>
+      </children>
       <styles xmi:type="notation:TitleStyle" xmi:id="_u5pXZqF1Eeia2vLJh0Dblg"/>
       <styles xmi:type="notation:SortingStyle" xmi:id="_u5pXZ6F1Eeia2vLJh0Dblg"/>
       <styles xmi:type="notation:FilteringStyle" xmi:id="_u5pXaKF1Eeia2vLJh0Dblg"/>

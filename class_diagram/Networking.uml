@@ -67,6 +67,9 @@
       </ownedParameter>
       <ownedParameter xmi:type="uml:Parameter" xmi:id="_eCZvkKJIEeicz60cRlE-Eg" name="conn" type="_cI8cAKF2Eeia2vLJh0Dblg" direction="return"/>
     </ownedOperation>
+    <ownedOperation xmi:type="uml:Operation" xmi:id="_Lp0Q4KTIEeieT5c9jEAXog" name="receive">
+      <ownedParameter xmi:type="uml:Parameter" xmi:id="_PzYHQKTIEeieT5c9jEAXog" name="packet" type="_zved4KF1Eeia2vLJh0Dblg"/>
+    </ownedOperation>
   </packagedElement>
   <packagedElement xmi:type="uml:Class" xmi:id="_zved4KF1Eeia2vLJh0Dblg" name="Packet">
     <generalization xmi:type="uml:Generalization" xmi:id="_YQQ9cKF6Eeia2vLJh0Dblg" general="_HyeNwKFYEei987-J58yDJQ"/>
@@ -86,7 +89,7 @@
       <ownedParameter xmi:type="uml:Parameter" xmi:id="_PD_X8KF2Eeia2vLJh0Dblg" name="dest" type="_i4eEgKF1Eeia2vLJh0Dblg"/>
       <ownedParameter xmi:type="uml:Parameter" xmi:id="_Q9OKcKF2Eeia2vLJh0Dblg" name="self" type="__A5HwKF1Eeia2vLJh0Dblg" direction="return"/>
     </ownedOperation>
-    <ownedOperation xmi:type="uml:Operation" xmi:id="_R65ToKF2Eeia2vLJh0Dblg" name="send" visibility="private">
+    <ownedOperation xmi:type="uml:Operation" xmi:id="_R65ToKF2Eeia2vLJh0Dblg" name="send" visibility="public">
       <ownedParameter xmi:type="uml:Parameter" xmi:id="_VELYwKF2Eeia2vLJh0Dblg" name="datagram" type="_5pK-oKJFEeicz60cRlE-Eg">
         <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_88mBwKJGEeicz60cRlE-Eg"/>
         <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_88psIKJGEeicz60cRlE-Eg" value="1"/>
