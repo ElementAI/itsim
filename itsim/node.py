@@ -131,3 +131,9 @@ class Node(_Node):
 
 
 # class UDP(object):
+
+
+class Endpoint(Node):
+
+    def install(*fn_software):
+        return self
