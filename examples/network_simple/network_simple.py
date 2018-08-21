@@ -1,6 +1,6 @@
 from greensim import Simulator
 
-from itsim import MS, S, MIN, H, B, MB, Location
+from itsim import MS, S, MIN, H, B, MB, GBPS, Location
 from itsim.network import Network, Internet
 from itsim.node import Router, Endpoint, CONNECTION_CLOSED
 from itsim.software import random_network_activity
