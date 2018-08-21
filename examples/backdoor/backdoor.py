@@ -18,8 +18,8 @@ LOCATION_C2 = [
     ]
 ]
 location_c2 = distribution(LOCATION_C2)
-len_beacon = num_bytes(expo(1024 * B), header=128 * B, max=20 * MB)
-len_response = num_bytes(expo(384 * B), header=128 * B, max=1.5 * MB)
+len_beacon = num_bytes(expo(1024 * B), header=128 * B, upper=20 * MB)
+len_response = num_bytes(expo(384 * B), header=128 * B, upper=1.5 * MB)
 
 
 def agent_monitoring(node):
