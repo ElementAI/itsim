@@ -135,5 +135,8 @@ class Node(_Node):
 
 class Endpoint(Node):
 
+    def __init__(self, name: str, network: Network):
+        super().__init__()
+
     def install(*fn_software):
         return self
