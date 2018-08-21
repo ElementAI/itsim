@@ -27,7 +27,7 @@ def agent_monitoring(node):
 
 
 def report_connection(node, connection):
-    print "Connection!"
+    print("Connection!")
 
 
 @happens(uniform(2.1 * H, 4.9 * H), "malware")

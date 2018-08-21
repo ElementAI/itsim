@@ -11,7 +11,7 @@ def agent_monitoring(node):
 
 
 def report_connection(node, connection):
-    print "Connection!"
+    print("Connection!")
 
 
 if __name__ == '__main__':
