@@ -1,2 +1,2 @@
 def random_network_activity():
-    pass
+    raise NotImplementedError()
