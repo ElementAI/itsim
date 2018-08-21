@@ -133,6 +133,12 @@ class Node(_Node):
 # class UDP(object):
 
 
+class Router(Node):
+
+    def __init__(self, lan: Network, wan: Network):
+        super().__init__()
+
+
 class Endpoint(Node):
 
     def __init__(self, name: str, network: Network):
