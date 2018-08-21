@@ -151,9 +151,6 @@
   </packagedElement>
   <packagedElement xmi:type="uml:Class" xmi:id="_dc4JEKF2Eeia2vLJh0Dblg" name="TCPConnection">
     <generalization xmi:type="uml:Generalization" xmi:id="_uVyqIKF6Eeia2vLJh0Dblg" general="__A5HwKF1Eeia2vLJh0Dblg"/>
-    <ownedAttribute xmi:type="uml:Property" xmi:id="_fYv_4KF2Eeia2vLJh0Dblg" name="isOpen">
-      <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
-    </ownedAttribute>
     <ownedOperation xmi:type="uml:Operation" xmi:id="_iQ-KMKF2Eeia2vLJh0Dblg" name="open">
       <ownedParameter xmi:type="uml:Parameter" xmi:id="_m207AKF2Eeia2vLJh0Dblg" name="status" direction="return">
         <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>

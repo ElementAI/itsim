@@ -299,10 +299,6 @@
       <layoutConstraint xmi:type="notation:Location" xmi:id="_dfRVwKF2Eeia2vLJh0Dblg" y="15"/>
     </children>
     <children xmi:type="notation:BasicCompartment" xmi:id="_dfRVwaF2Eeia2vLJh0Dblg" type="Class_AttributeCompartment">
-      <children xmi:type="notation:Shape" xmi:id="_fY6_AKF2Eeia2vLJh0Dblg" type="Property_ClassAttributeLabel">
-        <element xmi:type="uml:Property" href="Networking.uml#_fYv_4KF2Eeia2vLJh0Dblg"/>
-        <layoutConstraint xmi:type="notation:Location" xmi:id="_fY6_AaF2Eeia2vLJh0Dblg"/>
-      </children>
       <styles xmi:type="notation:TitleStyle" xmi:id="_dfRVwqF2Eeia2vLJh0Dblg"/>
       <styles xmi:type="notation:SortingStyle" xmi:id="_dfRVw6F2Eeia2vLJh0Dblg"/>
       <styles xmi:type="notation:FilteringStyle" xmi:id="_dfRVxKF2Eeia2vLJh0Dblg"/>
