@@ -5,7 +5,7 @@ from itsim import MS, S, MIN, H, B, MB, Location
 from itsim.network import Network, Internet
 from itsim.node import Router, Endpoint
 from itsim.random import num_bytes
-from itsim.software import RandomNetworkActivity
+from itsim.software import random_network_activity
 
 
 LOCATION_C2 = [
