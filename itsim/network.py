@@ -151,3 +151,6 @@ class Internet(Network):
             latency=latency or bounded(expo(1 * S), lower=20 * MS),
             bandwidth=bandwidth or expo(10 * MBPS)
         )
+
+    def add_receiver(loc: Location, receiver: Callable[[Packet], None]) -> None:
+        raise NotImplementedError("Stub")
