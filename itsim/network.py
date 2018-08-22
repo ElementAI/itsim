@@ -135,7 +135,7 @@ class Network(object):
         def transmission():
             advance(next(self._latency) + len(packet) / next(self._bandwidth))
             for node in receivers:
-                node.receive(packet)
+                self.sim.add(node.receive, packet)
         self.sim.add(transmission)
 
     def _get_forwarder(self, dest: Address) -> _Node:
