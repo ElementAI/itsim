@@ -125,7 +125,7 @@ class Network(object):
         receivers: Iterable[_Node]
         if receiver_maybe is not None:
             receivers = [cast(_Node, receiver_maybe)]
-        if packet.dest.host == self.address_broadcast:
+        elif packet.dest.host == self.address_broadcast:
             receivers = self._nodes.values()
         elif packet.dest.host in self._nodes:
             receivers = [self._nodes[packet.dest.host]]
