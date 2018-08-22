@@ -107,7 +107,7 @@ class Network(object):
                 raise NetworkFull()
 
     @property
-    def address_broadcast(self):
+    def address_broadcast(self) -> Address:
         return self._cidr.broadcast_address
 
     def transmit(self, packet: Packet, receiver_maybe: Optional[_Node] = None) -> None:
