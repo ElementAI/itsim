@@ -2,11 +2,11 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from ipaddress import _BaseAddress
 from itertools import cycle
-from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator
+from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator, Optional
 
 from greensim import Process
 from itsim import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr, Location, _Node
-from itsim.network import Packet, Network, InvalidAddress, AddressError
+from itsim.network import Packet, Network, InvalidAddress, AddressError, AddressInUse
 
 
 MapPorts = MutableMapping[Port, Process]
@@ -68,12 +68,14 @@ class Node(_Node):
     def __init__(self):
         super().__init__()
         self._networks: MutableMapping[Address, _NetworkLink] = OrderedDict()
+        self._address_default: Optional[Address] = None
 
-    def link_to(self, network: Network, ar: AddressRepr = None, *forward_me: CidrRepr) -> "Node":
-        if as_address(ar) not in self._networks:
-            address = network.link(self, ar, *forward_me)
-            self._networks[address] = _NetworkLink(address, network)
-        return self
+    def link_to(self, network: Network, ar: AddressRepr = None, *forward_me: CidrRepr) -> "_DefaultAddressSetter":
+        if as_address(ar) in self._networks:
+            raise AddressInUse(ar)
+        address = network.link(self, ar, *forward_me)
+        self._networks[address] = _NetworkLink(address, network)
+        return _DefaultAddressSetter(self, address)
 
     def unlink_from(self, ar: AddressRepr) -> "Node":
         address = as_address(ar)
@@ -128,6 +130,17 @@ class Node(_Node):
 
     def receive(self, packet: Packet) -> None:
         raise NotImplemented()
+
+
+class _DefaultAddressSetter(object):
+
+    def __init__(self, node: Node, address: Address) -> None:
+        super().__init__()
+        self._node = node
+        self._address = address
+
+    def set_default(self) -> None:
+        self._node._address_default = self._address
 
 
 # class UDP(object):
