@@ -98,7 +98,7 @@ class Node(_Node):
 
     def _as_location(self, lb: "Node.LocationBind") -> Location:
         if lb is None:
-            return Location(None, None)
+            return Location(0, 0)
         elif isinstance(lb, int):
             return Location(None, cast(Port, lb))
         elif isinstance(lb, (str, _BaseAddress)):
@@ -113,10 +113,8 @@ class Node(_Node):
         loc = self._as_location(lb)
 
         # Address here must be one of the node's addresses.
-        if not isinstance(loc.host, _BaseAddress):
+        if not isinstance(loc.host, _BaseAddress) or loc.host not in self.addresses:
             raise InvalidAddress(loc.host)
-        elif loc.host == as_address(0):
-            address = self.address_default
         elif loc.host not in self.addresses:
             raise InvalidAddress(loc.host)
         else:
@@ -124,6 +122,7 @@ class Node(_Node):
 
         port: Port = loc.port
         if port == 0:
+            # TODO -- Disambiguate between address 0 (bind all addresses against the port) and a specific binding.
             port = self._networks[address].get_port_free()
 
         return Location(address, port)
