@@ -99,7 +99,6 @@ class Network(object):
             for cidr, node in self._forwarders.items():
                 if address in node.addresses:
                     del self._forwarders[cidr]
-            self._nodes[address].unlink_from(address)
             del self._nodes[address]
             self._addresses_free.append(address)
 

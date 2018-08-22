@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractproperty
 from functools import total_ordering
 from ipaddress import IPv4Address, IPv6Address, IPv4Network, IPv6Network, ip_address, ip_network, _BaseNetwork
 from typing import Union, Optional, Any, Iterable
@@ -123,8 +123,3 @@ class _Node(ABC):
     def addresses(self) -> Iterable[Address]:
         raise NotImplementedError("Meant to be implemented by class itsim.node.Node.")
         return []
-
-    @abstractmethod
-    def unlink_from(self, ar: AddressRepr) -> "_Node":
-        raise NotImplementedError("Meant to be implemented by class itsim.node.Node.")
-        return self

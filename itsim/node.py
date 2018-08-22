@@ -44,7 +44,7 @@ class _NetworkLink(object):
                 return port
 
     def sever(self) -> None:
-        raise NotImplementedError()
+        self.network.unlink(self.address)
 
 
 class Socket(object):
@@ -77,14 +77,13 @@ class Node(_Node):
         self._networks[address] = _NetworkLink(address, network)
         return _DefaultAddressSetter(self, address)
 
-    def unlink_from(self, ar: AddressRepr) -> "Node":
+    def unlink_from(self, ar: AddressRepr) -> None:
         address = as_address(ar)
         if address in self._networks:
             if len(self._networks[address].ports) > 0:
                 raise AddressHasPortsOpen(address, list(self._networks[address].ports.keys()))
             self._networks[address].sever()
             del self._networks[address]
-        return self
 
     @property
     def addresses(self) -> Iterable[Address]:
