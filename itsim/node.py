@@ -96,36 +96,42 @@ class Node(_Node):
         except StopIteration:
             raise NoNetworkLinked()
 
-    def _as_location(self, lb: "Node.LocationBind"):
+    def _as_location(self, lb: "Node.LocationBind") -> Location:
         if lb is None:
-            return self._as_location(Location(None, None))
+            return Location(None, None)
         elif isinstance(lb, int):
-            return self._as_location(Location(None, cast(Port, lb)))
-        elif isinstance(lb, (type(None), str, _BaseAddress)):
-            return self._as_location(Location(cast(AddressRepr, lb), 0))
+            return Location(None, cast(Port, lb))
+        elif isinstance(lb, (str, _BaseAddress)):
+            return Location(cast(AddressRepr, lb), 0)
         elif isinstance(lb, tuple):
-            return self._as_location(Location(lb[0], lb[1]))
+            return Location(lb[0], lb[1])
         elif isinstance(lb, Location):
-            loc = cast(Location, lb)
-            if not isinstance(loc.host, _BaseAddress):
-                raise InvalidAddress(loc.host)
-            elif loc.host == as_address(0):
-                address = self.address_default
-            elif loc.host not in self.addresses:
-                raise InvalidAddress(loc.host)
+            return cast(Location, lb)
+        raise ValueError("What is that LocationBind instance?")
 
-            port: Port = loc.port
-            if port == 0:
-                port = self._networks[address].get_port_free()
+    def _as_source_bind(self, lb: "Node.LocationBind") -> Location:
+        loc = self._as_location(lb)
+        if not isinstance(loc.host, _BaseAddress):
+            raise InvalidAddress(loc.host)
+        elif loc.host == as_address(0):
+            address = self.address_default
+        elif loc.host not in self.addresses:
+            raise InvalidAddress(loc.host)
+        else:
+            address = loc.host
 
-            return Location(address, port)
+        port: Port = loc.port
+        if port == 0:
+            port = self._networks[address].get_port_free()
+
+        return Location(address, port)
 
     @contextmanager
-    def bind(self, lb: "Node.LocationBind" = None) -> Generator[Socket, None, None]:
-        loc = self._as_location(lb)
-        self._networks[loc.host].ports[loc.port] = Process.current()
-        yield loc
-        del self._networks[loc.host].ports[loc.port]
+    def bind(self, lb: "Node.LocationBind" = None) -> Generator[Location, None, None]:  # TODO - change!
+        src = self._as_source_bind(lb)
+        self._networks[src.host].ports[src.port] = Process.current()
+        yield src
+        del self._networks[src.host].ports[src.port]
 
     def receive(self, packet: Packet) -> None:
         raise NotImplemented()
