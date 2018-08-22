@@ -111,6 +111,8 @@ class Node(_Node):
 
     def _as_source_bind(self, lb: "Node.LocationBind") -> Location:
         loc = self._as_location(lb)
+
+        # Address here must be one of the node's addresses.
         if not isinstance(loc.host, _BaseAddress):
             raise InvalidAddress(loc.host)
         elif loc.host == as_address(0):
