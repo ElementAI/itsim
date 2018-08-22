@@ -60,7 +60,7 @@ class Network(object):
         )
 
     @property
-    def cidr(self):
+    def cidr(self) -> Cidr:
         return self._cidr
 
     @property
