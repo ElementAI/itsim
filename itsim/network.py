@@ -2,7 +2,7 @@ from collections import OrderedDict
 from ipaddress import _BaseAddress
 from itertools import dropwhile
 from numbers import Real
-from typing import cast, Any, MutableMapping, List, Iterable, Optional, Callable
+from typing import cast, Any, MutableMapping, List, Iterable, Iterator, Optional, Callable
 
 from greensim import Simulator, advance
 from greensim.random import VarRandom, bounded, expo
@@ -51,7 +51,7 @@ class Network(object):
         self._nodes: MutableMapping[Address, _Node] = OrderedDict()
         self._forwarders: MutableMapping[Cidr, _Node] = OrderedDict()
         self._addresses_free: List[Address] = []
-        self._top_free: Iterable[Address] = (
+        self._top_free: Iterator[Address] = (
             addr
             for _, addr in dropwhile(
                 lambda p: p[0] < num_skip_addresses,
@@ -95,9 +95,9 @@ class Network(object):
             del self._nodes[address]
             self._addresses_free.append(address)
 
-    def _get_address_free(self):
+    def _get_address_free(self) -> Address:
         try:
-            return next(self._top_free)
+            return cast(Address, next(self._top_free))
         except StopIteration:
             if len(self._addresses_free) > 0:
                 address = self._addresses_free[0]
