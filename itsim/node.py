@@ -130,9 +130,9 @@ class Node(_Node):
     @contextmanager
     def bind(self, lb: "Node.LocationBind" = None) -> Generator[Location, None, None]:  # TODO - change!
         src = self._as_source_bind(lb)
-        self._networks[src.host].ports[src.port] = Process.current()
+        self._networks[src.host_as_address()].ports[src.port] = Process.current()
         yield src
-        del self._networks[src.host].ports[src.port]
+        del self._networks[src.host_as_address()].ports[src.port]
 
     def receive(self, packet: Packet) -> None:
         raise NotImplemented()

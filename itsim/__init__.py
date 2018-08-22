@@ -1,7 +1,8 @@
 from abc import ABC, abstractproperty
 from functools import total_ordering
-from ipaddress import IPv4Address, IPv6Address, IPv4Network, IPv6Network, ip_address, ip_network, _BaseNetwork
-from typing import Union, Optional, Any, Iterable
+from ipaddress import \
+    IPv4Address, IPv6Address, IPv4Network, IPv6Network, ip_address, ip_network, _BaseNetwork, _BaseAddress
+from typing import cast, Union, Optional, Any, Iterable
 
 
 # Time correspondance convention: 1.0 simulated time == 1.0 second
@@ -87,6 +88,11 @@ class Location(object):
     @property
     def port(self) -> Port:
         return self._port
+
+    def host_as_address(self) -> Address:
+        if not isinstance(self.host, _BaseAddress):
+            raise ValueError("Location carries a domain name for host, which resolution must be simulated explicitly.")
+        return cast(Address, self._host)
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Location):
