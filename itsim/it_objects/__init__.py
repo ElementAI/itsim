@@ -1,4 +1,4 @@
-from greensim.tags import GreensimTag, TaggedObject
+from greensim.tags import GreensimTag
 
 
 class ITTag(GreensimTag):
