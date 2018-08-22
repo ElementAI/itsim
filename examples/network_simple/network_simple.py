@@ -1,7 +1,7 @@
 from greensim import Simulator
 from greensim.random import constant, normal, expo
 
-from itsim import MS, H, GBPS
+from itsim import MS, H, GbPS
 from itsim.network import Network, Internet
 from itsim.node import Router, Endpoint
 from itsim.software import random_network_activity
@@ -22,7 +22,7 @@ if __name__ == '__main__':
         net_local = Network(
             sim,
             cidr="192.168.4.0/24",
-            bandwidth=constant(1 * GBPS),
+            bandwidth=constant(1 * GbPS),
             latency=normal(5 * MS, 1 * MS),
             num_skip_addresses=100
         )

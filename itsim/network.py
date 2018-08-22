@@ -7,7 +7,7 @@ from typing import cast, Any, MutableMapping, List, Iterable, Optional, Callable
 from greensim import Simulator, advance
 from greensim.random import VarRandom, bounded, expo
 
-from itsim import MS, S, MBPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address, Packet, _Node, Location
+from itsim import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address, Packet, _Node, Location
 
 
 class AddressError(Exception):
@@ -149,7 +149,7 @@ class Internet(Network):
             sim,
             cidr="0.0.0.0/0",
             latency=latency or bounded(expo(1 * S), lower=20 * MS),
-            bandwidth=bandwidth or expo(10 * MBPS)
+            bandwidth=bandwidth or expo(10 * MbPS)
         )
 
     def add_receiver(self, loc: Location, receiver: Callable[[Packet], None]) -> None:

@@ -15,9 +15,9 @@ US = MS * 1.0e-6
 NS = US * 1.0e-9
 
 # Bandwidth units: B == bit, not byte
-KBPS = 1024 / 8
-MBPS = 1024 * KBPS
-GBPS = 1024 * MBPS
+KbPS = 1024 / 8
+MbPS = 1024 * KbPS
+GbPS = 1024 * MbPS
 
 # Size units: B == byte
 B = 1

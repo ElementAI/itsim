@@ -1,7 +1,7 @@
 from greensim import Simulator, happens
 from greensim.random import constant, expo, normal, distribution, uniform
 
-from itsim import B, MS, H, MB, GBPS, Location  # , MIN, MB
+from itsim import B, MS, H, MB, GbPS, Location  # , MIN, MB
 from itsim.network import Network, Internet
 from itsim.node import Router, Endpoint
 from itsim.random import num_bytes
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     net_local = Network(
         sim,
         cidr="192.168.4.0/24",
-        bandwidth=constant(1 * GBPS),
+        bandwidth=constant(1 * GbPS),
         latency=normal(5 * MS, 1 * MS),
         num_skip_addresses=100
     )
