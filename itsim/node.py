@@ -135,17 +135,17 @@ class Node(_Node):
 
 class Router(Node):
 
-    def __init__(self, lan: Network, wan: Network):
+    def __init__(self, lan: Network, wan: Network) -> None:
         super().__init__()
         raise NotImplementedError()
 
 
 class Endpoint(Node):
 
-    def __init__(self, name: str, network: Network):
+    def __init__(self, name: str, network: Network) -> None:
         super().__init__()
         raise NotImplementedError()
 
-    def install(*fn_software):
+    def install(self, *fn_software):
         raise NotImplementedError()
         return self

@@ -2,12 +2,12 @@ from collections import OrderedDict
 from ipaddress import _BaseAddress
 from itertools import dropwhile
 from numbers import Real
-from typing import cast, Any, MutableMapping, List, Iterable, Optional
+from typing import cast, Any, MutableMapping, List, Iterable, Optional, Callable
 
 from greensim import Simulator, advance
 from greensim.random import VarRandom, bounded, expo
 
-from itsim import MS, S, MBPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address, Packet, _Node
+from itsim import MS, S, MBPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address, Packet, _Node, Location
 
 
 class AddressError(Exception):
@@ -152,5 +152,5 @@ class Internet(Network):
             bandwidth=bandwidth or expo(10 * MBPS)
         )
 
-    def add_receiver(loc: Location, receiver: Callable[[Packet], None]) -> None:
+    def add_receiver(self, loc: Location, receiver: Callable[[Packet], None]) -> None:
         raise NotImplementedError("Stub")

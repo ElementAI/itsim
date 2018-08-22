@@ -1,7 +1,7 @@
 from greensim import Simulator, happens
-from greensim.random import constant, expo, normal, distribution
+from greensim.random import constant, expo, normal, distribution, uniform
 
-from itsim import MS, S, MIN, H, B, MB, GBPS, Location
+from itsim import B, MS, H, MB, GBPS, Location  # , MIN, MB
 from itsim.network import Network, Internet
 from itsim.node import Router, Endpoint
 from itsim.random import num_bytes
