@@ -68,6 +68,14 @@ class Network(object):
         return self._sim
 
     def link(self, node: _Node, ar: AddressRepr = None, *forward_to: CidrRepr) -> Address:
+        """
+        Adds the given node to the network. If a certain address is requested for it, the node is given this address,
+        unless it's already in use. Furthermore, any number of CIDR prefixes can be provided, which will instruct the
+        network to forward to the given node any non-local packet that CIDR-match these prefixes.
+
+        If a forwarding to a certain CIDR prefix was already set up, the latest call to link() overrides any previous
+        call: the latest forwarding to a CIDR prefix is in action, and no warning is given of the override.
+        """
         if ar is None:
             address = self._get_address_free()
         else:
