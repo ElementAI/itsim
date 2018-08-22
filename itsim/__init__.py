@@ -10,9 +10,9 @@ MIN = 60 * S
 H = 60 * MIN
 D = 24 * H
 W = 7 * D
-MS = S / 1000.0
-US = MS / 1000.0
-NS = US / 1000.0
+MS = S * 1.0e-3
+US = MS * 1.0e-6
+NS = US * 1.0e-9
 
 # Bandwidth units: B == bit, not byte
 KBPS = 1024 / 8
