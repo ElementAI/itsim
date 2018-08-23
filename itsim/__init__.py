@@ -49,6 +49,13 @@ class Location(object):
         return str(self.host) < str(other.host)
 
 
+class Packet(object):  # Unimplemented yet
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.dest = Location()  # TBD
+
+
 class _Node(ABC):
 
     @abstractproperty
