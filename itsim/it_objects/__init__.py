@@ -1,7 +1,7 @@
-from greensim.tags import GreensimTag, TaggedObject
+from greensim.tags import Tags, TaggedObject
 
 
-class ITTag(GreensimTag):
+class ITTag(Tags):
     MALWARE = 0
 
 
