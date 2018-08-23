@@ -23,7 +23,7 @@ def test_dest():
 
 
 def test_byte_size():
-    assert Packet(src, dest, bigliness, payload).byte_size == 1 * GB
+    assert Packet(src, dest, bigliness, payload).byte_size == 1e9
 
 
 def test_payload():
