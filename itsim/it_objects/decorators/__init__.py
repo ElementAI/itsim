@@ -9,4 +9,4 @@ def malware(event: Callable) -> Callable:
     Convenience decorator for identifying malware.
     Through the methods in greensim this label is cascaded through the actions of the Process
     """
-    return tagged([ITTag.MALWARE])(event)
+    return tagged(ITTag.MALWARE)(event)
