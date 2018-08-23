@@ -1,6 +1,30 @@
+from abc import ABC, abstractproperty
 from functools import total_ordering
-from ipaddress import IPv4Address, IPv6Address, ip_address
-from typing import Union, Optional, Any
+from ipaddress import \
+    IPv4Address, IPv6Address, IPv4Network, IPv6Network, ip_address, ip_network, _BaseNetwork, _BaseAddress
+from typing import cast, Union, Optional, Any, Iterable
+
+
+# Time correspondance convention: 1.0 simulated time == 1.0 second
+S = 1.0
+MIN = 60 * S
+H = 60 * MIN
+D = 24 * H
+W = 7 * D
+MS = S * 1.0e-3
+US = MS * 1.0e-6
+NS = US * 1.0e-9
+
+# Bandwidth units: B == bit, not byte
+KbPS = 1024 / 8
+MbPS = 1024 * KbPS
+GbPS = 1024 * MbPS
+
+# Size units: B == byte
+B = 1
+KB = 1024 * B
+MB = 1024 * KB
+GB = 1024 * MB
 
 
 Address = Union[IPv4Address, IPv6Address]
@@ -9,6 +33,8 @@ PortRepr = Optional[int]
 Port = int
 HostRepr = AddressRepr
 Host = Union[Address, str]
+Cidr = Union[IPv4Network, IPv6Network]
+CidrRepr = Union[str, Cidr]
 
 
 def as_address(ar: AddressRepr) -> Address:
@@ -21,6 +47,12 @@ def as_address(ar: AddressRepr) -> Address:
     elif isinstance(ar, str):
         return ip_address(ar)
     return ar
+
+
+def as_cidr(cr: CidrRepr) -> Cidr:
+    if isinstance(cr, _BaseNetwork):
+        return cr
+    return ip_network(cr)
 
 
 def as_port(pr: PortRepr) -> Port:
@@ -57,6 +89,11 @@ class Location(object):
     def port(self) -> Port:
         return self._port
 
+    def host_as_address(self) -> Address:
+        if not isinstance(self.host, _BaseAddress):
+            raise ValueError("Location carries a domain name for host, which resolution must be simulated explicitly.")
+        return cast(Address, self._host)
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Location):
             raise ValueError(f"Cannot compare for equality {str(self)} to {str(other)} (type {type(other)}).")
@@ -77,3 +114,18 @@ class Location(object):
         if self.host == other.host:
             return self.port < other.port
         return str(self.host) < str(other.host)
+
+
+class Packet(object):  # Unimplemented yet
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.dest = Location()  # TBD
+
+
+class _Node(ABC):
+
+    @abstractproperty
+    def addresses(self) -> Iterable[Address]:
+        raise NotImplementedError("Meant to be implemented by class itsim.node.Node.")
+        return []
