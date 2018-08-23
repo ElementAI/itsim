@@ -28,4 +28,4 @@ def test_byte_size():
 
 def test_payload():
     assert Packet(src, dest, bigliness, payload).payload == Payload({PayloadDictionaryType.CONTENT: "Good stuff"})
-    assert Packet(src, dest, bigliness, None).payload is None
+    assert Packet(src, dest, bigliness).payload == Payload()
