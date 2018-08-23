@@ -7,7 +7,9 @@ from typing import cast, Any, MutableMapping, List, Iterable, Iterator, Optional
 from greensim import Simulator, advance
 from greensim.random import VarRandom, bounded, expo
 
-from itsim import _Node, Location, Packet
+from itsim import _Node, Location
+from itsim.it_objects import ITObject
+from itsim.it_objects.packet import Packet
 from itsim.types import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
 
 
@@ -34,7 +36,7 @@ class CannotForward(AddressError):
     pass
 
 
-class Network(object):
+class Network(ITObject):
 
     def __init__(
         self,
