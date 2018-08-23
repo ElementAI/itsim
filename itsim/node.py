@@ -2,7 +2,7 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from ipaddress import _BaseAddress
 from itertools import cycle
-from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator, Optional
+from typing import Any, Callable, cast, Generator, Iterable, List, MutableMapping, Optional, Tuple, Union
 
 from greensim import Process
 from itsim import Location, _Node
@@ -164,8 +164,16 @@ class Endpoint(Node):
 
     def __init__(self, name: str, network: Network) -> None:
         super().__init__()
-        raise NotImplementedError()
+        self._name = name
+        self._network = network
 
-    def install(self, *fn_software):
-        raise NotImplementedError()
-        return self
+    @property
+    def network(self) -> Network:
+        return self._network
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def install(self, fn_software: Callable, *args: Any, **kwargs: Any) -> None:
+        Process.current().rsim().add(fn_software, *args + (self,), **kwargs)
