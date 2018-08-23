@@ -1,12 +1,11 @@
 from itsim import Location
-from itsim.types import GB
 from itsim.it_objects.packet import Packet
 from itsim.it_objects.payload import Payload, PayloadDictionaryType
 
 
 src = Location("54.88.73.99", 443)
 dest = Location("132.204.8.144", 80)
-bigliness = 1 * GB
+bigliness = 1e9
 payload = Payload({PayloadDictionaryType.CONTENT: "Good stuff"})
 
 
