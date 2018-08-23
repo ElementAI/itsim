@@ -7,7 +7,8 @@ from typing import cast, Any, MutableMapping, List, Iterable, Iterator, Optional
 from greensim import Simulator, advance
 from greensim.random import VarRandom, bounded, expo
 
-from itsim import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address, Packet, _Node, Location
+from itsim import _Node, Location, Packet
+from itsim.types import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
 
 
 class AddressError(Exception):

@@ -2,7 +2,8 @@ from ipaddress import ip_address
 
 import pytest
 
-from itsim import as_address, as_host, as_port, Location
+from itsim import Location
+from itsim.types import as_address, as_host, as_port
 
 
 def test_none_as_address():

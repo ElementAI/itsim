@@ -5,8 +5,9 @@ from itertools import cycle
 from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator, Optional
 
 from greensim import Process
-from itsim import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr, Location, _Node
+from itsim import Location, _Node
 from itsim.network import Packet, Network, InvalidAddress, AddressError, AddressInUse
+from itsim.types import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr
 
 
 MapPorts = MutableMapping[Port, Process]
