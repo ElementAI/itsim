@@ -7,7 +7,9 @@ from typing import cast, Any, MutableMapping, List, Iterable, Iterator, Optional
 from greensim import Simulator, advance
 from greensim.random import VarRandom, bounded, expo
 
-from itsim import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address, Packet, _Node, Location
+from itsim import _Node, Location
+from itsim.types import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
+from itsim.it_objects.packet import Packet
 
 
 class AddressError(Exception):
@@ -127,7 +129,7 @@ class Network(object):
         elif packet.dest.host == self.address_broadcast:
             receivers = self._nodes.values()
         elif packet.dest.host in self._nodes:
-            receivers = [self._nodes[packet.dest.host]]
+            receivers = [self._nodes[cast(Address, packet.dest.host)]]
         else:
             receivers = [self._get_forwarder(cast(Address, packet.dest.host))]
 
