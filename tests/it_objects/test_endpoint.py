@@ -1,8 +1,8 @@
 from greensim import Simulator
 from greensim.random import constant, normal
 
+from itsim.it_objects.endpoint import Endpoint
 from itsim.network import Network
-from itsim.node import Endpoint
 
 from pytest import raises
 
