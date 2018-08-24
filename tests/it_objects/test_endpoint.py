@@ -39,7 +39,11 @@ def test_sim():
     assert Endpoint("Fin", net, indie_sim).sim == indie_sim
 
 
-# Define constants for the many tests of install(_in, _at)
+############################################################
+# Define constants for the many tests of install(_in, _at) #
+############################################################
+
+
 flag = 0
 sim = Simulator()
 net = Network(sim,
@@ -49,6 +53,11 @@ net = Network(sim,
               num_skip_addresses=100)
 traveller = Endpoint("Ishmael", net)
 secret = "Rumplestiltzkin"
+
+
+##################################################################################
+# Define functions that will be installed in the many tests of install(_in, _at) #
+##################################################################################
 
 
 def no_argument():
@@ -68,6 +77,11 @@ def multi_argument(node, signal):
     assert secret == signal
 
 
+####################################################################################
+# Helper functions to deal with simulations in the many tests of install(_in, _at) #
+####################################################################################
+
+# Vanilla install, just passes arguments through and checks that fn is run using flag
 def run_install(sim, node, fn, *args, **kwargs):
     global flag
     flag = 0
@@ -77,6 +91,7 @@ def run_install(sim, node, fn, *args, **kwargs):
     assert flag == 1
 
 
+# Wraps fn in another function that checks the delay happend and passes arguments through
 def run_install_at(sim, node, fn, *args, **kwargs):
     global flag
     flag = 0
@@ -93,6 +108,7 @@ def run_install_at(sim, node, fn, *args, **kwargs):
     assert flag == 1
 
 
+# Same as above, but runs the simulation first to make sure the relative functionality of _in is used
 def run_install_in(sim, node, fn, *args, **kwargs):
     global flag
     flag = 0
@@ -108,6 +124,11 @@ def run_install_in(sim, node, fn, *args, **kwargs):
     node.install_in(delay, time_check, *args, **kwargs)
     sim.run()
     assert flag == 1
+
+
+#####################################################
+# Testing all the permutations of install(_in, _at) #
+#####################################################
 
 
 def test_install_single():
