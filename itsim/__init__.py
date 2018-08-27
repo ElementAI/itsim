@@ -3,11 +3,12 @@ from functools import total_ordering
 from ipaddress import _BaseAddress
 from typing import cast, Any, Iterable
 
+from itsim.it_objects import ITObject
 from itsim.types import Address, as_host, as_port, Host, HostRepr, Port, PortRepr
 
 
 @total_ordering
-class Location(object):
+class Location(ITObject):
 
     def __init__(self, host: HostRepr = None, port: PortRepr = None) -> None:
         super().__init__()
@@ -49,14 +50,7 @@ class Location(object):
         return str(self.host) < str(other.host)
 
 
-class Packet(object):  # Unimplemented yet
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.dest = Location()  # TBD
-
-
-class _Node(ABC):
+class _Node(ABC, ITObject):
 
     @abstractproperty
     def addresses(self) -> Iterable[Address]:
