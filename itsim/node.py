@@ -6,6 +6,7 @@ from typing import Any, cast, Generator, Iterable, List, MutableMapping, Optiona
 
 from greensim import Process
 from itsim import Location, _Node
+from itsim.it_objects import ITObject
 from itsim.network import Packet, Network, InvalidAddress, AddressError, AddressInUse
 from itsim.types import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr
 
@@ -48,7 +49,7 @@ class _NetworkLink(object):
         self.network.unlink(self.address)
 
 
-class Socket(object):
+class Socket(ITObject):
 
     def __init__(self, source: Location, network: Network) -> None:
         super().__init__()
