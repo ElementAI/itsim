@@ -1,5 +1,5 @@
-from itsim import Location
 from itsim.it_objects import ITObject
+from itsim.it_objects.location import Location
 from itsim.it_objects.payload import Payload
 
 
