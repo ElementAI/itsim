@@ -1,42 +1,49 @@
-from greensim import now, Simulator
+from greensim import now, Process, Simulator
 from greensim.random import constant, normal
 
 from itsim.it_objects.endpoint import Endpoint
 from itsim.network import Network
+from itsim.types import as_address
 
-from pytest import raises
-
-
-def test_name():
-    net = Network(Simulator(),
-                  cidr="192.168.4.0/24",
-                  bandwidth=constant(1),
-                  latency=normal(5, 1),
-                  num_skip_addresses=100)
-    assert Endpoint("Fin", net).name == "Fin"
+from pytest import raises, fixture
 
 
-def test_network():
-    net = Network(Simulator(),
-                  cidr="192.168.4.0/24",
-                  bandwidth=constant(1),
-                  latency=normal(5, 1),
-                  num_skip_addresses=100)
+@fixture
+def simulator():
+    return Simulator()
+
+
+@fixture
+def network(simulator):
+    return Network(simulator,
+                   cidr="192.168.4.0/24",
+                   bandwidth=constant(1),
+                   latency=normal(5, 1),
+                   num_skip_addresses=100)
+
+
+@fixture
+def endpoint(network):
+    return Endpoint("Traveller", network)
+
+
+def test_name(network):
+    assert Endpoint("Fin", network).name == "Fin"
+
+
+def test_network(network):
     # NB Network does not implement __eq__ so this is comparing pointers
-    assert Endpoint("Fin", net).network == net
+    assert Endpoint("Fin", network).network == network
 
 
-def test_sim():
-    net_sim = Simulator()
-    net = Network(net_sim,
-                  cidr="192.168.4.0/24",
-                  bandwidth=constant(1),
-                  latency=normal(5, 1),
-                  num_skip_addresses=100)
-    indie_sim = Simulator()
+def test_sim(simulator, network):
     # NB Simulator does not implement __eq__ so this is comparing pointers
-    assert Endpoint("Fin", net).sim == net_sim
-    assert Endpoint("Fin", net, indie_sim).sim == indie_sim
+    assert Endpoint("Fin", network).sim == network.sim
+
+
+def test_link(network):
+    addr = "192.168.4.0"
+    assert Endpoint("Fin", network, addr)._address == as_address(addr)
 
 
 ############################################################
@@ -44,15 +51,9 @@ def test_sim():
 ############################################################
 
 
-flag = 0
-sim = Simulator()
-net = Network(sim,
-              cidr="192.168.4.0/24",
-              bandwidth=constant(1),
-              latency=normal(5, 1),
-              num_skip_addresses=100)
-traveller = Endpoint("Ishmael", net)
-secret = "Rumplestiltzkin"
+SECRET = "Rumplestiltzkin"
+ENDPOINT_PROPERTY = "test_calling_endpoint"
+FLAG_PROPERTY = "test_flag"
 
 
 ##################################################################################
@@ -65,16 +66,14 @@ def no_argument():
 
 
 def single_argument(node):
-    global flag
-    flag = 1
-    assert traveller == node
+    setattr(Process.current().rsim(), FLAG_PROPERTY, 1)
+    assert getattr(Process.current().rsim(), ENDPOINT_PROPERTY) == node
 
 
 def multi_argument(node, signal):
-    global flag, secret
-    flag = 1
-    assert traveller == node
-    assert secret == signal
+    setattr(Process.current().rsim(), FLAG_PROPERTY, 1)
+    assert getattr(Process.current().rsim(), ENDPOINT_PROPERTY) == node
+    assert SECRET == signal
 
 
 ####################################################################################
@@ -82,48 +81,43 @@ def multi_argument(node, signal):
 ####################################################################################
 
 # Vanilla install, just passes arguments through and checks that fn is run using flag
-def run_install(sim, node, fn, *args, **kwargs):
-    global flag
-    flag = 0
-    sim._clear()
-    node.install(fn, *args, **kwargs)
+def run_install(sim, end, fn, *args, **kwargs):
+    setattr(sim, ENDPOINT_PROPERTY, end)
+    setattr(sim, FLAG_PROPERTY, 0)
+    end.install(fn, *args, **kwargs)
     sim.run()
-    assert flag == 1
+    assert 1 == getattr(sim, FLAG_PROPERTY)
 
 
 # Wraps fn in another function that checks the delay happend and passes arguments through
-def run_install_at(sim, node, fn, *args, **kwargs):
-    global flag
-    flag = 0
+def run_install_at(sim, end, fn, *args, **kwargs):
     delay = 10
 
     def time_check(*args, **kwargs):
-        nonlocal delay, fn
         assert delay == now()
         fn(*args, **kwargs)
 
-    sim._clear()
-    node.install_at(delay, time_check, *args, **kwargs)
+    setattr(sim, ENDPOINT_PROPERTY, end)
+    setattr(sim, FLAG_PROPERTY, 0)
+    end.install_at(delay, time_check, *args, **kwargs)
     sim.run()
-    assert flag == 1
+    assert 1 == getattr(sim, FLAG_PROPERTY)
 
 
 # Same as above, but runs the simulation first to make sure the relative functionality of _in is used
-def run_install_in(sim, node, fn, *args, **kwargs):
-    global flag
-    flag = 0
+def run_install_in(sim, end, fn, *args, **kwargs):
     delay = 10
 
     def time_check(*args, **kwargs):
-        nonlocal delay, fn
         assert 2 * delay == now()
         fn(*args, **kwargs)
 
-    sim._clear()
+    setattr(sim, ENDPOINT_PROPERTY, end)
+    setattr(sim, FLAG_PROPERTY, 0)
     sim.run(delay)
-    node.install_in(delay, time_check, *args, **kwargs)
+    end.install_in(delay, time_check, *args, **kwargs)
     sim.run()
-    assert flag == 1
+    assert 1 == getattr(sim, FLAG_PROPERTY)
 
 
 #####################################################
@@ -131,55 +125,55 @@ def run_install_in(sim, node, fn, *args, **kwargs):
 #####################################################
 
 
-def test_install_single():
-    run_install(sim, traveller, single_argument)
+def test_install_single(endpoint):
+    run_install(endpoint.sim, endpoint, single_argument)
 
 
-def test_install_multi():
-    run_install(sim, traveller, multi_argument, secret)
+def test_install_multi(endpoint):
+    run_install(endpoint.sim, endpoint, multi_argument, SECRET)
 
 
-def test_install_kw():
-    run_install(sim, traveller, multi_argument, signal=secret)
+def test_install_kw(endpoint):
+    run_install(endpoint.sim, endpoint, multi_argument, signal=SECRET)
 
 
-def test_install_no():
-    traveller.install(no_argument)
+def test_install_no(endpoint):
+    endpoint.install(no_argument)
     with raises(TypeError):
-        sim.run()
+        endpoint.sim.run()
 
 
-def test_install_at_single():
-    run_install_at(sim, traveller, single_argument)
+def test_install_at_single(endpoint):
+    run_install_at(endpoint.sim, endpoint, single_argument)
 
 
-def test_install_at_multi():
-    run_install_at(sim, traveller, multi_argument, secret)
+def test_install_at_multi(endpoint):
+    run_install_at(endpoint.sim, endpoint, multi_argument, SECRET)
 
 
-def test_install_at_kw():
-    run_install_at(sim, traveller, multi_argument, signal=secret)
+def test_install_at_kw(endpoint):
+    run_install_at(endpoint.sim, endpoint, multi_argument, signal=SECRET)
 
 
-def test_install_at_no():
-    traveller.install_at(10, no_argument)
+def test_install_at_no(endpoint):
+    endpoint.install_at(10, no_argument)
     with raises(TypeError):
-        sim.run()
+        endpoint.sim.run()
 
 
-def test_install_in_single():
-    run_install_in(sim, traveller, single_argument)
+def test_install_in_single(endpoint):
+    run_install_in(endpoint.sim, endpoint, single_argument)
 
 
-def test_install_in_multi():
-    run_install_in(sim, traveller, multi_argument, secret)
+def test_install_in_multi(endpoint):
+    run_install_in(endpoint.sim, endpoint, multi_argument, SECRET)
 
 
-def test_install_in_kw():
-    run_install_in(sim, traveller, multi_argument, signal=secret)
+def test_install_in_kw(endpoint):
+    run_install_in(endpoint.sim, endpoint, multi_argument, signal=SECRET)
 
 
-def test_install_in_no():
-    traveller.install_in(10, no_argument)
+def test_install_in_no(endpoint):
+    endpoint.install_in(10, no_argument)
     with raises(TypeError):
-        sim.run()
+        endpoint.sim.run()

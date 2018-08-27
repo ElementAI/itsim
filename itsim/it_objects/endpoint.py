@@ -1,21 +1,20 @@
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from greensim import Simulator
 
 from itsim.network import Network
 from itsim.node import Node
+from itsim.types import Address, AddressRepr, CidrRepr
 
 
 class Endpoint(Node):
 
-    def __init__(self, name: str, network: Network, sim: Optional[Simulator] = None) -> None:
+    def __init__(self, name: str, network: Network, ar: AddressRepr = None, *forward_to: CidrRepr) -> None:
         super().__init__()
         self._name = name
         self._network = network
-        if sim is None:
-            self._sim = network.sim
-        else:
-            self._sim = sim
+        self._sim = network.sim
+        self._address = network.link(self, ar, *forward_to)
 
     @property
     def network(self) -> Network:
@@ -28,6 +27,10 @@ class Endpoint(Node):
     @property
     def sim(self) -> Simulator:
         return self._sim
+
+    @property
+    def address(self) -> Address:
+        return self._address
 
     def install(self, fn_software: Callable, *args: Any, **kwargs: Any) -> None:
         self._sim.add(fn_software, self, *args, **kwargs)
