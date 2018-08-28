@@ -105,6 +105,18 @@ def test_no_network(loc_a, loc_b, node):
     run_test_sim(socket_check)
 
 
+def test_unlinked_port(loc_a, loc_b, node):
+
+    def socket_check():
+        with node.bind(loc_a):
+            loc_a._port = 80
+            with raises(NoNetworkLinked):
+                with node.open_socket(loc_a, loc_b):
+                    pass
+
+    run_test_sim(socket_check)
+
+
 def test_socket_in_use(loc_a, loc_b, node):
 
     def socket_check():

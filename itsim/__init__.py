@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Iterable
 
+from itsim.it_objects import ITObject
 from itsim.it_objects.packet import Packet
 from itsim.types import Address
 
 
-class _Node(ABC):
+class _Node(ABC, ITObject):
 
     @abstractproperty
     def addresses(self) -> Iterable[Address]:

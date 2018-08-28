@@ -79,13 +79,12 @@ class Socket(ITObject):
         self._packet_queue.put(packet)
         self._packet_signal.turn_on()
 
-    # Update to Packet
     def recv(self) -> Packet:
         # Waiting loop
         while self._packet_queue.empty():
             self._packet_signal.wait()
 
-        # Make sure to update the signal in case more Processes are in the Signal's queue
+        # Make sure to update the Signal in case more Processes are in the Signal's queue
         output = self._packet_queue.get()
         if self._packet_queue.empty():
             self._packet_signal.turn_off()
@@ -172,7 +171,8 @@ class Node(_Node):
     def open_socket(self, src: Location, dest: Location) -> Generator[Socket, None, None]:
         if src in self._sockets.keys():
             raise SocketAlreadyOpen()
-        if src.port not in self._networks[src.host_as_address()].ports.keys():
+        if src.host_as_address() not in self._networks or \
+           src.port not in self._networks[src.host_as_address()].ports.keys():
             raise NoNetworkLinked()
         sock = Socket(src, self)
         self._sockets[src] = sock
