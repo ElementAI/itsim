@@ -28,10 +28,6 @@ class Endpoint(Node):
     def sim(self) -> Simulator:
         return self._sim
 
-    @property
-    def address(self) -> Address:
-        return self._address
-
     def install(self, fn_software: Callable, *args: Any, **kwargs: Any) -> None:
         self._sim.add(fn_software, self, *args, **kwargs)
 
