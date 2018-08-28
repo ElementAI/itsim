@@ -4,7 +4,7 @@ from greensim import Simulator
 
 from itsim.network import Network
 from itsim.node import Node
-from itsim.types import Address, AddressRepr, CidrRepr
+from itsim.types import AddressRepr, CidrRepr
 
 
 class Endpoint(Node):
@@ -14,7 +14,7 @@ class Endpoint(Node):
         self._name = name
         self._network = network
         self._sim = network.sim
-        self._address = network.link(self, ar, *forward_to)
+        self.link_to(network, ar, *forward_to)
 
     @property
     def network(self) -> Network:
@@ -27,10 +27,6 @@ class Endpoint(Node):
     @property
     def sim(self) -> Simulator:
         return self._sim
-
-    @property
-    def address(self) -> Address:
-        return self._address
 
     def install(self, fn_software: Callable, *args: Any, **kwargs: Any) -> None:
         self._sim.add(fn_software, self, *args, **kwargs)

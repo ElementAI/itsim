@@ -7,6 +7,8 @@ from itsim.types import as_address
 
 from pytest import raises, fixture
 
+from unittest.mock import patch
+
 
 @fixture
 def simulator():
@@ -31,19 +33,24 @@ def test_name(network):
     assert Endpoint("Fin", network).name == "Fin"
 
 
-def test_network(network):
-    # NB Network does not implement __eq__ so this is comparing pointers
-    assert Endpoint("Fin", network).network == network
-
-
 def test_sim(simulator, network):
     # NB Simulator does not implement __eq__ so this is comparing pointers
     assert Endpoint("Fin", network).sim == network.sim
 
 
 def test_link(network):
-    addr = "192.168.4.0"
-    assert Endpoint("Fin", network, addr)._address == as_address(addr)
+    addr = as_address("192.168.4.0")
+    end = Endpoint("Fin", network, addr)
+    assert end._networks[addr].address == addr
+    assert end._networks[addr].network == network
+
+
+@patch("itsim.network.Network")
+def test_link_args(mock_net):
+    cidrs = ("192.168.0.0/8", "192.168.1.0/8")
+    addr = as_address("192.168.4.0")
+    end = Endpoint("Fin", mock_net, addr, *cidrs)
+    mock_net.link.assert_called_with(end, addr, *cidrs)
 
 
 ############################################################
