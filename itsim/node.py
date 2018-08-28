@@ -5,7 +5,7 @@ from itertools import cycle
 from queue import Queue
 from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator, Optional
 
-from greensim import Process
+from greensim import Process, Signal
 
 from itsim import _Node
 from itsim.it_objects import ITObject
@@ -68,19 +68,28 @@ class Socket(ITObject):
         super().__init__()
         self._src = src
         self._node = node
-        self._payload_queue: Queue[Payload] = Queue()
+        self._packet_queue: Queue[Packet] = Queue()
+        self._packet_signal: Signal = Signal()
+        self._packet_signal.turn_off()
 
     def send(self, dest: Location, byte_size: int, payload: Payload) -> None:
         self._node._send_to_network(Packet(self._src, dest, byte_size, payload))
 
-    def _enqueue(self, payload: Payload) -> None:
-        self._payload_queue.put(payload)
+    def _enqueue(self, packet: Packet) -> None:
+        self._packet_queue.put(packet)
+        self._packet_signal.turn_on()
 
-    def recv(self) -> Optional[Payload]:
-        if self._payload_queue.empty():
-            return None
-        else:
-            return self._payload_queue.get()
+    # Update to Packet
+    def recv(self) -> Packet:
+        # Waiting loop
+        while self._packet_queue.empty():
+            self._packet_signal.wait()
+
+        # Make sure to update the signal in case more Processes are in the Signal's queue
+        output = self._packet_queue.get()
+        if self._packet_queue.empty():
+            self._packet_signal.turn_off()
+        return output
 
 
 class Node(_Node):
@@ -181,7 +190,7 @@ class Node(_Node):
     def receive(self, packet: Packet) -> None:
         dest = packet.dest
         if dest in self._sockets.keys():
-            self._sockets[dest]._enqueue(packet.payload)
+            self._sockets[dest]._enqueue(packet)
 
 
 class _DefaultAddressSetter(object):
