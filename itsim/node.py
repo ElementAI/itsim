@@ -168,7 +168,7 @@ class Node(_Node):
         del self._networks[src.host_as_address()].ports[src.port]
 
     @contextmanager
-    def open_socket(self, src: Location, dest: Location) -> Generator[Socket, None, None]:
+    def open_socket(self, src: Location) -> Generator[Socket, None, None]:
         if src in self._sockets.keys():
             raise SocketAlreadyOpen()
         if src.host_as_address() not in self._networks or \

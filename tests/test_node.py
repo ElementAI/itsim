@@ -89,7 +89,7 @@ def test_open_socket(loc_a, loc_b, node):
 
     def socket_check():
         with node.bind(loc_a) as src:
-            with node.open_socket(src, loc_b) as sock:
+            with node.open_socket(src) as sock:
                 assert node._sockets[src] == sock
 
     run_test_sim(socket_check)
@@ -99,7 +99,7 @@ def test_no_network(loc_a, loc_b, node):
 
     def socket_check():
         with raises(NoNetworkLinked):
-            with node.open_socket(loc_a, loc_b):
+            with node.open_socket(loc_a):
                 pass
 
     run_test_sim(socket_check)
@@ -111,7 +111,7 @@ def test_unlinked_port(loc_a, loc_b, node):
         with node.bind(loc_a):
             loc_a._port = 80
             with raises(NoNetworkLinked):
-                with node.open_socket(loc_a, loc_b):
+                with node.open_socket(loc_a):
                     pass
 
     run_test_sim(socket_check)
@@ -121,9 +121,9 @@ def test_socket_in_use(loc_a, loc_b, node):
 
     def socket_check():
         with node.bind(loc_a) as src:
-            with node.open_socket(src, loc_b):
+            with node.open_socket(src):
                 with raises(SocketAlreadyOpen):
-                    with node.open_socket(src, loc_b):
+                    with node.open_socket(src):
                         pass
 
     run_test_sim(socket_check)
@@ -133,7 +133,7 @@ def test_receive(loc_a, loc_b, node, reverse_packet):
 
     def recv_check():
         with node.bind(loc_a) as src:
-            with node.open_socket(src, loc_b) as sock:
+            with node.open_socket(src) as sock:
                 node._receive(reverse_packet)
                 assert sock.recv() == reverse_packet
 
@@ -144,7 +144,7 @@ def test_receive_no_socket(loc_a, loc_b, node, packet):
 
     def recv_check():
         with node.bind(loc_a) as src:
-            with node.open_socket(src, loc_b) as sock:
+            with node.open_socket(src) as sock:
                 # Locations are reversed. Packet should be dropped
                 node._receive(packet)
                 assert sock._packet_queue.empty()
