@@ -134,7 +134,7 @@ def test_receive(loc_a, loc_b, node, reverse_packet):
     def recv_check():
         with node.bind(loc_a) as src:
             with node.open_socket(src, loc_b) as sock:
-                node.receive(reverse_packet)
+                node._receive(reverse_packet)
                 assert sock.recv() == reverse_packet
 
     run_test_sim(recv_check)
@@ -146,7 +146,7 @@ def test_receive_no_socket(loc_a, loc_b, node, packet):
         with node.bind(loc_a) as src:
             with node.open_socket(src, loc_b) as sock:
                 # Locations are reversed. Packet should be dropped
-                node.receive(packet)
+                node._receive(packet)
                 assert sock._packet_queue.empty()
 
     run_test_sim(recv_check)

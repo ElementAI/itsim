@@ -187,7 +187,7 @@ class Node(_Node):
         network = self._networks[src.host_as_address()].network
         network.transmit(packet)
 
-    def receive(self, packet: Packet) -> None:
+    def _receive(self, packet: Packet) -> None:
         dest = packet.dest
         if dest in self._sockets.keys():
             self._sockets[dest]._enqueue(packet)
