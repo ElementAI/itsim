@@ -14,7 +14,7 @@ class Endpoint(Node):
         self._name = name
         self._network = network
         self._sim = network.sim
-        self._address = network.link(self, ar, *forward_to)
+        self.link_to(network, ar, *forward_to)
 
     @property
     def network(self) -> Network:
