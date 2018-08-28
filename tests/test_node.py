@@ -5,6 +5,7 @@ from itsim.it_objects.packet import Packet
 from itsim.it_objects.payload import Payload
 from itsim.node import Node, NoNetworkLinked, PortAlreadyInUse, SocketAlreadyOpen
 from itsim.network import InvalidAddress
+from itsim.types import as_address
 
 from pytest import fixture, raises
 
@@ -21,11 +22,15 @@ def loc_b():
     return Location("132.204.8.144", 80)
 
 
+BROADCAST_ADDR = as_address("132.216.177.160")
+
+
 @fixture
 @patch("itsim.network.Network")
 def node(mock_net, loc_a):
     node = Node()
     mock_net.link.return_value = loc_a.host_as_address()
+    mock_net.address_broadcast = BROADCAST_ADDR
     node.link_to(mock_net, loc_a.host)
     return node
 
@@ -181,3 +186,12 @@ def test_send_to_unlinked_port(node, packet):
                 node._send_to_network(packet)
 
     run_test_sim(send_check)
+
+
+def test_get_broadcast(node, loc_a):
+    assert BROADCAST_ADDR == node._get_network_broadcast_address(loc_a.host)
+
+
+def test_get_broadcast_from_unlinked_network(node, loc_b):
+    with raises(NoNetworkLinked):
+        node._get_network_broadcast_address(loc_b.host)

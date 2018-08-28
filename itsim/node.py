@@ -75,6 +75,10 @@ class Socket(ITObject):
     def send(self, dest: Location, byte_size: int, payload: Payload) -> None:
         self._node._send_to_network(Packet(self._src, dest, byte_size, payload))
 
+    def broadcast(self, port: int, byte_size: int, payload: Payload) -> None:
+        dest_addr = self._node._get_network_broadcast_address(self._src.host)
+        self.send(Location(dest_addr, port), byte_size, payload)
+
     def _enqueue(self, packet: Packet) -> None:
         self._packet_queue.put(packet)
         self._packet_signal.turn_on()
@@ -191,6 +195,12 @@ class Node(_Node):
         dest = packet.dest
         if dest in self._sockets.keys():
             self._sockets[dest]._enqueue(packet)
+
+    def _get_network_broadcast_address(self, src_addr: Address) -> Address:
+        if src_addr not in self._networks:
+            raise NoNetworkLinked()
+        network = self._networks[src_addr].network
+        return network.address_broadcast
 
 
 class _DefaultAddressSetter(object):

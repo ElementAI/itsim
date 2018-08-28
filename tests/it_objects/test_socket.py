@@ -2,6 +2,7 @@ from itsim.it_objects.location import Location
 from itsim.it_objects.packet import Packet
 from itsim.it_objects.payload import Payload
 from itsim.node import Socket
+from itsim.types import as_address
 
 from greensim import add, advance, local, Simulator
 
@@ -22,9 +23,13 @@ def loc_b():
     return Location("132.204.8.144", 80)
 
 
+BROADCAST_ADDR = as_address("132.216.177.160")
+
+
 @fixture
 @patch("itsim.node.Node")
 def socket(mock_node, loc_a):
+    mock_node._get_network_broadcast_address.return_value = BROADCAST_ADDR
     return Socket(loc_a, mock_node)
 
 
@@ -51,6 +56,13 @@ def test_constructor(mock_node, loc_a):
 def test_send(socket, loc_a, loc_b, packet):
     socket.send(loc_b, packet.byte_size, packet.payload)
     socket._node._send_to_network.assert_called_with(packet)
+
+
+def test_broadcast(socket, loc_a):
+    socket.broadcast(80, 10, Payload())
+    broadcast_packet = Packet(loc_a, Location(BROADCAST_ADDR, 80), 10, Payload())
+    socket._node._get_network_broadcast_address.assert_called_with(loc_a.host)
+    socket._node._send_to_network.assert_called_with(broadcast_packet)
 
 
 def test_enqueue(socket, packet):
