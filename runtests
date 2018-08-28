@@ -24,7 +24,7 @@ if __name__ == '__main__':
         success_mypy = False
 
     print("### Running unit tests ###")
-    success_pytest = (pytest.main(sys.argv[1:] + ["--cov-config", ".coveragerc", "--cov=itsim", "--cov-report=term-missing", "tests/"]) == 0)
+    success_pytest = (pytest.main(sys.argv[1:] + ["--cov-config", ".coveragerc", "--cov=itsim", "--cov-report=term-missing", "-s", "tests/"]) == 0)
 
     if all([success_flake8, success_mypy, success_pytest]):
         print("### Success ###")

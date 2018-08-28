@@ -154,7 +154,7 @@ class Node(_Node):
     @contextmanager
     def bind(self, lb: "Node.LocationBind" = None) -> Generator[Location, None, None]:
         src = self._as_source_bind(lb)
-        if src.port in self._networks[src.host_as_address()].ports:
+        if src.port in self._networks[src.host_as_address()].ports.keys():
             raise PortAlreadyInUse()
         self._networks[src.host_as_address()].ports[src.port] = Process.current()
         yield src
@@ -162,8 +162,10 @@ class Node(_Node):
 
     @contextmanager
     def open_socket(self, src: Location, dest: Location) -> Generator[Socket, None, None]:
-        if self._sockets[src] is not None:
+        if src in self._sockets.keys():
             raise SocketAlreadyOpen()
+        if not src.port in self._networks[src.host_as_address()].ports.keys():
+            raise NoNetworkLinked()
         sock = Socket(src, dest, self)
         self._sockets[src] = sock
         yield sock
