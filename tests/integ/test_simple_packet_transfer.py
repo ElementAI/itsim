@@ -51,23 +51,21 @@ def test_packet_bounce(two_node_setup):
 
     def listen_a():
         nonlocal flag
-        with end_a.bind(loc_a) as src:
-            with end_a.open_socket(src) as sock:
-                assert packet_b == sock.recv()
-                sock.send(loc_b, 10, payload_a)
-                flag += 1
-                # Packet with zero length is bound by latency
-                assert 5 == now()
+        with end_a.open_socket(loc_a) as sock:
+            assert packet_b == sock.recv()
+            sock.send(loc_b, 10, payload_a)
+            flag += 1
+            # Packet with zero length is bound by latency
+            assert 5 == now()
 
     def listen_b():
         nonlocal flag
-        with end_b.bind(loc_b) as src:
-            with end_b.open_socket(src) as sock:
-                sock.send(loc_a, 0, payload_b)
-                assert packet_a == sock.recv()
-                flag += 1
-                # Packet with finite length is bound by latency and bandwidth
-                assert 20 == now()
+        with end_b.open_socket(loc_b) as sock:
+            sock.send(loc_a, 0, payload_b)
+            assert packet_a == sock.recv()
+            flag += 1
+            # Packet with finite length is bound by latency and bandwidth
+            assert 20 == now()
 
     def controller():
         add(listen_a)
@@ -101,30 +99,27 @@ def test_packet_cycle(three_node_setup):
 
     def listen_a():
         nonlocal flag
-        with end_a.bind(loc_a) as src:
-            with end_a.open_socket(src) as sock:
-                assert packet_b == sock.recv()
-                sock.send(loc_c, 0, payload_a)
-                flag += 1
-                assert 10 == now()
+        with end_a.open_socket(loc_a) as sock:
+            assert packet_b == sock.recv()
+            sock.send(loc_c, 0, payload_a)
+            flag += 1
+            assert 10 == now()
 
     def listen_b():
         nonlocal flag
-        with end_b.bind(loc_b) as src:
-            with end_b.open_socket(src) as sock:
-                assert packet_c == sock.recv()
-                sock.send(loc_a, 0, payload_b)
-                flag += 1
-                assert 5 == now()
+        with end_b.open_socket(loc_b) as sock:
+            assert packet_c == sock.recv()
+            sock.send(loc_a, 0, payload_b)
+            flag += 1
+            assert 5 == now()
 
     def listen_c():
         nonlocal flag
-        with end_c.bind(loc_c) as src:
-            with end_c.open_socket(src) as sock:
-                sock.send(loc_b, 0, payload_c)
-                assert packet_a == sock.recv()
-                flag += 1
-                assert 15 == now()
+        with end_c.open_socket(loc_c) as sock:
+            sock.send(loc_b, 0, payload_c)
+            assert packet_a == sock.recv()
+            flag += 1
+            assert 15 == now()
 
     def controller():
         add(listen_a)
