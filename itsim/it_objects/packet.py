@@ -46,6 +46,12 @@ class Packet(ITObject):
         """
         return self._payload
 
+    def __len__(self) -> int:
+        """
+        Convenience method to give the Packet a notion of size
+        """
+        return self._byte_size
+
     # Mainly for testing
     def __eq__(self, other) -> bool:
 
