@@ -34,10 +34,6 @@ class TooManyPorts(AddressError):
     pass
 
 
-class SocketAlreadyOpen(Exception):
-    pass
-
-
 class PortAlreadyInUse(Exception):
     pass
 
@@ -131,7 +127,7 @@ class Node(_Node):
         if lb is None:
             return Location(0, 0)
         elif isinstance(lb, int):
-            return Location(None, cast(Port, lb))
+            return Location(self.address_default, cast(Port, lb))
         elif isinstance(lb, (str, _BaseAddress)):
             return Location(cast(AddressRepr, lb), 0)
         elif isinstance(lb, tuple):
@@ -161,23 +157,23 @@ class Node(_Node):
     @contextmanager
     def bind(self, lb: "Node.LocationBind" = None) -> Generator[Location, None, None]:
         src = self._as_source_bind(lb)
+
         if src.port in self._networks[src.host_as_address()].ports.keys():
             raise PortAlreadyInUse()
+
         self._networks[src.host_as_address()].ports[src.port] = Process.current()
         yield src
         del self._networks[src.host_as_address()].ports[src.port]
 
     @contextmanager
-    def open_socket(self, src: Location, dest: Location) -> Generator[Socket, None, None]:
-        if src in self._sockets.keys():
-            raise SocketAlreadyOpen()
-        if src.host_as_address() not in self._networks or \
-           src.port not in self._networks[src.host_as_address()].ports.keys():
-            raise NoNetworkLinked()
-        sock = Socket(src, self)
-        self._sockets[src] = sock
-        yield sock
-        del self._sockets[src]
+    def open_socket(self, lb: "Node.LocationBind" = None) -> Generator[Socket, None, None]:
+
+        with self.bind(lb) as src:
+            sock = Socket(src, self)
+
+            self._sockets[src] = sock
+            yield sock
+            del self._sockets[src]
 
     def _send_to_network(self, packet: Packet) -> None:
         src = packet.source
