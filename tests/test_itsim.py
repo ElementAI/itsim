@@ -2,7 +2,7 @@ from ipaddress import ip_address
 
 import pytest
 
-from itsim import Location
+from itsim.it_objects.location import Location
 from itsim.types import as_address, as_host, as_port
 
 

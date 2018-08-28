@@ -2,12 +2,17 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from ipaddress import _BaseAddress
 from itertools import cycle
-from typing import Any, cast, Generator, Iterable, List, MutableMapping, Optional, Tuple, Union
+from queue import Queue
+from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator, Optional
 
-from greensim import Process
-from itsim import Location, _Node
+from greensim import Process, Signal
+
+from itsim import _Node
 from itsim.it_objects import ITObject
-from itsim.network import Packet, Network, InvalidAddress, AddressError, AddressInUse
+from itsim.it_objects.location import Location
+from itsim.it_objects.payload import Payload
+from itsim.it_objects.packet import Packet
+from itsim.network import Network, InvalidAddress, AddressError, AddressInUse
 from itsim.types import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr
 
 
@@ -26,6 +31,14 @@ class NoNetworkLinked(Exception):
 
 
 class TooManyPorts(AddressError):
+    pass
+
+
+class SocketAlreadyOpen(Exception):
+    pass
+
+
+class PortAlreadyInUse(Exception):
     pass
 
 
@@ -51,16 +64,31 @@ class _NetworkLink(object):
 
 class Socket(ITObject):
 
-    def __init__(self, source: Location, network: Network) -> None:
+    def __init__(self, src: Location, node: _Node) -> None:
         super().__init__()
-        self._source = source
-        self._network = network
+        self._src = src
+        self._node = node
+        self._packet_queue: Queue[Packet] = Queue()
+        self._packet_signal: Signal = Signal()
+        self._packet_signal.turn_off()
 
-    def send(self, destination: Location, num_bytes: int) -> None:
-        raise NotImplemented()
+    def send(self, dest: Location, byte_size: int, payload: Payload) -> None:
+        self._node._send_to_network(Packet(self._src, dest, byte_size, payload))
+
+    def _enqueue(self, packet: Packet) -> None:
+        self._packet_queue.put(packet)
+        self._packet_signal.turn_on()
 
     def recv(self) -> Packet:
-        raise NotImplemented()
+        # Waiting loop
+        while self._packet_queue.empty():
+            self._packet_signal.wait()
+
+        # Make sure to update the Signal in case more Processes are in the Signal's queue
+        output = self._packet_queue.get()
+        if self._packet_queue.empty():
+            self._packet_signal.turn_off()
+        return output
 
 
 class Node(_Node):
@@ -71,6 +99,7 @@ class Node(_Node):
         super().__init__()
         self._networks: MutableMapping[Address, _NetworkLink] = OrderedDict()
         self._address_default: Optional[Address] = None
+        self._sockets: MutableMapping[Location, Socket] = OrderedDict()
 
     def link_to(self, network: Network, ar: AddressRepr = None, *forward_me: CidrRepr) -> "_DefaultAddressSetter":
         if as_address(ar) in self._networks:
@@ -130,14 +159,38 @@ class Node(_Node):
         return Location(address, port)
 
     @contextmanager
-    def bind(self, lb: "Node.LocationBind" = None) -> Generator[Location, None, None]:  # TODO - change!
+    def bind(self, lb: "Node.LocationBind" = None) -> Generator[Location, None, None]:
         src = self._as_source_bind(lb)
+        if src.port in self._networks[src.host_as_address()].ports.keys():
+            raise PortAlreadyInUse()
         self._networks[src.host_as_address()].ports[src.port] = Process.current()
         yield src
         del self._networks[src.host_as_address()].ports[src.port]
 
-    def receive(self, packet: Packet) -> None:
-        raise NotImplemented()
+    @contextmanager
+    def open_socket(self, src: Location, dest: Location) -> Generator[Socket, None, None]:
+        if src in self._sockets.keys():
+            raise SocketAlreadyOpen()
+        if src.host_as_address() not in self._networks or \
+           src.port not in self._networks[src.host_as_address()].ports.keys():
+            raise NoNetworkLinked()
+        sock = Socket(src, self)
+        self._sockets[src] = sock
+        yield sock
+        del self._sockets[src]
+
+    def _send_to_network(self, packet: Packet) -> None:
+        src = packet.source
+        if src.host_as_address() not in self._networks or \
+           src.port not in self._networks[src.host_as_address()].ports.keys():
+            raise NoNetworkLinked()
+        network = self._networks[src.host_as_address()].network
+        network.transmit(packet)
+
+    def _receive(self, packet: Packet) -> None:
+        dest = packet.dest
+        if dest in self._sockets.keys():
+            self._sockets[dest]._enqueue(packet)
 
 
 class _DefaultAddressSetter(object):
@@ -149,9 +202,6 @@ class _DefaultAddressSetter(object):
 
     def set_default(self) -> None:
         self._node._address_default = self._address
-
-
-# class UDP(object):
 
 
 class Router(Node):

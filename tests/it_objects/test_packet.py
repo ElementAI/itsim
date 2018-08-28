@@ -1,4 +1,4 @@
-from itsim import Location
+from itsim.it_objects.location import Location
 from itsim.it_objects.packet import Packet
 from itsim.it_objects.payload import Payload, PayloadDictionaryType
 

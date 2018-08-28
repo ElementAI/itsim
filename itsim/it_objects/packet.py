@@ -1,5 +1,5 @@
-from itsim import Location
 from itsim.it_objects import ITObject
+from itsim.it_objects.location import Location
 from itsim.it_objects.payload import Payload
 
 
@@ -45,3 +45,17 @@ class Packet(ITObject):
         Defaults to a payload with an empty dictionary
         """
         return self._payload
+
+    # Mainly for testing
+    def __eq__(self, other) -> bool:
+
+        if other is None:
+            return False
+
+        if not isinstance(other, Packet):
+            return False
+
+        return self.source == other.source \
+            and self.dest == other.dest \
+            and self.byte_size == other.byte_size \
+            and self.payload == other.payload
