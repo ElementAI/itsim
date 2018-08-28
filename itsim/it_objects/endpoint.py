@@ -4,7 +4,7 @@ from greensim import Simulator
 
 from itsim.network import Network
 from itsim.node import Node
-from itsim.types import Address, AddressRepr, CidrRepr
+from itsim.types import AddressRepr, CidrRepr
 
 
 class Endpoint(Node):
