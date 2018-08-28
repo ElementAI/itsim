@@ -64,17 +64,16 @@ class _NetworkLink(object):
 
 class Socket(ITObject):
 
-    def __init__(self, src: Location, dest: Location, node: _Node) -> None:
+    def __init__(self, src: Location, node: _Node) -> None:
         super().__init__()
         self._src = src
-        self._dest = dest
         self._node = node
         self._payload_queue: Queue[Payload] = Queue()
 
-    def send(self, payload: Payload, byte_size: int) -> None:
-        self._node.send_to_network(Packet(self._src, self._dest, byte_size, payload))
+    def send(self, dest: Location, byte_size: int, payload: Payload) -> None:
+        self._node._send_to_network(Packet(self._src, dest, byte_size, payload))
 
-    def enqueue(self, payload: Payload) -> None:
+    def _enqueue(self, payload: Payload) -> None:
         self._payload_queue.put(payload)
 
     def recv(self) -> Optional[Payload]:
@@ -164,22 +163,25 @@ class Node(_Node):
     def open_socket(self, src: Location, dest: Location) -> Generator[Socket, None, None]:
         if src in self._sockets.keys():
             raise SocketAlreadyOpen()
-        if not src.port in self._networks[src.host_as_address()].ports.keys():
+        if src.port not in self._networks[src.host_as_address()].ports.keys():
             raise NoNetworkLinked()
-        sock = Socket(src, dest, self)
+        sock = Socket(src, self)
         self._sockets[src] = sock
         yield sock
         del self._sockets[src]
 
-    def send_to_network(self, packet: Packet) -> None:
+    def _send_to_network(self, packet: Packet) -> None:
         src = packet.source
+        if src.host_as_address() not in self._networks or \
+           src.port not in self._networks[src.host_as_address()].ports.keys():
+            raise NoNetworkLinked()
         network = self._networks[src.host_as_address()].network
         network.transmit(packet)
 
     def receive(self, packet: Packet) -> None:
         dest = packet.dest
-        if self._sockets[dest] is not None:
-            self._sockets[dest].enqueue(packet.payload)
+        if dest in self._sockets.keys():
+            self._sockets[dest]._enqueue(packet.payload)
 
 
 class _DefaultAddressSetter(object):

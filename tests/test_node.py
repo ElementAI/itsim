@@ -3,24 +3,13 @@ from greensim import Process, Simulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.packet import Packet
 from itsim.it_objects.payload import Payload
-from itsim.network import Network
-from itsim.node import Node, NoNetworkLinked, PortAlreadyInUse, Socket, SocketAlreadyOpen
-from itsim.types import as_address
+from itsim.node import Node, NoNetworkLinked, PortAlreadyInUse, SocketAlreadyOpen
+from itsim.network import InvalidAddress
 
 from pytest import fixture, raises
 
-LINKED_ADDRESS = as_address("54.88.73.99")
+from unittest.mock import patch
 
-class NetworkMock(Network):
-    
-    def __init__(self):
-        self.transmit_called_with = None
-
-    def transmit(self, packet: Packet):
-        self.transmit_called_with = packet
-
-    def link(self, node, *args):
-        return LINKED_ADDRESS
 
 @fixture
 def loc_a():
@@ -33,9 +22,11 @@ def loc_b():
 
 
 @fixture
-def node():
+@patch("itsim.network.Network")
+def node(mock_net, loc_a):
     node = Node()
-    node.link_to(NetworkMock())
+    mock_net.link.return_value = loc_a.host_as_address()
+    node.link_to(mock_net, loc_a.host)
     return node
 
 
@@ -44,66 +35,137 @@ def packet(loc_a, loc_b):
     return Packet(loc_a, loc_b, 1, Payload())
 
 
+@fixture
+def reverse_packet(loc_a, loc_b):
+    return Packet(loc_b, loc_a, 1, Payload())
+
+
+def run_test_sim(fn):
+    flag = 0
+    sim = Simulator()
+
+    def wrapper():
+        nonlocal flag
+        fn()
+        flag = 1
+
+    sim.add(wrapper)
+    sim.run()
+    assert 1 == flag
+
+
 def test_bind(loc_a, node):
 
-    flag = 0
-    
     def bind_check():
-        nonlocal flag
         with node.bind(loc_a) as src:
-            assert node._networks[LINKED_ADDRESS].ports[443].local.name == Process.current().local.name
+            assert node._networks[loc_a.host_as_address()].ports[loc_a.port].local.name == Process.current().local.name
             assert loc_a == src
-            with raises(PortAlreadyInUse):
-                with node.bind(loc_a) as src2:
-                    pass
-        flag = 1
 
-    sim = Simulator()
-    sim.add(bind_check)
-    sim.run()
-    assert 1 == flag
-            
-def test_open_socket(loc_a, loc_b, node):
-    flag = 0
-    
+    run_test_sim(bind_check)
+
+
+def test_bind_to_invalid_address(loc_b, node):
+
     def bind_check():
-        nonlocal flag
-        with raises(NoNetworkLinked):
-            with node.open_socket(loc_a, loc_b) as sock:
+        with raises(InvalidAddress):
+            with node.bind(loc_b):
                 pass
-            
-        with node.bind(loc_a) as src:
-            with node.open_socket(loc_a, loc_b) as sock:
-                with raises(SocketAlreadyOpen):
-                    with node.open_socket(loc_a, loc_b) as sock2:
-                        pass
-                assert node._sockets[src] == sock
-        flag = 1
 
-    sim = Simulator()
-    sim.add(bind_check)
-    sim.run()
-    assert 1 == flag
+    run_test_sim(bind_check)
 
 
-def test_receive(loc_a, loc_b, node):
-    flag = 0
-    packet = Packet(loc_b, loc_a, 1, Payload())
+def test_double_bind_fails(loc_a, node):
+
     def bind_check():
-        nonlocal flag
-            
-        with node.bind(loc_a) as src:
-            with node.open_socket(loc_a, loc_b) as sock:
-                node.receive(packet)
-                assert sock.recv() == Payload()
-        flag = 1
+        with node.bind(loc_a):
+            with raises(PortAlreadyInUse):
+                with node.bind(loc_a):
+                    pass
 
-    sim = Simulator()
-    sim.add(bind_check)
-    sim.run()
-    assert 1 == flag
+    run_test_sim(bind_check)
+
+
+def test_open_socket(loc_a, loc_b, node):
+
+    def socket_check():
+        with node.bind(loc_a) as src:
+            with node.open_socket(src, loc_b) as sock:
+                assert node._sockets[src] == sock
+
+    run_test_sim(socket_check)
+
+
+def test_no_network(loc_a, loc_b, node):
+
+    def socket_check():
+        with raises(NoNetworkLinked):
+            with node.open_socket(loc_a, loc_b):
+                pass
+
+    run_test_sim(socket_check)
+
+
+def test_socket_in_use(loc_a, loc_b, node):
+
+    def socket_check():
+        with node.bind(loc_a) as src:
+            with node.open_socket(src, loc_b):
+                with raises(SocketAlreadyOpen):
+                    with node.open_socket(src, loc_b):
+                        pass
+
+    run_test_sim(socket_check)
+
+
+def test_receive(loc_a, loc_b, node, reverse_packet):
+
+    def recv_check():
+        with node.bind(loc_a) as src:
+            with node.open_socket(src, loc_b) as sock:
+                node.receive(reverse_packet)
+                assert sock.recv() == Payload()
+
+    run_test_sim(recv_check)
+
+
+def test_receive_no_socket(loc_a, loc_b, node, packet):
+
+    def recv_check():
+        with node.bind(loc_a) as src:
+            with node.open_socket(src, loc_b) as sock:
+                # Locations are reversed. Packet should be dropped
+                node.receive(packet)
+                assert sock.recv() is None
+
+    run_test_sim(recv_check)
 
 
 def test_send_to_network(node, packet):
-    node.send_to_network(packet)
-    assert packet == node._networks[LINKED_ADDRESS].network.transmit_called_with
+
+    def send_check():
+        with node.bind(packet.source):
+            node._send_to_network(packet)
+            node._networks[packet.source.host_as_address()].network.transmit.assert_called_with(packet)
+
+    run_test_sim(send_check)
+
+
+def test_send_to_unlinked_network(node, reverse_packet):
+
+    def send_check():
+        with node.bind(reverse_packet.dest):
+            with raises(NoNetworkLinked):
+                node._send_to_network(reverse_packet)
+
+    run_test_sim(send_check)
+
+
+def test_send_to_unlinked_port(node, packet):
+
+    def send_check():
+        with node.bind(packet.source):
+            packet.source._port = 80
+            with raises(NoNetworkLinked):
+                node._send_to_network(packet)
+
+    run_test_sim(send_check)

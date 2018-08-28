@@ -13,5 +13,5 @@ class _Node(ABC):
         return []
 
     @abstractmethod
-    def send_to_network(self, packet: Packet) -> None:
+    def _send_to_network(self, packet: Packet) -> None:
         raise NotImplementedError("Meant to be implemented by class itsim.node.Node.")
