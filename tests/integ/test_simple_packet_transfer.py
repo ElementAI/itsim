@@ -92,7 +92,7 @@ def test_packet_cycle(three_node_setup):
     flag = 0
     payload_a = Payload({PayloadDictionaryType.CONTENT: end_a.name})
     payload_b = Payload({PayloadDictionaryType.CONTENT: end_b.name})
-    payload_c = Payload({PayloadDictionaryType.CONTENT: end_b.name})
+    payload_c = Payload({PayloadDictionaryType.CONTENT: end_c.name})
     packet_a = Packet(loc_a, loc_c, 0, payload_a)
     packet_b = Packet(loc_b, loc_a, 0, payload_b)
     packet_c = Packet(loc_c, loc_b, 0, payload_c)
@@ -120,6 +120,43 @@ def test_packet_cycle(three_node_setup):
             assert packet_a == sock.recv()
             flag += 1
             assert 15 == now()
+
+    def controller():
+        add(listen_a)
+        add(listen_b)
+        add(listen_c)
+
+    sim.add(controller)
+    sim.run()
+    assert 3 == flag
+
+
+def test_packet_broadcast(three_node_setup):
+    sim, net, end_a, end_b, end_c, loc_a, loc_b, loc_c = three_node_setup
+
+    flag = 0
+    payload_c = Payload({PayloadDictionaryType.CONTENT: end_c.name})
+    packet_c = Packet(loc_c, Location(net.address_broadcast, 1867), 0, payload_c)
+
+    def listen_a():
+        nonlocal flag
+        with end_a.open_socket(Location(loc_a.host, 1867)) as sock:
+            assert packet_c == sock.recv()
+            flag += 1
+            assert 5 == now()
+
+    def listen_b():
+        nonlocal flag
+        with end_b.open_socket(Location(loc_b.host, 1867)) as sock:
+            assert packet_c == sock.recv()
+            flag += 1
+            assert 5 == now()
+
+    def listen_c():
+        nonlocal flag
+        with end_c.open_socket(loc_c) as sock:
+            sock.broadcast(1867, 0, payload_c)
+            flag += 1
 
     def controller():
         add(listen_a)
