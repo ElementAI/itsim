@@ -2,7 +2,7 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from ipaddress import _BaseAddress
 from itertools import cycle
-from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator, Optional
+from typing import Any, cast, Generator, Iterable, List, MutableMapping, Optional, Tuple, Union
 
 from greensim import Process
 from itsim import Location, _Node
@@ -159,14 +159,3 @@ class Router(Node):
     def __init__(self, lan: Network, wan: Network) -> None:
         super().__init__()
         raise NotImplementedError()
-
-
-class Endpoint(Node):
-
-    def __init__(self, name: str, network: Network) -> None:
-        super().__init__()
-        raise NotImplementedError()
-
-    def install(self, *fn_software):
-        raise NotImplementedError()
-        return self
