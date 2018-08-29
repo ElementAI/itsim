@@ -19,8 +19,11 @@ from itsim.types import MS, US, MIN, H, B, GbPS, AddressRepr, CidrRepr
 
 def get_logger(name_logger):
     logger = logging.getLogger(name_logger)
+    logger.setLevel(logging.getLogger().level)
     logger.addFilter(Filter())
-    logger.setFormatter(logging.Formatter("%(sim_time)f [%(sim_process)s] %(message)s"))
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("%(sim_time)f [%(sim_process)s] %(message)s"))
+    logger.addHandler(handler)
     return logger
 
 
