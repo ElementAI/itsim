@@ -67,7 +67,7 @@ class Workstation(Endpoint):
         self.wait_until_awake()
         time_at_start = self._time_awoken
         yield self
-        if now() != self._time_awoken:
+        if self._time_awoken != time_at_start:
             raise Workstation.FellAsleep()
 
     class _Complete(Exception):
