@@ -283,12 +283,9 @@ if __name__ == '__main__':
         num_llmnr = num_workstations - num_mdns
         dhcp_server = Endpoint("DHCPServer", net_local, "192.168.4.2").install(dhcp_serve)
         workstations = [
-            Workstation(f"Workstation-{n+1}", net_local).install(
-                workstation_blinking,
-                self_identification_service
-            )
-            for n, self_indentification_service in enumerate(
-                chain((mdns_respond for _ in range(num_mdns)), (llmnr_respond for _ in range(num_llmnr)))
+            Workstation(f"Workstation-{n+1}", net_local).install(workstation_blinking, daemon)
+            for n, daemon in enumerate([])
+                chain((mdns_daemon for _ in range(num_mdns)), (llmnr_daemon for _ in range(num_llmnr)))
             )
         ]
 
