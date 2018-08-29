@@ -211,7 +211,7 @@ def mdns_daemon(ws: Workstation) -> None:
 
 
 def llmnr_daemon(ws: Workstation) -> None:
-    local.name = "LLMNR responder / {ws.name}"
+    local.name = f"LLMNR responder / {ws.name}"
     logger = get_logger("llmnr_responder")
     while True:
         try:
