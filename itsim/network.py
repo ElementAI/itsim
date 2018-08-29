@@ -138,7 +138,7 @@ class Network(ITObject):
         def transmission():
             advance(next(self._latency) + len(packet) / next(self._bandwidth))
             for node in receivers:
-                self.sim.add(node.receive, packet)
+                self.sim.add(node._receive, packet)
         self.sim.add(transmission)
 
     def _get_forwarder(self, dest: Address) -> _Node:
