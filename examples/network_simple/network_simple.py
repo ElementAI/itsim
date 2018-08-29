@@ -22,7 +22,7 @@ def get_logger(name_logger):
     logger.setLevel(logging.getLogger().level)
     logger.addFilter(Filter())
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("%(sim_time)f [%(sim_process)s] %(message)s"))
+    handler.setFormatter(logging.Formatter("<%(levelname)s> %(sim_time)f [%(sim_process)s] %(message)s"))
     logger.addHandler(handler)
     return logger
 
@@ -280,7 +280,11 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--duration", help="Duration (in hours) of simulation.", type=float, default=12 * H)
     args = parser.parse_args()
 
-    logging.getLogger().setLevel(logging.DEBUG if args.verbose else logging.INFO)
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, handlers=[])
+    h = logging.StreamHandler(sys.stdout)
+    h.setFormatter(logging.Formatter("<%(levelname)s> -- %(message)s"))
+    logging.getLogger().addHandler(h)
+
     if args.duration <= 0.0:
         logging.critical("Suggested simulation duration {args.duration} makes no sense. Abort.")
 
