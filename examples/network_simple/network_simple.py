@@ -102,7 +102,6 @@ def workstation_blinking(ws: Workstation) -> None:
 
         logger.debug(f"Awakening; redo networking setup")
         get_address_from_dhcp(ws)
-        claim_name_through_mdns(ws)
         advance(next(delay_setup_to_ready))
         ws.wake_up()
         logger.info(f"Awake (got address on the network)")
