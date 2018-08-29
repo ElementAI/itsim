@@ -237,7 +237,7 @@ def _query(protocol: str, logger: logging.Logger, ws: Workstation, size_packet_b
     try:
         local.name = f"{protocol} query from {ws.name}"
         with ws.open_socket() as socket:
-            yield (socket, size_packet_base + next(size_packet_delta))
+            yield (socket, int(size_packet_base + next(size_packet_delta)))
             try:
                 with ws.awake(), ws.timeout(5.0):  # FIXME - fugly
                     response = socket.recv()
