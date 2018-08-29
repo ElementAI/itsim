@@ -258,24 +258,26 @@ def _query_llmnr(logger: logging.Logger, ws: Workstation, size_packet_base: int,
 
 
 def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
-    pass
-    # local.name = f"Client activity / {ws.name}"
-    # logger = get_logger("client_activity")
-    # while True:
-    #     ws.wait_until_awake()
-    #     try:
-    #         with ws.awake():
-    #             advance(next(delay_identity_queries))
+    local.name = f"Client activity / {ws.name}"
+    logger = get_logger("client_activity")
+    while True:
+        ws.wait_until_awake()
+        try:
+            with ws.awake():
+                advance(next(delay_identity_queries))
 
-    #         target_query = next(name_next_query)
-    #         logger.info(f"Query IP address of {target_query}")
+            while True:
+                target_query = next(name_next_query)
+                if target_query != ws.name:
+                    break
+            logger.info(f"Query IP address of {target_query}")
 
-    #         payload = Payload({"msg": "resolve", "hostname": query_target})
-    #         size_packet_base = next(size_packet_dns)
-    #         for q in [_query_mdns, _query_llmnr]:
-    #             add(q, logger, ws, size_packet_base, payload)
-    #     except Workstation.FellAsleep:
-    #         logger.debug("Reset by machine falling asleep")
+            payload = Payload({"msg": "resolve", "hostname": query_target})
+            size_packet_base = next(size_packet_dns)
+            for q in [_query_mdns, _query_llmnr]:
+                add(q, logger, ws, size_packet_base, payload)
+        except Workstation.FellAsleep:
+            logger.debug("Reset by machine falling asleep")
 
 
 if __name__ == '__main__':
