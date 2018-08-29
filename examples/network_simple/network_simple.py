@@ -12,6 +12,7 @@ from greensim.random import VarRandom, constant, normal, expo, uniform, distribu
 
 from itsim.network import Network, Internet
 from itsim.it_objects.endpoint import Endpoint
+from itsim.it_objects.location import Location
 from itsim.it_objects.payload import Payload
 from itsim.random import num_bytes
 from itsim.types import MS, US, MIN, H, B, GbPS, AddressRepr, CidrRepr
