@@ -1,16 +1,15 @@
 import argparse
 from contextlib import contextmanager
 from ipaddress import ip_network
-from itertools import chain
 import logging
 import sys
 from typing import Generator, Optional
 
 from greensim import Simulator, Signal, advance, local, now, Process, add
 from greensim.logging import Filter
-from greensim.random import VarRandom, constant, normal, expo, uniform, distribution
+from greensim.random import VarRandom, constant, normal, expo, distribution
 
-from itsim.network import Network, Internet
+from itsim.network import Network
 from itsim.it_objects.endpoint import Endpoint
 from itsim.it_objects.location import Location
 from itsim.it_objects.payload import Payload
@@ -277,7 +276,6 @@ def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
 
             logger.info(f"Query IP address of {target_query}")
 
-            payload = Payload({"msg": "resolve", "hostname": target_query})
             size_packet_base = next(size_packet_dns)
             add(_query_mdns, logger, ws, size_packet_base, Payload({"msg": "query", "hostname": target_query}))
             add(_query_llmnr, logger, ws, size_packet_base, Payload({"msg": "resolve", "hostname": target_query}))
