@@ -211,25 +211,24 @@ def mdns_daemon(ws: Workstation) -> None:
 
 
 def llmnr_daemon(ws: Workstation) -> None:
-    pass
-    # local.name = "LLMNR responder / {ws.name}"
-    # logger = get_logger("llmnr_responder")
-    # while True:
-    #     try:
-    #         with ws.open_socket(5355) as socket:
-    #             while True:
-    #                 with ws.awake():
-    #                     packet = socket.recv()
-    #                 payload_entries = packet.payload.entries
-    #                 if payload_entries["msg"] == "resolve" and payload_entries["hostname"] == ws.name:
-    #                     logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
-    #                     socket.send(
-    #                         packet.source,
-    #                         next(size_packet_dns),
-    #                         Payload({"msg": "iam", "hostname": ws.name, "address": self.address_default})
-    #                     )
-    #     except Workstation.FellAsleep:
-    #         logger.debug("Reset by workstation falling asleep")
+    local.name = "LLMNR responder / {ws.name}"
+    logger = get_logger("llmnr_responder")
+    while True:
+        try:
+            with ws.open_socket(5355) as socket:
+                while True:
+                    with ws.awake():
+                        packet = socket.recv()
+                    payload_entries = packet.payload.entries
+                    if payload_entries["msg"] == "resolve" and payload_entries["hostname"] == ws.name:
+                        logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
+                        socket.send(
+                            packet.source,
+                            next(size_packet_dns),
+                            Payload({"msg": "iam", "hostname": ws.name, "address": ws.address_default})
+                        )
+        except Workstation.FellAsleep:
+            logger.debug("LLMNR Reset by workstation falling asleep")
 
 
 delay_identity_queries = expo(2.0 * MIN)
@@ -346,9 +345,9 @@ if __name__ == '__main__':
             ws = Workstation(name, net_local)
             ws.install(workstation_blinking)
             ws.install(client_activity, name_next_query)
-            if n <= num_mdns:
-                ws.install(mdns_daemon)
-            else:
-                ws.install(llmnr_daemon)
+            # if n <= num_mdns:
+            #     ws.install(mdns_daemon)
+            # else:
+            ws.install(llmnr_daemon)
 
         sim.run(args.duration)

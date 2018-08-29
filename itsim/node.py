@@ -161,13 +161,14 @@ class Node(_Node):
     @contextmanager
     def bind(self, lb: "Node.LocationBind" = None) -> Generator[Location, None, None]:
         src = self._as_source_bind(lb)
-
         if src.port in self._networks[src.host_as_address()].ports.keys():
             raise PortAlreadyInUse()
 
         self._networks[src.host_as_address()].ports[src.port] = Process.current()
-        yield src
-        del self._networks[src.host_as_address()].ports[src.port]
+        try:
+            yield src
+        finally:
+            del self._networks[src.host_as_address()].ports[src.port]
 
     @contextmanager
     def open_socket(self, lb: "Node.LocationBind" = None) -> Generator[Socket, None, None]:
@@ -180,9 +181,11 @@ class Node(_Node):
             broadcast_addr = self._get_network_broadcast_address(src.host_as_address())
             broadcast = Location(broadcast_addr, src.port)
             self._sockets[broadcast] = sock
-            yield sock
-            del self._sockets[src]
-            del self._sockets[broadcast]
+            try:
+                yield sock
+            finally:
+                del self._sockets[src]
+                del self._sockets[broadcast]
 
     def _send_to_network(self, packet: Packet) -> None:
         src = packet.source
