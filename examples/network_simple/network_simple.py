@@ -165,49 +165,48 @@ size_packet_dns = num_bytes(expo(192.0 * B), header=68 * B, upper=576 * B)
 
 
 def mdns_daemon(ws: Workstation) -> None:
-    pass
-    # # This models only mDNS local host name resolution; service discovery is TBD.
-    # local.name = "mDNS responder / {ws.name}"
-    # logger = get_logger("mdns_responder")
-    # while True:
-    #     queries = []
-    #     try:
-    #         with ws.open_socket(5353) as socket:
-    #             while True:
-    #                 with ws.awake():
-    #                     packet = socket.recv()
-    #                 pl_ent = packet.payload.entries
+    # This models only mDNS local host name resolution; service discovery is TBD.
+    local.name = f"mDNS responder / {ws.name}"
+    logger = get_logger("mdns_responder")
+    while True:
+        queries = []
+        try:
+            with ws.open_socket(5353) as socket:
+                while True:
+                    with ws.awake():
+                        packet = socket.recv()
+                    pl_ent = packet.payload.entries
+                    logger.debug(f"Received message {pl_ent} from {packet.source}")
+                    if pl_ent["msg"] == "query":
+                        queries.append(packet)
+                        socket.broadcast(
+                            5353,
+                            len(packet),
+                            Payload({"msg": "resolve", "hostname": pl_ent["hostname"]})
+                        )  # FIXME -- add port info
 
-    #                 if pl_ent["msg"] == "query":
-    #                     queries.append(packet)
-    #                     socket.broadcast(
-    #                         5353,
-    #                         packet.num_bytes,
-    #                         Payload({"msg": "resolve", "hostname": pl_ent["hostname"]})
-    #                     )  # FIXME -- add port info
+                    elif pl_ent["msg"] == "iam":
+                        i_del = None
+                        for i, packet_query in enumerate(queries):
+                            if packet_query.payload.entries["hostname"] == pl_ent["hostname"]:
+                                i_del = i
+                                socket.send(packet_query.source, len(packet), packet.payload)
+                                break
+                        if i_del is not None:
+                            del queries[i_del]
 
-    #                 elif pl_ent["msg"] == "iam":
-    #                     i_del = None
-    #                     for i, packet_query in enumerate(queries):
-    #                         if packet_query.payload.entries["hostname"] == pl_ent["hostname"]:
-    #                             i_del = i
-    #                             socket.send(packet_query.source, packet.num_bytes, packet.payload)
-    #                             break
-    #                     if i_del is not None:
-    #                         del queries[i_del]
+                    elif pl_ent["msg"] == "resolve" and pl_ent["hostname"] == ws.name:
+                        logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
+                        socket.broadcast(
+                            5353,
+                            next(size_packet_dns),
+                            Payload({"msg": "iam", "hostname": ws.name, "address": ws.address_default})
+                        )  # FIXME
 
-    #                 elif pl_ent["msg"] == "resolve" and pl_ent["hostname"] == ws.name:
-    #                     logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
-    #                     socket.broadcast(
-    #                         5353,
-    #                         next(size_packet_dns),
-    #                         Payload({"msg": "iam", "hostname": ws.name, "address": self.address_default})
-    #                     )  # FIXME
-
-    #     except Workstation.FellAsleep:
-    #         # This mechanism encodes the inevitable drop of packets and loss of socket inherent to wake-cycling the
-    #         # workstation.
-    #         logger.debug("Reset by workstation falling asleep")
+        except Workstation.FellAsleep:
+            # This mechanism encodes the inevitable drop of packets and loss of socket inherent to wake-cycling the
+            # workstation.
+            logger.debug("Reset by workstation falling asleep")
 
 
 def llmnr_daemon(ws: Workstation) -> None:
@@ -275,12 +274,13 @@ def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
                 target_query = next(name_next_query)
                 if target_query != ws.name:
                     break
+
             logger.info(f"Query IP address of {target_query}")
 
             payload = Payload({"msg": "resolve", "hostname": target_query})
             size_packet_base = next(size_packet_dns)
-            for q in [_query_mdns, _query_llmnr]:
-                add(q, logger, ws, size_packet_base, payload)
+            add(_query_mdns, logger, ws, size_packet_base, Payload({"msg": "query", "hostname": target_query}))
+            add(_query_llmnr, logger, ws, size_packet_base, Payload({"msg": "resolve", "hostname": target_query}))
         except Workstation.FellAsleep:
             logger.debug("Reset by machine falling asleep")
 
@@ -345,9 +345,9 @@ if __name__ == '__main__':
             ws = Workstation(name, net_local)
             ws.install(workstation_blinking)
             ws.install(client_activity, name_next_query)
-            # if n <= num_mdns:
-            #     ws.install(mdns_daemon)
-            # else:
-            ws.install(llmnr_daemon)
+            if n <= num_mdns:
+                ws.install(mdns_daemon)
+            else:
+                ws.install(llmnr_daemon)
 
         sim.run(args.duration)
