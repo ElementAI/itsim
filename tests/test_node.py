@@ -45,6 +45,11 @@ def reverse_packet(loc_a, loc_b):
     return Packet(loc_b, loc_a, 1, Payload())
 
 
+@fixture
+def broadcast_packet(loc_a, loc_b):
+    return Packet(loc_b, Location(BROADCAST_ADDR, loc_a.port), 1, Payload())
+
+
 def run_test_sim(fn):
     flag = 0
     sim = Simulator()
@@ -153,6 +158,16 @@ def test_receive(loc_a, node, reverse_packet):
         with node.open_socket(loc_a) as sock:
             node._receive(reverse_packet)
             assert sock.recv() == reverse_packet
+
+    run_test_sim(recv_check)
+
+
+def test_receive_broadcast(loc_a, node, broadcast_packet):
+
+    def recv_check():
+        with node.open_socket(loc_a) as sock:
+            node._receive(broadcast_packet)
+            assert sock.recv() == broadcast_packet
 
     run_test_sim(recv_check)
 
