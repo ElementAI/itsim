@@ -176,10 +176,11 @@ class Node(_Node):
         with self.bind(lb) as src:
             sock = Socket(src, self)
 
-            self._sockets[src] = sock
             # Listen on the broadcast address
             broadcast_addr = self._get_network_broadcast_address(src.host_as_address())
             broadcast = Location(broadcast_addr, src.port)
+
+            self._sockets[src] = sock
             self._sockets[broadcast] = sock
             try:
                 yield sock

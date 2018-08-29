@@ -74,6 +74,20 @@ def test_bind(loc_a, node):
     run_test_sim(bind_check)
 
 
+def test_bind_releases_on_exception(loc_a, node):
+
+    def bind_check():
+        try:
+            with node.bind(loc_a):
+                raise Exception()
+        except Exception:
+            assert loc_a.port not in node._networks[loc_a.host_as_address()].ports.keys()
+            with node.bind(loc_a):
+                pass
+
+    run_test_sim(bind_check)
+
+
 def test_bind_to_invalid_address(loc_b, node):
 
     def bind_check():
@@ -148,6 +162,21 @@ def test_open_socket_on_location(loc_a, node):
         # Check cleanup
         assert loc_a.port not in node._networks[loc_a.host_as_address()].ports.keys()
         assert loc_a not in node._sockets
+
+    run_test_sim(socket_check)
+
+
+def test_open_socket_releases_on_exception(loc_a, node):
+
+    def socket_check():
+        try:
+            with node.open_socket(loc_a):
+                raise Exception()
+        except Exception:
+            assert loc_a not in node._sockets
+            assert node._networks[loc_a.host_as_address()].network.address_broadcast not in node._sockets
+            with node.open_socket(loc_a):
+                pass
 
     run_test_sim(socket_check)
 
