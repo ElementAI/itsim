@@ -233,7 +233,7 @@ def _query(protocol: str, logger: logging.Logger, ws: Workstation, size_packet_b
             except Workstation.Timeout:
                 logger.debug(f"Resolution of {payload.entries['hostname']} timed out")
     except Workstation.FellAsleep:
-        logger.debug(f"Resolution of {payload.entries['hostname'] killed by workstation falling asleep")
+        logger.debug(f"Resolution of {payload.entries['hostname']} killed by workstation falling asleep")
 
 
 def _query_mdns(logger: logging.Logger, ws: Workstation, size_packet_base: int, payload: Payload):
