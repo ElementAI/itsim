@@ -35,7 +35,7 @@ def get_logger(name_logger):
 
 
 def _throw_process(proc, exc):  # FIXME -- Move that somehow in greensim
-    proc.rsim()._schedule(proc.throw, exc)
+    proc.rsim()._schedule(0.0, proc.throw, exc)
 
 
 # FIXME -- Push this in endpoints, or in nodes?
