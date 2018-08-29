@@ -136,7 +136,9 @@ def get_address_from_dhcp(ws: Workstation) -> None:
 def dhcp_serve(ws: Workstation) -> None:
     local.name = f"DHCP server / {ws.name}"
     responses = {"DHCPDISCOVER": "DHCPOFFER", "DHCPREQUEST": "DHCPACK"}
+    logger = get_logger("dhcp_server")
     with ws.open_socket(67) as socket:
+        logger.debug("DHCP server open for business")
         while True:
             # On reception of server discovery and address request packets, send the corresponding response.
             packet_client = socket.recv()
@@ -283,17 +285,18 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, handlers=[])
     h = logging.StreamHandler(sys.stdout)
     h.setFormatter(logging.Formatter("<%(levelname)s> -- %(message)s"))
-    logging.getLogger().addHandler(h)
+    logger = logging.getLogger("main")
+    logger.addHandler(h)
 
     if args.duration <= 0.0:
-        logging.critical("Suggested simulation duration {args.duration} makes no sense. Abort.")
+        logger.critical("Suggested simulation duration {args.duration} makes no sense. Abort.")
 
     with Simulator() as sim:
         num_addresses = ip_network(args.cidr).num_addresses - 2
         if num_addresses < 2:
-            logging.critical("Unsuitable CIDR prefix for simulating a non-trivial network: {args.cidr} -- Abort.")
+            logger.critical("Unsuitable CIDR prefix for simulating a non-trivial network: {args.cidr} -- Abort.")
             sys.exit(1)
-        logging.debug(f"CIDR prefix of network: {args.cidr}")
+        logger.debug(f"CIDR prefix of network: {args.cidr}")
         net_local = Network(
             sim,
             cidr=args.cidr,
@@ -306,13 +309,13 @@ if __name__ == '__main__':
         else:
             num_endpoints = args.num_endpoints
             if num_endpoints < 2:
-                logging.warning(f"Requested number of endpoints ({num_endpoints}) is insufficient; raising it to 2.")
+                logger.warning(f"Requested number of endpoints ({num_endpoints}) is insufficient; raising it to 2.")
                 num_endpoints = 2
 
         num_workstations = num_endpoints - 1  # DHCP server is not a workstation.
         num_mdns = int(0.9 * num_workstations)
         num_llmnr = num_workstations - num_mdns
-        logging.debug(
+        logger.debug(
             f"Setting up 1 DHCP server and {num_workstations} workstations -- {num_mdns} / mDNS, {num_llmnr} / LLMNR."
         )
 
