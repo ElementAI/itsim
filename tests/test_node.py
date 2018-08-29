@@ -3,8 +3,9 @@ from greensim import Process, Simulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.packet import Packet
 from itsim.it_objects.payload import Payload
-from itsim.node import Node, NoNetworkLinked, PortAlreadyInUse, SocketAlreadyOpen
+from itsim.node import Node, NoNetworkLinked, PortAlreadyInUse
 from itsim.network import InvalidAddress
+from itsim.types import as_address
 
 from pytest import fixture, raises
 
@@ -21,11 +22,15 @@ def loc_b():
     return Location("132.204.8.144", 80)
 
 
+BROADCAST_ADDR = as_address("132.216.177.160")
+
+
 @fixture
 @patch("itsim.network.Network")
 def node(mock_net, loc_a):
     node = Node()
     mock_net.link.return_value = loc_a.host_as_address()
+    mock_net.address_broadcast = BROADCAST_ADDR
     node.link_to(mock_net, loc_a.host)
     return node
 
@@ -85,69 +90,80 @@ def test_double_bind_fails(loc_a, node):
     run_test_sim(bind_check)
 
 
-def test_open_socket(loc_a, loc_b, node):
+def test_open_socket_on_address(node):
 
     def socket_check():
-        with node.bind(loc_a) as src:
-            with node.open_socket(src, loc_b) as sock:
-                assert node._sockets[src] == sock
+        src = None
+        with node.open_socket("54.88.73.99") as sock:
+            src = sock._src
+            assert Process.current().local.name == node._networks[as_address("54.88.73.99")] \
+                                                       .ports[src._port].local.name
+        # Check cleanup
+        assert src._port not in node._networks[src.host_as_address()].ports.keys()
+        assert src not in node._sockets
 
     run_test_sim(socket_check)
 
 
-def test_no_network(loc_a, loc_b, node):
+def test_open_socket_on_tuple(node):
 
     def socket_check():
-        with raises(NoNetworkLinked):
-            with node.open_socket(loc_a, loc_b):
-                pass
+        src = None
+        with node.open_socket(("54.88.73.99", 443)) as sock:
+            src = sock._src
+            assert Process.current().local.name == node._networks[as_address("54.88.73.99")] \
+                                                       .ports[443].local.name
+        # Check cleanup
+        assert 443 not in node._networks[src.host_as_address()].ports.keys()
+        assert src not in node._sockets
 
     run_test_sim(socket_check)
 
 
-def test_unlinked_port(loc_a, loc_b, node):
+def test_open_socket_on_port(node):
 
     def socket_check():
-        with node.bind(loc_a):
-            loc_a._port = 80
-            with raises(NoNetworkLinked):
-                with node.open_socket(loc_a, loc_b):
-                    pass
+        src = None
+        with node.open_socket(100) as sock:
+            src = sock._src
+            assert Process.current().local.name == node._networks[src.host_as_address()].ports[100].local.name
+        # Check cleanup
+        assert 100 not in node._networks[src.host_as_address()].ports.keys()
+        assert src not in node._sockets
 
     run_test_sim(socket_check)
 
 
-def test_socket_in_use(loc_a, loc_b, node):
+def test_open_socket_on_location(loc_a, node):
 
     def socket_check():
-        with node.bind(loc_a) as src:
-            with node.open_socket(src, loc_b):
-                with raises(SocketAlreadyOpen):
-                    with node.open_socket(src, loc_b):
-                        pass
+        with node.open_socket(loc_a) as sock:
+            assert loc_a == sock._src
+            assert Process.current().local.name == node._networks[loc_a.host_as_address()].ports[loc_a.port].local.name
+        # Check cleanup
+        assert loc_a.port not in node._networks[loc_a.host_as_address()].ports.keys()
+        assert loc_a not in node._sockets
 
     run_test_sim(socket_check)
 
 
-def test_receive(loc_a, loc_b, node, reverse_packet):
+def test_receive(loc_a, node, reverse_packet):
 
     def recv_check():
-        with node.bind(loc_a) as src:
-            with node.open_socket(src, loc_b) as sock:
-                node._receive(reverse_packet)
-                assert sock.recv() == reverse_packet
+        with node.open_socket(loc_a) as sock:
+            node._receive(reverse_packet)
+            assert sock.recv() == reverse_packet
 
     run_test_sim(recv_check)
 
 
-def test_receive_no_socket(loc_a, loc_b, node, packet):
+def test_receive_no_socket(loc_a, node, packet):
 
     def recv_check():
-        with node.bind(loc_a) as src:
-            with node.open_socket(src, loc_b) as sock:
-                # Locations are reversed. Packet should be dropped
-                node._receive(packet)
-                assert sock._packet_queue.empty()
+        with node.open_socket(loc_a) as sock:
+            # Locations are reversed. Packet should be dropped
+            node._receive(packet)
+            assert sock._packet_queue.empty()
 
     run_test_sim(recv_check)
 
@@ -181,3 +197,12 @@ def test_send_to_unlinked_port(node, packet):
                 node._send_to_network(packet)
 
     run_test_sim(send_check)
+
+
+def test_get_broadcast(node, loc_a):
+    assert BROADCAST_ADDR == node._get_network_broadcast_address(loc_a.host)
+
+
+def test_get_broadcast_from_unlinked_network(node, loc_b):
+    with raises(NoNetworkLinked):
+        node._get_network_broadcast_address(loc_b.host)
