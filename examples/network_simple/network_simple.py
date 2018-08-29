@@ -24,11 +24,12 @@ MIN_NUM_ENDPOINTS = MIN_NUM_WORKSTATIONS + 1
 
 def get_logger(name_logger):
     logger = logging.getLogger(name_logger)
-    logger.setLevel(logging.getLogger().level)
-    logger.addFilter(Filter())
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("<%(levelname)s> %(sim_time)f [%(sim_process)s] %(message)s"))
-    logger.addHandler(handler)
+    if len(logger.handlers) == 0:
+        logger.setLevel(logging.getLogger().level)
+        logger.addFilter(Filter())
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("<%(levelname)s> %(sim_time)f [%(sim_process)s] %(message)s"))
+        logger.addHandler(handler)
     return logger
 
 
