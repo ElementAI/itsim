@@ -319,7 +319,8 @@ if __name__ == '__main__':
             f"Setting up 1 DHCP server and {num_workstations} workstations -- {num_mdns} / mDNS, {num_llmnr} / LLMNR."
         )
 
-        dhcp_server = Endpoint("DHCPServer", net_local).install(dhcp_serve)
+        dhcp_server = Endpoint("DHCPServer", net_local)
+        dhcp_server.install(dhcp_serve)
 
         names_ws = []
         name_next_query = distribution(names_ws)
