@@ -94,17 +94,17 @@ delay_setup_to_ready = expo(5.0 * US)
 
 def workstation_blinking(ws: Workstation) -> None:
     logger = get_logger("blinking")
-    local.name = f"{node.name} blinking"
+    local.name = f"{ws.name} blinking"
 
     while True:
-        ws.is_awake.turn_off()
+        ws.sleep()
         advance(next(delay_workstation_sleeping))
 
         logger.debug(f"Awakening; redo networking setup")
         get_address_from_dhcp(ws)
         claim_name_through_mdns(ws)
         advance(next(delay_setup_to_ready))
-        ws.is_awake.turn_on()
+        ws.wake_up()
         logger.info(f"Awake (got address on the network)")
         advance(next(delay_workstation_awake))
 
