@@ -129,7 +129,7 @@ class Node(_Node):
 
     def _as_location(self, lb: "Node.LocationBind") -> Location:
         if lb is None:
-            return Location(0, 0)
+            return Location(self.address_default, 0)
         elif isinstance(lb, int):
             return Location(self.address_default, cast(Port, lb))
         elif isinstance(lb, (str, _BaseAddress)):
@@ -176,8 +176,13 @@ class Node(_Node):
             sock = Socket(src, self)
 
             self._sockets[src] = sock
+            # Listen on the broadcast address
+            broadcast_addr = self._get_network_broadcast_address(src.host_as_address())
+            broadcast = Location(broadcast_addr, src.port)
+            self._sockets[broadcast] = sock
             yield sock
             del self._sockets[src]
+            del self._sockets[broadcast]
 
     def _send_to_network(self, packet: Packet) -> None:
         src = packet.source
