@@ -17,6 +17,11 @@ from itsim.random import num_bytes
 from itsim.types import MS, US, MIN, H, B, GbPS, AddressRepr, CidrRepr
 
 
+NUM_ADDRESSES_RESERVED = 2  # Address 0 and broadcast address.
+MIN_NUM_WORKSTATIONS = 2
+MIN_NUM_ENDPOINTS = MIN_NUM_WORKSTATIONS + 1
+
+
 def get_logger(name_logger):
     logger = logging.getLogger(name_logger)
     logger.setLevel(logging.getLogger().level)
@@ -291,9 +296,9 @@ if __name__ == '__main__':
         logger.critical("Suggested simulation duration {args.duration} makes no sense. Abort.")
 
     with Simulator() as sim:
-        num_addresses = ip_network(args.cidr).num_addresses - 2
-        if num_addresses < 2:
-            logger.critical("Unsuitable CIDR prefix for simulating a non-trivial network: {args.cidr} -- Abort.")
+        num_addresses = ip_network(args.cidr).num_addresses - NUM_ADDRESSES_RESERVED
+        if num_addresses < MIN_NUM_ENDPOINTS:
+            logger.critical(f"Unsuitable CIDR prefix for simulating a non-trivial network: {args.cidr} -- Abort.")
             sys.exit(1)
         logger.debug(f"CIDR prefix of network: {args.cidr}")
         net_local = Network(
@@ -304,12 +309,15 @@ if __name__ == '__main__':
         )
 
         if args.num_endpoints is None:
-            num_endpoints = max(2, int(0.2 * num_addresses))
+            num_endpoints = max(MIN_NUM_ENDPOINTS, int(0.2 * num_addresses))
         else:
             num_endpoints = args.num_endpoints
-            if num_endpoints < 2:
-                logger.warning(f"Requested number of endpoints ({num_endpoints}) is insufficient; raising it to 2.")
-                num_endpoints = 2
+            if num_endpoints < MIN_NUM_ENDPOINTS:
+                logger.warning(
+                    f"Requested number of endpoints ({num_endpoints}) is insufficient; " +
+                    f"raising it to {MIN_NUM_ENDPOINTS}."
+                )
+                num_endpoints = MIN_NUM_ENDPOINTS
 
         num_workstations = num_endpoints - 1  # DHCP server is not a workstation.
         num_mdns = int(0.9 * num_workstations)
