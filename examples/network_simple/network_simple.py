@@ -4,7 +4,7 @@ from ipaddress import ip_network
 from itertools import chain
 import logging
 import sys
-from typing import Generator
+from typing import Generator, Optional
 
 from greensim import Simulator, Signal, advance, local, now, Process, add
 from greensim.logging import Filter
@@ -57,8 +57,12 @@ class Workstation(Endpoint):
     def is_awake(self) -> bool:
         return self._wake.is_on
 
-    def wait_until_awake(self) -> None:
+    def wait_until_awake(self, logger: Optional[logging.Logger] = None) -> None:
+        time_before = self._time_awoken
         self._wake.wait()
+        if self._time_awoken != time_before:
+            if logger:
+                logger.debug("Resuming after machine awoke")
 
     class FellAsleep(Exception):
         pass
@@ -263,7 +267,7 @@ def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
     local.name = f"Client activity / {ws.name}"
     logger = get_logger("client_activity")
     while True:
-        ws.wait_until_awake()
+        ws.wait_until_awake(logger)  # FIXME
         try:
             with ws.awake():
                 advance(next(delay_identity_queries))
