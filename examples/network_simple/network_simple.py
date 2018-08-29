@@ -6,7 +6,7 @@ import logging
 import sys
 from typing import Generator
 
-from greensim import Simulator, Signal, advance, local, now, Process
+from greensim import Simulator, Signal, advance, local, now, Process, add
 from greensim.logging import Filter
 from greensim.random import VarRandom, constant, normal, expo, uniform, distribution
 
