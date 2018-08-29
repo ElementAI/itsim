@@ -122,7 +122,7 @@ def get_address_from_dhcp(ws: Workstation) -> None:
     logger = get_logger("dhcp_client")
     with ws.open_socket(68) as socket:
         # DHCP server discovery.
-        socket.broadcast(67, next(size_packet_dhcp), Payload({"msg": "DHCPDISCOVERY"}))  # FIXME
+        socket.broadcast(67, next(size_packet_dhcp), Payload({"msg": "DHCPDISCOVER"}))  # FIXME
         # Lease offer.
         packet_offer = socket.recv()
         logger.info(f"{packet_offer.payload.entries['msg']} from {packet_offer.source.host}")  # FIXME
