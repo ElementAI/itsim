@@ -236,7 +236,7 @@ def _query(protocol: str, logger: logging.Logger, ws: Workstation, size_packet_b
     try:
         local.name = f"{protocol} query from {ws.name}"
         with ws.open_socket() as socket:
-            yield socket, size_packet_base + next(size_packet_delta)
+            yield (socket, size_packet_base + next(size_packet_delta))
             try:
                 with ws.awake(), ws.timeout(5.0):  # FIXME - fugly
                     response = socket.recv()
@@ -249,12 +249,12 @@ def _query(protocol: str, logger: logging.Logger, ws: Workstation, size_packet_b
 
 
 def _query_mdns(logger: logging.Logger, ws: Workstation, size_packet_base: int, payload: Payload):
-    with _query("mDNS", logger, ws, size_packet_base, payload) as socket, size_packet:
+    with _query("mDNS", logger, ws, size_packet_base, payload) as (socket, size_packet):
         socket.send(Location(ws.address_default, 5353), size_packet, payload)
 
 
 def _query_llmnr(logger: logging.Logger, ws: Workstation, size_packet_base: int, payload: Payload):
-    with _query("LLMNR", logger, ws, size_packet_base, payload) as socket, size_packet:
+    with _query("LLMNR", logger, ws, size_packet_base, payload) as (socket, size_packet):
         socket.broadcast(5355, size_packet, payload)
 
 
