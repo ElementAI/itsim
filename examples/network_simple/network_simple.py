@@ -273,7 +273,7 @@ def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
                     break
             logger.info(f"Query IP address of {target_query}")
 
-            payload = Payload({"msg": "resolve", "hostname": query_target})
+            payload = Payload({"msg": "resolve", "hostname": target_query})
             size_packet_base = next(size_packet_dns)
             for q in [_query_mdns, _query_llmnr]:
                 add(q, logger, ws, size_packet_base, payload)
