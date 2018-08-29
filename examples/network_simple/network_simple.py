@@ -125,12 +125,12 @@ def get_address_from_dhcp(ws: Workstation) -> None:
         socket.broadcast(67, next(size_packet_dhcp), Payload({"msg": "DHCPDISCOVERY"}))  # FIXME
         # Lease offer.
         packet_offer = socket.recv()
-        logger.info(f"{packet_offer.payload.entries['msg']} from {packet_offer.src.host}")  # FIXME
+        logger.info(f"{packet_offer.payload.entries['msg']} from {packet_offer.source.host}")  # FIXME
         # Address request.
-        socket.send(packet_offer.src, next(size_packet_dhcp), Payload({"msg": "DHCPREQUEST"}))  # FIXME
+        socket.send(packet_offer.source, next(size_packet_dhcp), Payload({"msg": "DHCPREQUEST"}))  # FIXME
         # Address acknowledgement.
         packet_ack = socket.recv()
-        logger.info(f"{packet_ack.payload.entries['msg']} from {packet_ack.src.host}")  # FIXME
+        logger.info(f"{packet_ack.payload.entries['msg']} from {packet_ack.source.host}")  # FIXME
 
 
 def dhcp_serve(ws: Workstation) -> None:
@@ -144,10 +144,10 @@ def dhcp_serve(ws: Workstation) -> None:
             packet_client = socket.recv()
             type_msg = packet_client.payload.entries["msg"]
             if type_msg not in responses:
-                logger.warning(f"Received unknown message {repr(type_msg)} from {packet_client.src.host} -- DROP")
+                logger.warning(f"Received unknown message {repr(type_msg)} from {packet_client.source.host} -- DROP")
             else:
-                logger.info(f"Received {type_msg} from {packet_client.src.host}")
-                socket.send(packet_client.src, next(size_packet_dhcp), dhcp_payload(responses[type_msg]))
+                logger.info(f"Received {type_msg} from {packet_client.source.host}")
+                socket.send(packet_client.source, next(size_packet_dhcp), dhcp_payload(responses[type_msg]))
 
 
 # Used by both mDNS and LLMNR responders.
@@ -181,7 +181,7 @@ def mdns_daemon(ws: Workstation) -> None:
     #                     for i, packet_query in enumerate(queries):
     #                         if packet_query.payload.entries["hostname"] == pl_ent["hostname"]:
     #                             i_del = i
-    #                             socket.send(packet_query.src, packet.num_bytes, packet.payload)
+    #                             socket.send(packet_query.source, packet.num_bytes, packet.payload)
     #                             break
     #                     if i_del is not None:
     #                         del queries[i_del]
@@ -214,7 +214,7 @@ def llmnr_daemon(ws: Workstation) -> None:
     #                 if payload_entries["msg"] == "resolve" and payload_entries["hostname"] == ws.name:
     #                     logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
     #                     socket.send(
-    #                         packet.src,
+    #                         packet.source,
     #                         next(size_packet_dns),
     #                         Payload({"msg": "iam", "hostname": ws.name, "address": self.address_default})
     #                     )
