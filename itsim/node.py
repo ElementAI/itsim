@@ -129,7 +129,7 @@ class Node(_Node):
 
     def _as_location(self, lb: "Node.LocationBind") -> Location:
         if lb is None:
-            return Location(0, 0)
+            return Location(self.address_default, 0)
         elif isinstance(lb, int):
             return Location(self.address_default, cast(Port, lb))
         elif isinstance(lb, (str, _BaseAddress)):
