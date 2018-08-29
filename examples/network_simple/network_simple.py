@@ -10,7 +10,6 @@ from greensim.random import VarRandom, constant, normal, expo, uniform, distribu
 from itsim import MS, US, H, GbPS
 from itsim.network import Network, Internet
 from itsim.node import Endpoint
-# from itsim.software import random_network_activity
 from itsim.random import num_bytes
 
 
@@ -108,7 +107,7 @@ def workstation_blinking(ws: Workstation) -> None:
         logger.debug(f"Sleep")
 
 
-size_packet_dhcp = num_bytes(normal(100.0 * B, 30.0 * B), header = 240 * B)
+size_packet_dhcp = num_bytes(normal(100.0 * B, 30.0 * B), header=240 * B)
 
 
 def get_address_from_dhcp(ws: Workstation) -> None:
