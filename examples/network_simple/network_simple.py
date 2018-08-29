@@ -111,6 +111,10 @@ def workstation_blinking(ws: Workstation) -> None:
         logger.debug(f"Sleep")
 
 
+def dhcp_payload(msg_name: str) -> Payload:
+    return Payload({"msg": msg_name})
+
+
 size_packet_dhcp = num_bytes(normal(100.0 * B, 30.0 * B), header=240 * B)
 
 
@@ -127,10 +131,6 @@ def get_address_from_dhcp(ws: Workstation) -> None:
         # Address acknowledgement.
         packet_ack = socket.recv()
         logger.info(f"{packet_ack.payload.entries['msg']} from {packet_ack.src.host}")  # FIXME
-
-
-def dhcp_payload(msg_name: str) -> Payload:
-    return Payload({"msg": msg_name})
 
 
 def dhcp_serve(ws: Workstation) -> None:
