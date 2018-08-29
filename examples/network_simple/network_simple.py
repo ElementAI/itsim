@@ -273,31 +273,59 @@ def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
 
 
 if __name__ == '__main__':
-    logger = logging.getLogger()
-    logger.addFilter(Filter())
-    logger.setLevel(logging.INFO)
+    parser = argparse.ArgumentParser(description="Simulator of the baseline behaviour of a simple flat network.")
+    parser.add_argument("-c", "--cidr", help="CIDR prefix describing basic network setup.", default="192.168.4.0/24")
+    parser.add_argument("-n", "--num-endpoints", help="Number of endpoints into the simulation.", type=int)
+    parser.add_argument("-v", "--verbose", help="Log debugging informationn.", action="store_true", default=False)
+    parser.add_argument("-d", "--duration", help="Duration (in hours) of simulation.", type=float, default=12 * H)
+    args = parser.parse_args()
+
+    logging.getLogger().setLevel(logging.DEBUG if args.verbose else logging.INFO)
+    if args.duration <= 0.0:
+        logging.critical("Suggested simulation duration {args.duration} makes no sense. Abort.")
 
     with Simulator() as sim:
+        num_addresses = ip_network(args.cidr).num_addresses - 2
+        if num_addresses < 2:
+            logging.critical("Unsuitable CIDR prefix for simulating a non-trivial network: {args.cidr} -- Abort.")
+            sys.exit(1)
+        logging.debug(f"CIDR prefix of network: {args.cidr}")
         net_local = Network(
             sim,
-            cidr="192.168.4.0/24",
+            cidr=args.cidr,
             bandwidth=constant(1 * GbPS),
             latency=normal(5 * MS, 1 * MS)
         )
 
-        num_workstations = NUM_ENDPOINTS - 1  # DHCP server is not a workstation.
+        if args.num_endpoints is None:
+            num_endpoints = max(2, int(0.2 * num_addresses))
+        else:
+            num_endpoints = args.num_endpoints
+            if num_endpoints < 2:
+                logging.warning(f"Requested number of endpoints ({num_endpoints}) is insufficient; raising it to 2.")
+                num_endpoints = 2
+
+        num_workstations = num_endpoints - 1  # DHCP server is not a workstation.
         num_mdns = int(0.9 * num_workstations)
         num_llmnr = num_workstations - num_mdns
-        dhcp_server = Endpoint("DHCPServer", net_local, "192.168.4.2").install(dhcp_serve)
-        workstations = [
-            Workstation(f"Workstation-{n+1}", net_local).install(workstation_blinking, daemon)
-            for n, daemon in enumerate([])
-                chain((mdns_daemon for _ in range(num_mdns)), (llmnr_daemon for _ in range(num_llmnr)))
-            )
-        ]
+        logging.debug(
+            f"Setting up 1 DHCP server and {num_workstations} workstations -- {num_mdns} / mDNS, {num_llmnr} / LLMNR."
+        )
 
-        name_next_query = distribution([ws.name for ws in workstations])
-        for ws in workstations:
+        dhcp_server = Endpoint("DHCPServer", net_local).install(dhcp_serve)
+
+        names_ws = []
+        name_next_query = distribution(names_ws)
+        for n in range(num_workstations):
+            name = f"Workstation-{n+1}"
+            names_ws.append(name)
+
+            ws = Workstation(name, net_local)
+            ws.install(workstation_blinking)
             ws.install(client_activity, name_next_query)
+            if n <= num_mdns:
+                ws.install(mdns_daemon)
+            else:
+                ws.install(llmnr_daemon)
 
-        sim.run(12 * H)
+        sim.run(args.duration)
