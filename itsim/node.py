@@ -129,7 +129,7 @@ class Node(_Node):
 
     def _as_location(self, lb: "Node.LocationBind") -> Location:
         if lb is None:
-            return Location(0, 0)
+            return Location(self.address_default, 0)
         elif isinstance(lb, int):
             return Location(self.address_default, cast(Port, lb))
         elif isinstance(lb, (str, _BaseAddress)):
@@ -161,7 +161,6 @@ class Node(_Node):
     @contextmanager
     def bind(self, lb: "Node.LocationBind" = None) -> Generator[Location, None, None]:
         src = self._as_source_bind(lb)
-
         if src.port in self._networks[src.host_as_address()].ports.keys():
             raise PortAlreadyInUse()
 
