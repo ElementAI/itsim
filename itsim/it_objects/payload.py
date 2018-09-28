@@ -28,3 +28,6 @@ class Payload(ITObject):
             return False
 
         return self._entries == other._entries
+
+    def __str__(self):
+        return "<%s>" % ", ".join(["%s: %s" % (k, v) for k, v in self.entries.items()])

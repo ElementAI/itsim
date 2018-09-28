@@ -65,3 +65,6 @@ class Packet(ITObject):
             and self.dest == other.dest \
             and self.byte_size == other.byte_size \
             and self.payload == other.payload
+
+    def __str__(self):
+        return "<Src: %s, Dest: %s, Size: %s, Payload: %s>" % (self.source, self.dest, self.byte_size, self.payload)
