@@ -22,7 +22,7 @@ MIN_NUM_WORKSTATIONS = 2
 MIN_NUM_ENDPOINTS = MIN_NUM_WORKSTATIONS + 1
 
 
-def get_logger(name_logger = __name__):
+def get_logger(name_logger=__name__):
     logger = logging.getLogger(name_logger)
     if len(logger.handlers) == 0:
         logger.setLevel(logging.getLogger().level)
@@ -282,11 +282,13 @@ def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
         except Workstation.FellAsleep:
             logger.debug("Reset by machine falling asleep")
 
+
 net_local = None
+
 
 def init():
     global net_local
-    
+
     parser = argparse.ArgumentParser(description="Simulator of the baseline behaviour of a simple flat network.")
     parser.add_argument("-c", "--cidr", help="CIDR prefix describing basic network setup.", default="192.168.4.0/24")
     parser.add_argument("-n", "--num-endpoints", help="Number of endpoints into the simulation.", type=int)
@@ -294,21 +296,21 @@ def init():
     parser.add_argument("-d", "--duration", help="Duration (in hours) of simulation.", type=float, default=12 * H)
     args = parser.parse_args()
 
-    if args.duration <= 0.0:
-        logger.critical("Suggested simulation duration {args.duration} makes no sense. Abort.")
-
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, handlers=[])
     h = logging.StreamHandler(sys.stdout)
     h.setFormatter(logging.Formatter("<%(levelname)s> -- %(message)s"))
     logger = logging.getLogger("main")
     logger.addHandler(h)
-    
+
+    if args.duration <= 0.0:
+        logger.critical("Suggested simulation duration {args.duration} makes no sense. Abort.")
+
     sim = Simulator()
     num_addresses = ip_network(args.cidr).num_addresses - NUM_ADDRESSES_RESERVED
     if num_addresses < MIN_NUM_ENDPOINTS:
         logger.critical(f"Unsuitable CIDR prefix for simulating a non-trivial network: {args.cidr} -- Abort.")
         sys.exit(1)
-        
+
     logger.debug(f"CIDR prefix of network: {args.cidr}")
     net_local = Network(
         sim,
@@ -352,7 +354,6 @@ def init():
             ws.install(mdns_daemon)
         else:
             ws.install(llmnr_daemon)
-
 
     return sim, args.duration, names_ws
     sim.run(args.duration)
