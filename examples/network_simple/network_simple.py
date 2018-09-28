@@ -104,7 +104,7 @@ delay_setup_to_ready = expo(5.0 * US)
 
 def workstation_blinking(ws: Workstation) -> None:
     logger = get_logger("blinking")
-    local.name = f"Blinking / {ws.name}"
+    local.name = f"{ws.name} / Blinking"
 
     while True:
         ws.sleep()
@@ -143,7 +143,7 @@ def get_address_from_dhcp(ws: Workstation) -> None:
 
 
 def dhcp_serve(ws: Workstation) -> None:
-    local.name = f"DHCP server / {ws.name}"
+    local.name = f"{ws.name} / DHCP server"
     responses = {"DHCPDISCOVER": "DHCPOFFER", "DHCPREQUEST": "DHCPACK"}
     logger = get_logger("dhcp_server")
     with ws.open_socket(67) as socket:
@@ -165,7 +165,7 @@ size_packet_dns = num_bytes(expo(192.0 * B), header=68 * B, upper=576 * B)
 
 def mdns_daemon(ws: Workstation) -> None:
     # This models only mDNS local host name resolution; service discovery is TBD.
-    local.name = f"mDNS responder / {ws.name}"
+    local.name = f"{ws.name} / mDNS responder"
     logger = get_logger("mdns_responder")
     while True:
         queries = []
@@ -209,7 +209,7 @@ def mdns_daemon(ws: Workstation) -> None:
 
 
 def llmnr_daemon(ws: Workstation) -> None:
-    local.name = f"LLMNR responder / {ws.name}"
+    local.name = f"{ws.name} / LLMNR responder"
     logger = get_logger("llmnr_responder")
     while True:
         try:
@@ -261,7 +261,7 @@ def _query_llmnr(logger: logging.Logger, ws: Workstation, size_packet_base: int,
 
 
 def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
-    local.name = f"Client activity / {ws.name}"
+    local.name = f"{ws.name} / Client activity"
     logger = get_logger("client_activity")
     while True:
         ws.wait_until_awake(logger)  # FIXME
