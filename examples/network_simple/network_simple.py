@@ -292,8 +292,9 @@ def init():
     parser = argparse.ArgumentParser(description="Simulator of the baseline behaviour of a simple flat network.")
     parser.add_argument("-c", "--cidr", help="CIDR prefix describing basic network setup.", default="192.168.4.0/24")
     parser.add_argument("-n", "--num-endpoints", help="Number of endpoints into the simulation.", type=int)
-    parser.add_argument("-v", "--verbose", help="Log debugging informationn.", action="store_true", default=False)
+    parser.add_argument("-v", "--verbose", help="Log debugging information.", action="store_true", default=False)
     parser.add_argument("-d", "--duration", help="Duration (in hours) of simulation.", type=float, default=12 * H)
+    parser.add_argument("-o", "--colors-off", help="Turn off colored output,", action="store_true", default=False)
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, handlers=[])
@@ -361,7 +362,7 @@ def init():
 
         ws_list.append(ws)
 
-    return sim, args.duration, ws_list, router
+    return sim, args.duration, ws_list, router, (not args.colors_off)
 
 
 if __name__ == '__main__':
