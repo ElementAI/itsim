@@ -22,7 +22,7 @@ MIN_NUM_WORKSTATIONS = 2
 MIN_NUM_ENDPOINTS = MIN_NUM_WORKSTATIONS + 1
 
 
-def get_logger(name_logger):
+def get_logger(name_logger=__name__):
     logger = logging.getLogger(name_logger)
     if len(logger.handlers) == 0:
         logger.setLevel(logging.getLogger().level)
@@ -104,7 +104,7 @@ delay_setup_to_ready = expo(5.0 * US)
 
 def workstation_blinking(ws: Workstation) -> None:
     logger = get_logger("blinking")
-    local.name = f"{ws.name} blinking"
+    local.name = f"{ws.name} / Blinking"
 
     while True:
         ws.sleep()
@@ -143,7 +143,7 @@ def get_address_from_dhcp(ws: Workstation) -> None:
 
 
 def dhcp_serve(ws: Workstation) -> None:
-    local.name = f"DHCP server / {ws.name}"
+    local.name = f"{ws.name} / DHCP server"
     responses = {"DHCPDISCOVER": "DHCPOFFER", "DHCPREQUEST": "DHCPACK"}
     logger = get_logger("dhcp_server")
     with ws.open_socket(67) as socket:
@@ -165,7 +165,7 @@ size_packet_dns = num_bytes(expo(192.0 * B), header=68 * B, upper=576 * B)
 
 def mdns_daemon(ws: Workstation) -> None:
     # This models only mDNS local host name resolution; service discovery is TBD.
-    local.name = f"mDNS responder / {ws.name}"
+    local.name = f"{ws.name} / mDNS responder"
     logger = get_logger("mdns_responder")
     while True:
         queries = []
@@ -209,7 +209,7 @@ def mdns_daemon(ws: Workstation) -> None:
 
 
 def llmnr_daemon(ws: Workstation) -> None:
-    local.name = f"LLMNR responder / {ws.name}"
+    local.name = f"{ws.name} / LLMNR responder"
     logger = get_logger("llmnr_responder")
     while True:
         try:
@@ -261,7 +261,7 @@ def _query_llmnr(logger: logging.Logger, ws: Workstation, size_packet_base: int,
 
 
 def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
-    local.name = f"Client activity / {ws.name}"
+    local.name = f"{ws.name} / Client activity"
     logger = get_logger("client_activity")
     while True:
         ws.wait_until_awake(logger)  # FIXME
@@ -283,7 +283,12 @@ def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
             logger.debug("Reset by machine falling asleep")
 
 
-if __name__ == '__main__':
+net_local = None
+
+
+def init():
+    global net_local
+
     parser = argparse.ArgumentParser(description="Simulator of the baseline behaviour of a simple flat network.")
     parser.add_argument("-c", "--cidr", help="CIDR prefix describing basic network setup.", default="192.168.4.0/24")
     parser.add_argument("-n", "--num-endpoints", help="Number of endpoints into the simulation.", type=int)
@@ -300,52 +305,65 @@ if __name__ == '__main__':
     if args.duration <= 0.0:
         logger.critical("Suggested simulation duration {args.duration} makes no sense. Abort.")
 
-    with Simulator() as sim:
-        num_addresses = ip_network(args.cidr).num_addresses - NUM_ADDRESSES_RESERVED
-        if num_addresses < MIN_NUM_ENDPOINTS:
-            logger.critical(f"Unsuitable CIDR prefix for simulating a non-trivial network: {args.cidr} -- Abort.")
-            sys.exit(1)
-        logger.debug(f"CIDR prefix of network: {args.cidr}")
-        net_local = Network(
-            sim,
-            cidr=args.cidr,
-            bandwidth=constant(1 * GbPS),
-            latency=normal(5 * MS, 1 * MS)
-        )
+    sim = Simulator()
+    num_addresses = ip_network(args.cidr).num_addresses - NUM_ADDRESSES_RESERVED
+    if num_addresses < MIN_NUM_ENDPOINTS:
+        logger.critical(f"Unsuitable CIDR prefix for simulating a non-trivial network: {args.cidr} -- Abort.")
+        sys.exit(1)
 
-        if args.num_endpoints is None:
-            num_endpoints = max(MIN_NUM_ENDPOINTS, int(0.2 * num_addresses))
+    logger.debug(f"CIDR prefix of network: {args.cidr}")
+    net_local = Network(
+        sim,
+        cidr=args.cidr,
+        bandwidth=constant(1 * GbPS),
+        latency=normal(5 * MS, 1 * MS)
+    )
+
+    # Create a router. Currently used in malware_sample
+    router = Endpoint("Router", net_local)
+
+    if args.num_endpoints is None:
+        num_endpoints = max(MIN_NUM_ENDPOINTS, int(0.2 * num_addresses))
+    else:
+        num_endpoints = args.num_endpoints
+        if num_endpoints < MIN_NUM_ENDPOINTS:
+            logger.warning(
+                f"Requested number of endpoints ({num_endpoints}) is insufficient; " +
+                f"raising it to {MIN_NUM_ENDPOINTS}."
+            )
+            num_endpoints = MIN_NUM_ENDPOINTS
+
+    num_workstations = num_endpoints - 1  # DHCP server is not a workstation.
+    num_mdns = int(0.9 * num_workstations)
+    num_llmnr = num_workstations - num_mdns
+    logger.debug(
+        f"Setting up 1 DHCP server and {num_workstations} workstations -- {num_mdns} / mDNS, {num_llmnr} / LLMNR."
+    )
+
+    dhcp_server = Endpoint("DHCPServer", net_local)
+    dhcp_server.install(dhcp_serve)
+
+    ws_list = []
+    names_ws = []
+    name_next_query = distribution(names_ws)
+
+    for n in range(num_workstations):
+        name = f"Workstation-{n+1}"
+        names_ws.append(name)
+
+        ws = Workstation(name, net_local)
+        ws.install(workstation_blinking)
+        ws.install(client_activity, name_next_query)
+        if n <= num_mdns:
+            ws.install(mdns_daemon)
         else:
-            num_endpoints = args.num_endpoints
-            if num_endpoints < MIN_NUM_ENDPOINTS:
-                logger.warning(
-                    f"Requested number of endpoints ({num_endpoints}) is insufficient; " +
-                    f"raising it to {MIN_NUM_ENDPOINTS}."
-                )
-                num_endpoints = MIN_NUM_ENDPOINTS
+            ws.install(llmnr_daemon)
 
-        num_workstations = num_endpoints - 1  # DHCP server is not a workstation.
-        num_mdns = int(0.9 * num_workstations)
-        num_llmnr = num_workstations - num_mdns
-        logger.debug(
-            f"Setting up 1 DHCP server and {num_workstations} workstations -- {num_mdns} / mDNS, {num_llmnr} / LLMNR."
-        )
+        ws_list.append(ws)
 
-        dhcp_server = Endpoint("DHCPServer", net_local)
-        dhcp_server.install(dhcp_serve)
+    return sim, args.duration, ws_list, router
 
-        names_ws = []
-        name_next_query = distribution(names_ws)
-        for n in range(num_workstations):
-            name = f"Workstation-{n+1}"
-            names_ws.append(name)
 
-            ws = Workstation(name, net_local)
-            ws.install(workstation_blinking)
-            ws.install(client_activity, name_next_query)
-            if n <= num_mdns:
-                ws.install(mdns_daemon)
-            else:
-                ws.install(llmnr_daemon)
-
-        sim.run(args.duration)
+if __name__ == '__main__':
+    sim, dur, _, _ = init()
+    sim.run(dur)
