@@ -319,6 +319,9 @@ def init():
         latency=normal(5 * MS, 1 * MS)
     )
 
+    # Create a router. Currently used in malware_sample
+    router = Endpoint("Router", net_local)
+
     if args.num_endpoints is None:
         num_endpoints = max(MIN_NUM_ENDPOINTS, int(0.2 * num_addresses))
     else:
@@ -340,6 +343,7 @@ def init():
     dhcp_server = Endpoint("DHCPServer", net_local)
     dhcp_server.install(dhcp_serve)
 
+    ws_list = []
     names_ws = []
     name_next_query = distribution(names_ws)
 
@@ -355,5 +359,11 @@ def init():
         else:
             ws.install(llmnr_daemon)
 
-    return sim, args.duration, names_ws
-    sim.run(args.duration)
+        ws_list.append(ws)
+
+    return sim, args.duration, ws_list, router
+
+
+if __name__ == '__main__':
+    sim, dur, _, _ = init()
+    sim.run(dur)
