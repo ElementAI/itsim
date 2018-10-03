@@ -1,3 +1,8 @@
+import json
+import logging
+import sys
+from greensim.logging import Filter
+
 from collections import OrderedDict
 from contextlib import contextmanager
 from ipaddress import _BaseAddress
@@ -5,7 +10,7 @@ from itertools import cycle
 from queue import Queue
 from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator, Optional
 
-from greensim import Process, Signal
+from greensim import now, Process, Signal
 
 from itsim import _Node
 from itsim.it_objects import ITObject
@@ -67,9 +72,57 @@ class Socket(ITObject):
         self._packet_queue: Queue[Packet] = Queue()
         self._packet_signal: Signal = Signal()
         self._packet_signal.turn_off()
+        # Keeps track of packets waiting for responses so they can be logged together
+        # The float keeps track of the time that the packet was queued up
+        # This is not at all the best way to handle this, but as a quick hack it is effective
+        self._outbound_packets: MutableMapping[Location, Tuple[Packet, float]] = OrderedDict()
+        self._inbound_packets: MutableMapping[Location, Tuple[Packet, float]] = OrderedDict()
+
+    def get_logger(self, name_logger=__name__):
+        logger = logging.getLogger(name_logger)
+        if len(logger.handlers) == 0:
+            logger.setLevel(logging.getLogger().level)
+            logger.addFilter(Filter())
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setFormatter(logging.Formatter("<%(levelname)s> %(sim_time)f [%(sim_process)s] %(message)s"))
+            logger.addHandler(handler)
+        return logger
+
+    # Designed to keep this hack contained. This allows unit tests without a Simulation to succeed
+    def get_time_with_fallback(self):
+        try:
+            return now()
+        except TypeError:
+            return 0
+
+    # Check to see if this packet is in response to another one. If so, log the pair as Inbound
+    # If not, check whether this socket is already waiting for a response from the destination host
+    # If it is waiting just log the old packet without a response, assuming all new responses are to the latest packet
+    # If it is not waiting, queue up the outbound packet so we can log the response together with it
+    def correlate_outbound_packet(self, dest: Location, ob_packet: Packet) -> None:
+        if dest in self._inbound_packets:
+            self.log_pair(self._inbound_packets[dest][0], ob_packet, self._inbound_packets[dest][1], True)
+            del self._inbound_packets[dest]
+        else:
+            if dest in self._outbound_packets:
+                self.log_pair(None, self._outbound_packets[dest][0], self._outbound_packets[dest][1], False)
+            self._outbound_packets[dest] = (ob_packet, self.get_time_with_fallback())
+
+    # Check to see if this packet is in response to another one. If so, log the pair as Outbound
+    # If not, queue up the inbound packet so we can log the response together with it
+    # This method is used so that the socket can remain independent of packet creation
+    # And also so the hack is contained here in this class
+    def correlate_inbound_packet(self, src: Location, ib_packet: Packet) -> None:
+        if src in self._outbound_packets:
+            self.log_pair(ib_packet, self._outbound_packets[src][0], self._outbound_packets[src][1], False)
+            del self._outbound_packets[src]
+        else:
+            self._inbound_packets[src] = (ib_packet, self.get_time_with_fallback())
 
     def send(self, dest: Location, byte_size: int, payload: Payload) -> None:
-        self._node._send_to_network(Packet(self._src, dest, byte_size, payload))
+        ob_packet = Packet(self._src, dest, byte_size, payload)
+        self._node._send_to_network(ob_packet)
+        self.correlate_outbound_packet(dest, ob_packet)
 
     def broadcast(self, port: int, byte_size: int, payload: Payload) -> None:
         dest_addr = self._node._get_network_broadcast_address(self._src.host)
@@ -86,9 +139,44 @@ class Socket(ITObject):
 
         # Make sure to update the Signal in case more Processes are in the Signal's queue
         output = self._packet_queue.get()
+
+        self.correlate_inbound_packet(output.source, output)
+
         if self._packet_queue.empty():
             self._packet_signal.turn_off()
         return output
+
+    # Take 0 - 2 packets and log whatever information is available as a JSON object in the format
+    # defined in the Telemetry table
+    # This method is just a stand-in so it is not very intelligent
+    # It also uses STDOUT for the time being so logging did not have
+    def log_pair(self,
+                 packet_in: Optional[Packet],
+                 packet_out: Optional[Packet],
+                 start: float,
+                 is_inbound: bool) -> None:
+        self.get_logger().info(json.dumps({"Connection_Type": "UDP",
+                                           "Local_IP": 0 if packet_in is None else str(packet_in.dest.host),
+                                           "Local_Port": 0 if packet_in is None else str(packet_in.dest.port),
+                                           "Direction": "Inbound" if is_inbound else "Outbound",
+                                           "Remote_IP": 0 if packet_out is None else str(packet_out.source.host),
+                                           "Remote_Port": 0 if packet_out is None else str(packet_out.source.port),
+                                           "Sent_Bytes": 0 if packet_out is None else str(packet_out.byte_size),
+                                           "Received_Bytes": 0 if packet_in is None else str(packet_in.byte_size),
+                                           "PID": 0,
+                                           "Start_Time": start,
+                                           "End_Time": self.get_time_with_fallback(),
+                                           "Parent_Process_Path": "/home/town",
+                                           "Parent_Process_Start_Time": start}))
+
+    # When the socket is closed this method is called to log whatever packets didn't end up
+    # being part of a transaction
+    def flush_logs(self) -> None:
+        for pair in self._outbound_packets.values():
+            self.log_pair(None, pair[0], pair[1], False)
+
+        for pair in self._inbound_packets.values():
+            self.log_pair(pair[0], None, pair[1], True)
 
 
 class Node(_Node):
@@ -185,6 +273,7 @@ class Node(_Node):
             try:
                 yield sock
             finally:
+                sock.flush_logs()
                 del self._sockets[src]
                 del self._sockets[broadcast]
 
