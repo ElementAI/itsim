@@ -366,5 +366,5 @@ def init():
 
 
 if __name__ == '__main__':
-    sim, dur, _, _ = init()
+    sim, dur, _, _, _ = init()
     sim.run(dur)
