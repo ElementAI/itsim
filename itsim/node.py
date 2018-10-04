@@ -84,7 +84,7 @@ class Socket(ITObject):
             logger.setLevel(logging.getLogger().level)
             logger.addFilter(Filter())
             handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(logging.Formatter("<%(levelname)s> %(sim_time)f [%(sim_process)s] %(message)s"))
+            handler.setFormatter(logging.Formatter("JSON-OUT <%(levelname)s> %(sim_time)f [%(sim_process)s] %(message)s"))
             logger.addHandler(handler)
         return logger
 
@@ -149,18 +149,18 @@ class Socket(ITObject):
     # Take 0 - 2 packets and log whatever information is available as a JSON object in the format
     # defined in the Telemetry table
     # This method is just a stand-in so it is not very intelligent
-    # It also uses STDOUT for the time being so logging did not have
     def log_pair(self,
                  packet_in: Optional[Packet],
                  packet_out: Optional[Packet],
                  start: float,
                  is_inbound: bool) -> None:
+            
         self.get_logger().info(json.dumps({"Connection_Type": "UDP",
                                            "Local_IP": 0 if packet_in is None else str(packet_in.dest.host),
                                            "Local_Port": 0 if packet_in is None else str(packet_in.dest.port),
                                            "Direction": "Inbound" if is_inbound else "Outbound",
-                                           "Remote_IP": 0 if packet_out is None else str(packet_out.source.host),
-                                           "Remote_Port": 0 if packet_out is None else str(packet_out.source.port),
+                                           "Remote_IP": 0 if packet_out is None else str(packet_out.dest.host) if "address" not in packet_out._payload._entries else str(packet_out._payload._entries["address"]),
+                                           "Remote_Port": 0 if packet_out is None else str(packet_out.dest.port),
                                            "Sent_Bytes": 0 if packet_out is None else str(packet_out.byte_size),
                                            "Received_Bytes": 0 if packet_in is None else str(packet_in.byte_size),
                                            "PID": 0,
