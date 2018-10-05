@@ -84,7 +84,8 @@ class Socket(ITObject):
             logger.setLevel(logging.getLogger().level)
             logger.addFilter(Filter())
             handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(logging.Formatter("JSON-OUT <%(levelname)s> %(sim_time)f [%(sim_process)s] %(message)s"))
+            handler.setFormatter(
+                logging.Formatter("JSON-OUT <%(levelname)s> %(sim_time)f [%(sim_process)s] %(message)s"))
             logger.addHandler(handler)
         return logger
 
@@ -154,12 +155,18 @@ class Socket(ITObject):
                  packet_out: Optional[Packet],
                  start: float,
                  is_inbound: bool) -> None:
-            
+        remote_ip = "0"
+        if packet_out is not None:
+            if "address" in packet_out._payload._entries:
+                remote_ip = str(cast(Address, packet_out._payload._entries["address"]))
+            else:
+                remote_ip = str(packet_out.dest.host)
+
         self.get_logger().info(json.dumps({"Connection_Type": "UDP",
                                            "Local_IP": 0 if packet_in is None else str(packet_in.dest.host),
                                            "Local_Port": 0 if packet_in is None else str(packet_in.dest.port),
                                            "Direction": "Inbound" if is_inbound else "Outbound",
-                                           "Remote_IP": 0 if packet_out is None else str(packet_out.dest.host) if "address" not in packet_out._payload._entries else str(packet_out._payload._entries["address"]),
+                                           "Remote_IP": remote_ip,
                                            "Remote_Port": 0 if packet_out is None else str(packet_out.dest.port),
                                            "Sent_Bytes": 0 if packet_out is None else str(packet_out.byte_size),
                                            "Received_Bytes": 0 if packet_in is None else str(packet_in.byte_size),
