@@ -3,16 +3,18 @@ from contextlib import contextmanager
 from ipaddress import _BaseAddress
 from itertools import cycle
 from queue import Queue
-from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator, Optional
+from typing import Any, cast, Generator, Iterable, Optional, MutableMapping, List, Tuple, Union
 
 from greensim import Process, Signal
 
 from itsim import _Node
 from itsim.it_objects import ITObject
 from itsim.it_objects.location import Location
+from itsim.it_objects.networking import _Link
+from itsim.it_objects.networking.link import AddressError, AddressInUse, InvalidAddress
 from itsim.it_objects.payload import Payload
 from itsim.it_objects.packet import Packet
-from itsim.network import Network, InvalidAddress, AddressError, AddressInUse
+from itsim.network import Network
 from itsim.types import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr
 
 
@@ -100,6 +102,17 @@ class Node(_Node):
         self._networks: MutableMapping[Address, _NetworkLink] = OrderedDict()
         self._address_default: Optional[Address] = None
         self._sockets: MutableMapping[Location, Socket] = OrderedDict()
+        self._links: MutableMapping[AddressRepr, _Link] = set()
+
+    def add_physical_link(self, link: _Link, ar: AddressRepr) -> None:
+        link.add_node(self, ar)
+        self._links[ar] = link
+
+    def remove_physical_links(self, link: _Link, ar: AddressRepr) -> bool:
+        if ar not in self._links:
+            return False
+        del self._links[ar]
+        return link.drop_node(ar)
 
     def link_to(self, network: Network, ar: AddressRepr = None, *forward_me: CidrRepr) -> "_DefaultAddressSetter":
         if as_address(ar) in self._networks:

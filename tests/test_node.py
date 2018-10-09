@@ -1,10 +1,10 @@
 from greensim import Process, Simulator
 
 from itsim.it_objects.location import Location
+from itsim.it_objects.networking.link import InvalidAddress
 from itsim.it_objects.packet import Packet
 from itsim.it_objects.payload import Payload
 from itsim.node import Node, NoNetworkLinked, PortAlreadyInUse
-from itsim.network import InvalidAddress
 from itsim.types import as_address
 
 from pytest import fixture, raises
