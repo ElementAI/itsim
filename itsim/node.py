@@ -102,15 +102,22 @@ class Node(_Node):
         self._networks: MutableMapping[Address, _NetworkLink] = OrderedDict()
         self._address_default: Optional[Address] = None
         self._sockets: MutableMapping[Location, Socket] = OrderedDict()
-        self._links: MutableMapping[AddressRepr, _Link] = set()
+        self._links: MutableMapping[AddressRepr, _Link] = OrderedDict()
 
     def add_physical_link(self, link: _Link, ar: AddressRepr) -> None:
         link.add_node(self, ar)
+
+        if ar in self._links:
+            raise AddressInUse(ar)
+
         self._links[ar] = link
 
-    def remove_physical_links(self, link: _Link, ar: AddressRepr) -> bool:
+    def remove_physical_link(self, ar: AddressRepr) -> bool:
+
         if ar not in self._links:
             return False
+
+        link = self._links[ar]
         del self._links[ar]
         return link.drop_node(ar)
 

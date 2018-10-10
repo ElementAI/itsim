@@ -7,6 +7,7 @@ from greensim import advance
 from greensim.random import VarRandom
 
 from itsim import _Node
+from itsim.it_objects import ITSimulator
 from itsim.it_objects.networking import _Link
 from itsim.it_objects.packet import Packet
 from itsim.types import Address, AddressRepr, as_address
@@ -29,11 +30,16 @@ class InvalidAddress(AddressError):
 
 class Link(_Link):
 
-    def __init__(self, bandwidth: VarRandom[float], latency: VarRandom[float]) -> None:
+    def __init__(self, sim: ITSimulator, bandwidth: VarRandom[float], latency: VarRandom[float]) -> None:
         super()
         self._bandwidth: VarRandom[float] = bandwidth
         self._latency: VarRandom[float] = latency
         self._nodes: MutableMapping[Address, weakref.ReferenceType[_Node]] = OrderedDict()
+        self._sim: ITSimulator = sim
+
+    @property
+    def sim(self) -> ITSimulator:
+        return self._sim
 
     def add_node(self, node: _Node, ar: AddressRepr) -> None:
 

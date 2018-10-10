@@ -1,7 +1,9 @@
 from greensim import Process, Simulator
+from greensim.random import expo, normal
 
+from itsim.it_objects import ITSimulator
 from itsim.it_objects.location import Location
-from itsim.it_objects.networking.link import InvalidAddress
+from itsim.it_objects.networking.link import AddressInUse, Link, InvalidAddress
 from itsim.it_objects.packet import Packet
 from itsim.it_objects.payload import Payload
 from itsim.node import Node, NoNetworkLinked, PortAlreadyInUse
@@ -20,6 +22,16 @@ def loc_a():
 @fixture
 def loc_b():
     return Location("132.204.8.144", 80)
+
+
+@fixture
+def link_a():
+    return Link(ITSimulator(), expo(10), normal(10, 1))
+
+
+@fixture
+def link_b():
+    return Link(ITSimulator(), normal(10, 1), expo(10))
 
 
 BROADCAST_ADDR = as_address("132.216.177.160")
@@ -48,6 +60,11 @@ def reverse_packet(loc_a, loc_b):
 @fixture
 def broadcast_packet(loc_a, loc_b):
     return Packet(loc_b, Location(BROADCAST_ADDR, loc_a.port), 1, Payload())
+
+
+@fixture
+def link():
+    return Link(ITSimulator(), expo(10), normal(10, 1))
 
 
 def run_test_sim(fn):
@@ -250,3 +267,37 @@ def test_get_broadcast(node, loc_a):
 def test_get_broadcast_from_unlinked_network(node, loc_b):
     with raises(NoNetworkLinked):
         node._get_network_broadcast_address(loc_b.host)
+
+
+def test_add_physical_link(node, link_a, link_b):
+    node.add_physical_link(link_a, "54.88.73.99")
+    node.add_physical_link(link_b, "132.204.8.144")
+    assert link_a == node._links["54.88.73.99"]
+    assert link_b == node._links["132.204.8.144"]
+
+
+def test_add_same_physical_link(node, link_a):
+    node.add_physical_link(link_a, "54.88.73.99")
+    node.add_physical_link(link_a, "132.204.8.144")
+    assert link_a == node._links["54.88.73.99"]
+    assert link_a == node._links["132.204.8.144"]
+
+
+def test_add_physical_link_twice(node, link_a, link_b):
+    node.add_physical_link(link_a, "54.88.73.99")
+    with raises(AddressInUse):
+        node.add_physical_link(link_b, "54.88.73.99")
+
+
+def test_drop_physical_link(node, link_a, link_b):
+    node.add_physical_link(link_a, "54.88.73.99")
+    node.add_physical_link(link_b, "132.204.8.144")
+    assert link_a == node._links["54.88.73.99"]
+    assert node.remove_physical_link("132.204.8.144")
+    assert "132.204.8.144" not in node._links
+
+
+def test_drop_same_physical_link(node, link_b):
+    node.add_physical_link(link_b, "132.204.8.144")
+    assert node.remove_physical_link("132.204.8.144")
+    assert not node.remove_physical_link("132.204.8.144")
