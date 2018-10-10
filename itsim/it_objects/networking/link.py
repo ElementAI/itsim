@@ -33,20 +33,16 @@ class Link(_Link):
         super()
         self._bandwidth: VarRandom[float] = bandwidth
         self._latency: VarRandom[float] = latency
-        self._nodes: MutableMapping[Address, _Node] = OrderedDict()
+        self._nodes: MutableMapping[Address, weakref.ReferenceType[_Node]] = OrderedDict()
 
     def add_node(self, node: _Node, ar: AddressRepr) -> None:
 
         address = as_address(ar)
 
-        if address not in self._cidr:
-            raise InvalidAddress(address)
         if address in self._nodes:
             raise AddressInUse(address)
 
-        # TODO: Work out how to annotate weak references. The documentation points here:
-        # https://docs.python.org/3.5/extending/newtypes.html#weakref-support
-        self._nodes[address] = weakref.ref(node)  # type: ignore
+        self._nodes[address] = weakref.ref(node)
 
     def drop_node(self, ar: AddressRepr) -> bool:
 
@@ -66,4 +62,5 @@ class Link(_Link):
             advance(next(self._latency) + len(packet) / next(self._bandwidth))
             for node in receivers:
                 self.sim.add(node._receive, packet)
+
         self.sim.add(transmission)
