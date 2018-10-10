@@ -1,7 +1,6 @@
 from typing import Any, Callable
 
-from greensim import Simulator
-
+from itsim.it_objects import ITSimulator
 from itsim.network import Network
 from itsim.node import Node
 from itsim.types import AddressRepr, CidrRepr
@@ -25,7 +24,7 @@ class Endpoint(Node):
         return self._name
 
     @property
-    def sim(self) -> Simulator:
+    def sim(self) -> ITSimulator:
         return self._sim
 
     def install(self, fn_software: Callable, *args: Any, **kwargs: Any) -> None:

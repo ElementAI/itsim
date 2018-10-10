@@ -4,11 +4,11 @@ from itertools import dropwhile
 from numbers import Real
 from typing import cast, Any, MutableMapping, List, Iterable, Iterator, Optional, Callable
 
-from greensim import Simulator, advance
+from greensim import advance
 from greensim.random import VarRandom, bounded, expo
 
 from itsim import _Node
-from itsim.it_objects import ITObject
+from itsim.it_objects import ITObject, ITSimulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.packet import Packet
 from itsim.types import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
@@ -41,7 +41,7 @@ class Network(ITObject):
 
     def __init__(
         self,
-        sim: Simulator,
+        sim: ITSimulator,
         cidr: CidrRepr,
         latency: VarRandom[Real],
         bandwidth: VarRandom[Real],
@@ -68,7 +68,7 @@ class Network(ITObject):
         return self._cidr
 
     @property
-    def sim(self) -> Simulator:
+    def sim(self) -> ITSimulator:
         return self._sim
 
     def link(self, node: _Node, ar: AddressRepr = None, *forward_to: CidrRepr) -> Address:
@@ -152,7 +152,7 @@ class Internet(Network):
 
     def __init__(
         self,
-        sim: Simulator,
+        sim: ITSimulator,
         latency: Optional[VarRandom[Real]] = None,
         bandwidth: Optional[VarRandom[Real]] = None
     ) -> None:
