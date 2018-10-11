@@ -14,7 +14,7 @@ class _Link(ABC, ITObject):
     """
     def __init__(self):
         """
-        Calls the constructors for ABC and ITObject with no arguments        
+        Calls the constructors for ABC and ITObject with no arguments
         """
         self._bind_and_call_constructor(ABC)
         self._bind_and_call_constructor(ITObject)
