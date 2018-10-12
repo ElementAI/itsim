@@ -105,14 +105,28 @@ class Node(_Node):
         self._links: MutableMapping[AddressRepr, _Link] = OrderedDict()
 
     def add_physical_link(self, link: _Link, ar: AddressRepr) -> None:
-        link.add_node(self, ar)
+        """
+        Attempt to connect this Node to the given Link at the given AddressRepr.
+        If the AddressRepr is already being used to point to a Link, this will throw AddressInUse.
+        Otherwise, it will call add_node on the Link (which in turn will call as_address from itsim.types
+        on the AddressRepr) and if the call succeeds this method will store a reference
+        to the Link internally at the AddressRepr
+        """
 
         if ar in self._links:
             raise AddressInUse(ar)
 
+        link.add_node(self, ar)
+
         self._links[ar] = link
 
     def remove_physical_link(self, ar: AddressRepr) -> bool:
+        """
+        Attempt to drop the Link that is connected at the given AddressRepr.
+        If there is no known Link at the AddressRepr, this method will return False.
+        Otherwise, it will free up the AddressRepr for another Node and call drop_node
+        on the Link that was previously stored there, returning its result
+        """
 
         if ar not in self._links:
             return False
