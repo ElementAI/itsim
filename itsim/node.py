@@ -3,16 +3,18 @@ from contextlib import contextmanager
 from ipaddress import _BaseAddress
 from itertools import cycle
 from queue import Queue
-from typing import cast, Any, MutableMapping, List, Union, Tuple, Iterable, Generator, Optional
+from typing import Any, cast, Generator, Iterable, Optional, MutableMapping, List, Tuple, Union
 
 from greensim import Process, Signal
 
 from itsim import _Node
 from itsim.it_objects import ITObject
 from itsim.it_objects.location import Location
+from itsim.it_objects.networking import _Link
+from itsim.it_objects.networking.link import AddressError, AddressInUse, InvalidAddress
 from itsim.it_objects.payload import Payload
 from itsim.it_objects.packet import Packet
-from itsim.network import Network, InvalidAddress, AddressError, AddressInUse
+from itsim.network import Network
 from itsim.types import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr
 
 
@@ -100,6 +102,38 @@ class Node(_Node):
         self._networks: MutableMapping[Address, _NetworkLink] = OrderedDict()
         self._address_default: Optional[Address] = None
         self._sockets: MutableMapping[Location, Socket] = OrderedDict()
+        self._links: MutableMapping[AddressRepr, _Link] = OrderedDict()
+
+    def add_physical_link(self, link: _Link, ar: AddressRepr) -> None:
+        """
+        Attempt to connect this Node to the given Link at the given AddressRepr.
+        If the AddressRepr is already being used to point to a Link, this will throw AddressInUse.
+        Otherwise, it will call add_node on the Link (which in turn will call as_address from itsim.types
+        on the AddressRepr) and if the call succeeds this method will store a reference
+        to the Link internally at the AddressRepr
+        """
+
+        if ar in self._links:
+            raise AddressInUse(ar)
+
+        link.add_node(self, ar)
+
+        self._links[ar] = link
+
+    def remove_physical_link(self, ar: AddressRepr) -> bool:
+        """
+        Attempt to drop the Link that is connected at the given AddressRepr.
+        If there is no known Link at the AddressRepr, this method will return False.
+        Otherwise, it will free up the AddressRepr for another Node and call drop_node
+        on the Link that was previously stored there, returning its result
+        """
+
+        if ar not in self._links:
+            return False
+
+        link = self._links[ar]
+        del self._links[ar]
+        return link.drop_node(ar)
 
     def link_to(self, network: Network, ar: AddressRepr = None, *forward_me: CidrRepr) -> "_DefaultAddressSetter":
         if as_address(ar) in self._networks:
