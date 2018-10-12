@@ -1,4 +1,9 @@
+import greensim
 from greensim.tags import Tags, TaggedObject
+
+
+class Simulator(greensim.Simulator):
+    pass
 
 
 class ITTag(Tags):

@@ -4,11 +4,11 @@ from itertools import dropwhile
 from numbers import Real
 from typing import cast, Any, MutableMapping, List, Iterable, Iterator, Optional, Callable
 
-from greensim import Simulator, advance
+from greensim import advance
 from greensim.random import VarRandom, bounded, expo
 
 from itsim import _Node
-from itsim.it_objects import ITObject
+from itsim.it_objects import ITObject, Simulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.packet import Packet
 from itsim.types import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
