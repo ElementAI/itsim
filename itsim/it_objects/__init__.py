@@ -6,7 +6,7 @@ class Simulator(greensim.Simulator):
     pass
 
 
-class ITTag(Tags):
+class Tag(Tags):
     MALWARE = 0
     VULNERABLE = 1
 

@@ -1,7 +1,7 @@
-from greensim import Process, Simulator
+from greensim import Process
 from greensim.random import expo, normal
 
-from itsim.it_objects import ITSimulator
+from itsim.it_objects import Simulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.networking.link import AddressInUse, Link, InvalidAddress
 from itsim.it_objects.packet import Packet
@@ -26,12 +26,12 @@ def loc_b():
 
 @fixture
 def link_a():
-    return Link(ITSimulator(), expo(10), normal(10, 1))
+    return Link(Simulator(), expo(10), normal(10, 1))
 
 
 @fixture
 def link_b():
-    return Link(ITSimulator(), normal(10, 1), expo(10))
+    return Link(Simulator(), normal(10, 1), expo(10))
 
 
 BROADCAST_ADDR = as_address("132.216.177.160")
@@ -64,7 +64,7 @@ def broadcast_packet(loc_a, loc_b):
 
 @fixture
 def link():
-    return Link(ITSimulator(), expo(10), normal(10, 1))
+    return Link(Simulator(), expo(10), normal(10, 1))
 
 
 def run_test_sim(fn):
