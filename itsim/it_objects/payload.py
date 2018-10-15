@@ -7,6 +7,8 @@ from itsim.it_objects import ITObject
 class PayloadDictionaryType(Enum):
     CONTENT = 0
     CONTENT_TYPE = 1
+    HOSTNAME = 2
+    ADDRESS = 3
 
 
 class Payload(ITObject):

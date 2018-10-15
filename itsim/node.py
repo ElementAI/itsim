@@ -17,7 +17,7 @@ from itsim.it_objects import ITObject
 from itsim.it_objects.location import Location
 from itsim.it_objects.networking import _Link
 from itsim.it_objects.networking.link import AddressError, AddressInUse, InvalidAddress
-from itsim.it_objects.payload import Payload
+from itsim.it_objects.payload import Payload, PayloadDictionaryType
 from itsim.it_objects.packet import Packet
 from itsim.network import Network
 from itsim.types import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr
@@ -159,8 +159,9 @@ class Socket(ITObject):
                  is_inbound: bool) -> None:
         remote_ip = "0"
         if packet_out is not None:
-            if "address" in packet_out._payload._entries:
-                remote_ip = str(cast(Address, packet_out._payload._entries["address"]))
+            if PayloadDictionaryType.ADDRESS in packet_out._payload._entries:
+                remote_ip = str(cast(Address,
+                                     packet_out._payload._entries[PayloadDictionaryType.ADDRESS]))
             else:
                 remote_ip = str(packet_out.dest.host)
 

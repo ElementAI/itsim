@@ -12,7 +12,7 @@ from greensim.random import VarRandom, constant, normal, expo, distribution
 from itsim.network import Network
 from itsim.it_objects.endpoint import Endpoint
 from itsim.it_objects.location import Location
-from itsim.it_objects.payload import Payload
+from itsim.it_objects.payload import Payload, PayloadDictionaryType
 from itsim.random import num_bytes
 from itsim.types import MS, US, MIN, H, B, GbPS, AddressRepr, CidrRepr
 
@@ -121,7 +121,7 @@ def workstation_blinking(ws: Workstation) -> None:
 
 
 def dhcp_payload(msg_name: str) -> Payload:
-    return Payload({"msg": msg_name})
+    return Payload({PayloadDictionaryType.CONTENT: msg_name})
 
 
 size_packet_dhcp = num_bytes(normal(100.0 * B, 30.0 * B), header=240 * B)
@@ -131,15 +131,21 @@ def get_address_from_dhcp(ws: Workstation) -> None:
     logger = get_logger("dhcp_client")
     with ws.open_socket(68) as socket:
         # DHCP server discovery.
-        socket.broadcast(67, next(size_packet_dhcp), Payload({"msg": "DHCPDISCOVER"}))  # FIXME
+        socket.broadcast(67, next(size_packet_dhcp), Payload({PayloadDictionaryType.CONTENT: "DHCPDISCOVER"}))  # FIXME
         # Lease offer.
         packet_offer = socket.recv()
-        logger.info(f"{packet_offer.payload.entries['msg']} from {packet_offer.source.host}")  # FIXME
+        logger.info("%s from %s" %
+                    (packet_offer.payload.entries[PayloadDictionaryType.CONTENT],
+                     packet_offer.source.host))  # FIXME
         # Address request.
-        socket.send(packet_offer.source, next(size_packet_dhcp), Payload({"msg": "DHCPREQUEST"}))  # FIXME
+        socket.send(packet_offer.source,
+                    next(size_packet_dhcp),
+                    Payload({PayloadDictionaryType.CONTENT: "DHCPREQUEST"}))  # FIXME
         # Address acknowledgement.
         packet_ack = socket.recv()
-        logger.info(f"{packet_ack.payload.entries['msg']} from {packet_ack.source.host}")  # FIXME
+        logger.info("%s from %s" %
+                    (packet_ack.payload.entries[PayloadDictionaryType.CONTENT],
+                     packet_ack.source.host))  # FIXME
 
 
 def dhcp_serve(ws: Workstation) -> None:
@@ -151,7 +157,7 @@ def dhcp_serve(ws: Workstation) -> None:
         while True:
             # On reception of server discovery and address request packets, send the corresponding response.
             packet_client = socket.recv()
-            type_msg = packet_client.payload.entries["msg"]
+            type_msg = packet_client.payload.entries[PayloadDictionaryType.CONTENT]
             if type_msg not in responses:
                 logger.warning(f"Received unknown message {repr(type_msg)} from {packet_client.source.host} -- DROP")
             else:
@@ -176,30 +182,35 @@ def mdns_daemon(ws: Workstation) -> None:
                         packet = socket.recv()
                     pl_ent = packet.payload.entries
                     logger.debug(f"Received message {pl_ent} from {packet.source}")
-                    if pl_ent["msg"] == "query":
+                    if pl_ent[PayloadDictionaryType.CONTENT] == "query":
                         queries.append(packet)
                         socket.broadcast(
                             5353,
                             len(packet),
-                            Payload({"msg": "resolve", "hostname": pl_ent["hostname"]})
+                            Payload({PayloadDictionaryType.CONTENT: "resolve",
+                                     PayloadDictionaryType.HOSTNAME: pl_ent[PayloadDictionaryType.HOSTNAME]})
                         )  # FIXME -- add port info
 
-                    elif pl_ent["msg"] == "iam":
+                    elif pl_ent[PayloadDictionaryType.CONTENT] == "iam":
                         i_del = None
                         for i, packet_query in enumerate(queries):
-                            if packet_query.payload.entries["hostname"] == pl_ent["hostname"]:
+                            if packet_query.payload.entries[PayloadDictionaryType.HOSTNAME] \
+                               == pl_ent[PayloadDictionaryType.HOSTNAME]:
                                 i_del = i
                                 socket.send(packet_query.source, len(packet), packet.payload)
                                 break
                         if i_del is not None:
                             del queries[i_del]
 
-                    elif pl_ent["msg"] == "resolve" and pl_ent["hostname"] == ws.name:
+                    elif pl_ent[PayloadDictionaryType.CONTENT] == "resolve" and
+                    pl_ent[PayloadDictionaryType.HOSTNAME] == ws.name:
                         logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
                         socket.broadcast(
                             5353,
                             next(size_packet_dns),
-                            Payload({"msg": "iam", "hostname": ws.name, "address": ws.address_default})
+                            Payload({PayloadDictionaryType.CONTENT: "iam",
+                                     PayloadDictionaryType.HOSTNAME: ws.name,
+                                     PayloadDictionaryType.ADDRESS: ws.address_default})
                         )  # FIXME
 
         except Workstation.FellAsleep:
@@ -218,12 +229,15 @@ def llmnr_daemon(ws: Workstation) -> None:
                     with ws.awake():
                         packet = socket.recv()
                     payload_entries = packet.payload.entries
-                    if payload_entries["msg"] == "resolve" and payload_entries["hostname"] == ws.name:
+                    if payload_entries[PayloadDictionaryType.CONTENT] == "resolve" and \
+                       payload_entries[PayloadDictionaryType.HOSTNAME] == ws.name:
                         logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
                         socket.send(
                             packet.source,
                             next(size_packet_dns),
-                            Payload({"msg": "iam", "hostname": ws.name, "address": ws.address_default})
+                            Payload({PayloadDictionaryType.CONTENT: "iam",
+                                     PayloadDictionaryType.HOSTNAME: ws.name,
+                                     PayloadDictionaryType.ADDRESS: ws.address_default})
                         )
         except Workstation.FellAsleep:
             logger.debug("LLMNR Reset by workstation falling asleep")
@@ -243,11 +257,14 @@ def _query(protocol: str, logger: logging.Logger, ws: Workstation, size_packet_b
                 with ws.awake(), ws.timeout(5.0):  # FIXME - fugly
                     response = socket.recv()
                     rpl = response.payload.entries
-                    logger.info(f"{rpl['hostname']} resolved to {rpl['address']}")
+                    logger.info("%s resolved to %s" %
+                                (rpl[PayloadDictionaryType.HOSTNAME],
+                                 rpl[PayloadDictionaryType.ADDRESS]))
             except Workstation.Timeout:
-                logger.debug(f"Resolution of {payload.entries['hostname']} timed out")
+                logger.debug(f"Resolution of {payload.entries[PayloadDictionaryType.HOSTNAME]} timed out")
     except Workstation.FellAsleep:
-        logger.debug(f"Resolution of {payload.entries['hostname']} killed by workstation falling asleep")
+        logger.debug("Resolution of %s killed by workstation falling asleep" %
+                     payload.entries[PayloadDictionaryType.HOSTNAME])
 
 
 def _query_mdns(logger: logging.Logger, ws: Workstation, size_packet_base: int, payload: Payload):
@@ -277,8 +294,10 @@ def client_activity(ws: Workstation, name_next_query: VarRandom[str]) -> None:
             logger.info(f"Query IP address of {target_query}")
 
             size_packet_base = next(size_packet_dns)
-            add(_query_mdns, logger, ws, size_packet_base, Payload({"msg": "query", "hostname": target_query}))
-            add(_query_llmnr, logger, ws, size_packet_base, Payload({"msg": "resolve", "hostname": target_query}))
+            add(_query_mdns, logger, ws, size_packet_base, Payload({PayloadDictionaryType.CONTENT: "query",
+                                                                    PayloadDictionaryType.HOSTNAME: target_query}))
+            add(_query_llmnr, logger, ws, size_packet_base, Payload({PayloadDictionaryType.CONTENT: "resolve",
+                                                                     PayloadDictionaryType.HOSTNAME: target_query}))
         except Workstation.FellAsleep:
             logger.debug("Reset by machine falling asleep")
 
