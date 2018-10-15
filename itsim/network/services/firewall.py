@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
-from enum import Flag, auto
-from typing import Iterable, Tuple, Union
+from enum import IntFlag
+from typing import Iterable, Tuple, Union, Optional
 
+from itsim.network.services import Service
 from itsim.types import CidrRepr, Port
 
 
-class Protocol(Flag):
-    UDP = auto
-    TCP = auto
+class Protocol(IntFlag):
+    UDP = 0x1
+    TCP = 0x2
     BOTH = UDP | TCP
 
 
@@ -15,7 +16,10 @@ class Ports(ABC):
     """
     Collection of ports that may be set as part of a rule.
     """
-    ALL = PortInterval(0, 65536)
+
+    @staticmethod
+    def all():
+        return PortRange(0, 65536)
 
     @abstractmethod
     def __contains__(self, port: Port) -> bool:
@@ -52,7 +56,7 @@ class PortRange(Ports):
         raise NotImplementedError()
 
 
-PortsRepr = Union[Iterable[Port], Tuple[Port, Port]]
+PortsRepr = Union[Iterable[Port], Tuple[Port, Port], Ports]
 
 
 class Rule(ABC):
@@ -60,7 +64,7 @@ class Rule(ABC):
     Firewall rule: determines whether a certain category of packets is allowed through a firewall or not.
     """
 
-    def __init__(origin: CidrRepr, protocol: Protocol, ports: PortsRepr) -> None:
+    def __init__(self, origin: CidrRepr, protocol: Protocol, ports: PortsRepr) -> None:
         """
         - :param origin: CIDR prefix indicating the provenance of packets that can match this rule.
         - :param protocol: Transport protocol carrying packets that can match this rule.
@@ -81,7 +85,9 @@ class Allow(Rule):
     Firewall rule that allows packets through.
     """
 
-    ALL = Allow("0.0.0.0/0", Protocol.BOTH, (0, 0xffff))
+    @staticmethod
+    def all():
+        return Allow("0.0.0.0/0", Protocol.BOTH, Ports.all())
 
     def is_allowed(self) -> bool:
         return True
@@ -92,19 +98,21 @@ class Deny(Rule):
     Firewall rule that denies packet traversal.
     """
 
-    ALL = Deny("0.0.0.0/0", Protocol.BOTH, (0, 0xffff))
+    @staticmethod
+    def all():
+        return Deny("0.0.0.0/0", Protocol.BOTH, Ports.all())
 
     def is_allowed(self) -> bool:
         return False
 
 
-class Firewall(object):
+class Firewall(Service):
     """
     Network service that controls which packets it lets through its associated interface, either to the node (inbound)
     or from the node (outbound).
     """
 
-    def __init__(self, inbound: Iterable[Rule], outbound: Iterable[Rule]) -> None:
+    def __init__(self, inbound: Optional[Iterable[Rule]] = None, outbound: Optional[Iterable[Rule]] = None) -> None:
         """
         - :param inbound:
             List of firewall rules as to which packets should be accepted through the interface and relayed to the node.

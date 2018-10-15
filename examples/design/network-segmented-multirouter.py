@@ -1,7 +1,8 @@
+from greensim.random import normal, constant
+
 from itsim.link import Link, Internet
 from itsim.node.endpoint import Endpoint
 from itsim.node.router import Router
-from itsim.random import normal, constant
 from itsim.simulator import Simulator
 from itsim.types import as_address
 from itsim.units import MS, GbPS
@@ -14,7 +15,7 @@ sim = Simulator()
 internet = Internet(sim)
 
 PORTS_DNS = [53]
-PORTS_WWW = [80,443]
+PORTS_WWW = [80, 443]
 PORTS_IT = [22] + list(range(135, 140)) + [445]
 
 FARM = "10.1.128.0/18"
@@ -55,7 +56,7 @@ router_farm = Router(
             outbound=[
                 Allow(internet.cidr, Protocol.TCP, PORTS_WWW),
                 Allow(internet.cidr, Protocol.BOTH, PORTS_DNS),
-                Deny.ALL
+                Deny.all()
             ]
         )
     )
@@ -77,7 +78,7 @@ router_dc = Router(
                 Allow(internet.cidr, Protocol.BOTH, PORTS_DNS),
                 Allow(CORP, Protocol.TCP, PORTS_IT)
             ],
-            outbound=[Deny.ALL]
+            outbound=[Deny.all()]
         )
     )
 )
@@ -86,7 +87,7 @@ assert {router_main, router_farm, router_corp, router_dc} == set(lobby.iter_node
 
 NUM_ENDPOINTS_PER_SUBNET = 30
 endpoints = [Endpoint(sim).link_to(net) for _ in range(NUM_ENDPOINTS_PER_SUBNET) for net in [farm, corp, dc]]
-assert all(ept.address_default == ad_address(0) for ept in endpoints)
+assert all(ept.address_default == as_address(0) for ept in endpoints)
 
 sim.run()
 

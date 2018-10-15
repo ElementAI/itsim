@@ -1,13 +1,10 @@
+from typing import Iterator
+
+from itsim.network.services import Service
+from itsim.node import Node
 from itsim.random import VarRandomTime, VarRandomBandwidth
 from itsim.simulator import Simulator
-from itsim.types import AddressRepr, CidrRepr, Cidr
-
-
-class NetworkService(object):
-    """
-    Description of a service implemented over a network.
-    """
-    pass
+from itsim.types import AddressRepr, CidrRepr, Cidr, as_cidr
 
 
 class Connection(object):
@@ -15,7 +12,7 @@ class Connection(object):
     Connection object, tying a network interface of a node to a certain link.
     """
 
-    def setup(self, *services: NetworkService):
+    def setup(self, *services: Service):
         """
         Lists services that the node connected to the link should arrange and get running.
         """
@@ -47,7 +44,7 @@ class Link(object):
         return self._cidr
         return
 
-    def connected_as(ar: AddressRepr = None) -> Connection:
+    def connected_as(self, ar: AddressRepr = None) -> Connection:
         """
         Generates a Connection instance to tie a certain node to this network. This connection object requests
         from an incipient node that, in order to be connected to this link, it implements a certain number of network
@@ -61,6 +58,12 @@ class Link(object):
         """
         if ar is None:
             ar = "0.0.0.0"
+        raise NotImplementedError()
+
+    def iter_nodes(self) -> Iterator[Node]:
+        """
+        Iteration over the nodes connected to a link.
+        """
         raise NotImplementedError()
 
 

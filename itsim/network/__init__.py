@@ -11,7 +11,8 @@ from itsim import _Node
 from itsim.it_objects import ITObject
 from itsim.it_objects.location import Location
 from itsim.it_objects.packet import Packet
-from itsim.types import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
+from itsim.types import CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
+from itsim.units import MS, S, MbPS
 
 
 class AddressError(Exception):

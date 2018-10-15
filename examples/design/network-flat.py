@@ -1,13 +1,14 @@
 from inspect import isgenerator
+from ipaddress import ip_network
 
+from greensim.random import normal, constant
 from itsim.link import Internet, Link
 from itsim.node.endpoint import Endpoint
 from itsim.node.router import Router
-from itsim.random import normal, constant
 from itsim.simulator import Simulator
 from itsim.types import as_address
 from itsim.units import MS, GbPS
-from itsim.network.services import DHCP, NAT, PortForwarding
+from itsim.network.services import DHCP, NAT
 from itsim.network.services.firewall import Firewall, Allow, Deny, Protocol
 
 
@@ -32,16 +33,16 @@ for aname in ["latency", "bandwidth"]:
 # forwards between. In this case, there is a single local network, so all forwarding is towards the WAN.
 #
 router = Router(
-    wan=internet.connected_as("24.192.132.23").setup(NAT()),
-    net.connected_as(1).setup(  # As net is 192.168.1/24, machine 1 on it becomes 192.168.1.1.
+    internet.connected_as("24.192.132.23").setup(NAT()),  # WAN
+    net.connected_as(1).setup(  # LAN -- As net is 192.168.1/24, machine 1 on it becomes 192.168.1.1.
         # Parameters to setup() are services we expect the router to run for this network.
         DHCP(),
         Firewall(
-            inbound=[allow(internet.cidr, Protocol.UDP, PORTS_DNS)],  # Allow DNS responses
+            inbound=[Allow(internet.cidr, Protocol.UDP, PORTS_DNS)],  # Allow DNS responses
             outbound=[                                  # Allow only website traffic
-                allow(internet.cidr, Protocol.TCP, PORTS_WWW),
-                allow(internet.cidr, Protocol.BOTH, PORTS_DNS),
-                Deny.ALL
+                Allow(internet.cidr, Protocol.TCP, PORTS_WWW),
+                Allow(internet.cidr, Protocol.BOTH, PORTS_DNS),
+                Deny.all()
             ]
         )
     )
