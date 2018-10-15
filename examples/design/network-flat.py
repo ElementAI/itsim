@@ -1,10 +1,19 @@
 from inspect import isgenerator
 
+from itsim.link import Internet, Link
+from itsim.node.endpoint import Endpoint
+from itsim.node.router import Router
+from itsim.random import normal, constant
+from itsim.simulator import Simulator
+from itsim.types import as_address
+from itsim.units import MS, GbPS
+from itsim.network.services import DHCP, NAT, PortForwarding
+from itsim.network.services.firewall import Firewall, Allow, Deny, Protocol
+
+
 sim = Simulator()
 
-
 internet = Internet(sim)
-INTERNET = internet.cidr
 
 PORTS_DNS = [53]
 PORTS_WWW = [80, 443]
@@ -12,7 +21,7 @@ PORTS_WWW = [80, 443]
 # A network link is a thing against which nodes connect, so as to communicate across an identified IP network.
 net = Link("192.168.1.0/24", latency=normal(5 * MS, 1.5 * MS), bandwidth=constant(100 * GbPS))
 
-assert net.cidr == ip_network("192.168.1/24")
+assert net.cidr == ip_network("192.168.1.0/24")
 for aname in ["latency", "bandwidth"]:
     assert hasattr(net, aname) and isgenerator(getattr(net, aname))
 
@@ -27,12 +36,12 @@ router = Router(
     net.connected_as(1).setup(  # As net is 192.168.1/24, machine 1 on it becomes 192.168.1.1.
         # Parameters to setup() are services we expect the router to run for this network.
         DHCP(),
-        firewall(
-            inbound=[allow(INTERNET, UDP, PORTS_DNS)],  # Allow DNS responses
+        Firewall(
+            inbound=[allow(internet.cidr, Protocol.UDP, PORTS_DNS)],  # Allow DNS responses
             outbound=[                                  # Allow only website traffic
-                allow(INTERNET, TCP, PORTS_WWW),
-                allow(INTERNET, BOTH, PORTS_DNS),
-                DENY_ALL
+                allow(internet.cidr, Protocol.TCP, PORTS_WWW),
+                allow(internet.cidr, Protocol.BOTH, PORTS_DNS),
+                Deny.ALL
             ]
         )
     )
