@@ -10,7 +10,7 @@ PORTS_DNS = [53]
 PORTS_WWW = [80, 443]
 
 # A network link is a thing against which nodes connect, so as to communicate across an identified IP network.
-net = Link("192.168.1/24", latency=normal(5 * MS, 1.5 * MS), bandwidth=constant(100 * GbPS))
+net = Link("192.168.1.0/24", latency=normal(5 * MS, 1.5 * MS), bandwidth=constant(100 * GbPS))
 
 assert net.cidr == ip_network("192.168.1/24")
 for aname in ["latency", "bandwidth"]:
@@ -23,7 +23,7 @@ for aname in ["latency", "bandwidth"]:
 # forwards between. In this case, there is a single local network, so all forwarding is towards the WAN.
 #
 router = Router(
-    wan=internet.connected_as("24.192.132.23"),
+    wan=internet.connected_as("24.192.132.23").setup(NAT()),
     net.connected_as(1).setup(  # As net is 192.168.1/24, machine 1 on it becomes 192.168.1.1.
         # Parameters to setup() are services we expect the router to run for this network.
         DHCP(),
@@ -32,7 +32,7 @@ router = Router(
             outbound=[                                  # Allow only website traffic
                 allow(INTERNET, TCP, PORTS_WWW),
                 allow(INTERNET, BOTH, PORTS_DNS),
-                deny_all()
+                DENY_ALL
             ]
         )
     )
@@ -44,12 +44,13 @@ assert router in nodes
 
 
 # TODO -- Figure out how to list the services run by a node.
-# TODO -- Assert that the router node is doing DHCP against
+# TODO -- Have some nodes do something that the router's firewall would block, and capture this result.
 
 
 # Instantiate nodes against the link.
 # TODO -- Complete proper endpoint instantiation and load up some software.
 # TODO -- Get endpoints to do some stuff against the Internet, and ensure it worked.
+# TODO -- Facilitate adding multiple endpoints to a link in one call?
 endpoints = [Endpoint(sim).connected_to(net) for _ in range(50)]
 
 assert all(ept.address_default == as_address(0) for ept in endpoints)
@@ -62,7 +63,7 @@ for ept in endpoints:
 # Run the simulation.
 sim.run()
 
-all_addresses = set(as_address("192.168.1.1"))  # The router...
+all_addresses = set([as_address("192.168.1.1")])  # The router...
 for ept in endpoints:
     assert ept.address_default in net.cidr
     all_addresses.add(ept.address_default)
