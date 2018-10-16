@@ -1,6 +1,8 @@
+from abc import ABC, abstractmethod
+from enum import IntFlag
 from ipaddress import ip_address, \
     IPv4Address, IPv6Address, IPv4Network, IPv6Network, ip_network, _BaseNetwork
-from typing import Optional, Union
+from typing import Optional, Union, Iterable, Tuple
 
 
 Address = Union[IPv4Address, IPv6Address]
@@ -47,3 +49,56 @@ def as_host(hr: HostRepr) -> Host:
             return hr
         else:
             raise
+
+
+class Protocol(IntFlag):
+    UDP = 0x1
+    TCP = 0x2
+    BOTH = UDP | TCP
+
+
+class Ports(ABC):
+    """
+    Collection of ports that may be set as part of a rule.
+    """
+
+    @staticmethod
+    def all():
+        return PortRange(0, 65536)
+
+    @abstractmethod
+    def __contains__(self, port: Port) -> bool:
+        raise NotImplementedError()
+
+
+class PortSet(Ports):
+    """
+    Port collection based on an exhaustive set.
+    """
+
+    def __init__(self, ports: Iterable[Port]) -> None:
+        """
+        - :param ports: Ports assembled into the set.
+        """
+        raise NotImplementedError()
+
+    def __contains__(self, port: Port) -> bool:
+        raise NotImplementedError()
+
+
+class PortRange(Ports):
+    """
+    Port collection based on a functional interval.
+    """
+
+    def __init__(self, lower: Port, upper: Port) -> None:
+        """
+        The functional interval is [lower, upper[.
+        """
+        raise NotImplementedError()
+
+    def __contains__(self, port: Port) -> bool:
+        raise NotImplementedError()
+
+
+PortsRepr = Union[Iterable[Port], Tuple[Port, Port], Ports]

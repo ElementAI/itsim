@@ -1,6 +1,6 @@
 from typing import Tuple, Mapping
 
-from itsim.it_objects import ITObjects
+from itsim.it_objects import ITObject
 from itsim.types import AddressRepr, Port
 
 
