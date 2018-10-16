@@ -1,9 +1,10 @@
 from typing import Tuple, Mapping
 
+from itsim.it_objects import ITObjects
 from itsim.types import AddressRepr, Port
 
 
-class Service(object):
+class Service(ITObject):
     """
     Description of a service implemented over a network.
     """

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from enum import IntFlag
 from typing import Iterable, Tuple, Union, Optional
 
+from itsim.it_objects import ITObject
 from itsim.network.services import Service
 from itsim.types import CidrRepr, Port
 
@@ -59,7 +60,7 @@ class PortRange(Ports):
 PortsRepr = Union[Iterable[Port], Tuple[Port, Port], Ports]
 
 
-class Rule(ABC):
+class Rule(ITObject):
     """
     Firewall rule: determines whether a certain category of packets is allowed through a firewall or not.
     """
