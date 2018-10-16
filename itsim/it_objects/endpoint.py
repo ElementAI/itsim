@@ -1,7 +1,6 @@
 from typing import Any, Callable
 
-from greensim import Simulator
-
+from itsim.it_objects import Simulator
 from itsim.network import Network
 from itsim.node import Node
 from itsim.types import AddressRepr, CidrRepr

@@ -2,32 +2,18 @@ from collections import OrderedDict
 from ipaddress import _BaseAddress
 from itertools import dropwhile
 from numbers import Real
-from typing import cast, Any, MutableMapping, List, Iterable, Iterator, Optional, Callable
+from typing import cast, MutableMapping, List, Iterable, Iterator, Optional, Callable
 
-from greensim import Simulator, advance
+from greensim import advance
 from greensim.random import VarRandom, bounded, expo
 
 from itsim import _Node
-from itsim.it_objects import ITObject
+from itsim.it_objects import ITObject, Simulator
 from itsim.it_objects.location import Location
+from itsim.it_objects.networking.link import AddressError, AddressInUse, InvalidAddress
 from itsim.it_objects.packet import Packet
 from itsim.types import CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
 from itsim.units import MS, S, MbPS
-
-
-class AddressError(Exception):
-
-    def __init__(self, value: Any) -> None:
-        super().__init__()
-        self.value_for_address = value
-
-
-class InvalidAddress(AddressError):
-    pass
-
-
-class AddressInUse(AddressError):
-    pass
 
 
 class NetworkFull(Exception):
