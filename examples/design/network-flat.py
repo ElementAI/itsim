@@ -33,6 +33,7 @@ for aname in ["latency", "bandwidth"]:
 # forwards between. In this case, there is a single local network, so all forwarding is towards the WAN.
 #
 router = Router(
+    sim,
     internet.connected_as("24.192.132.23").setup(NAT()),  # WAN
     net.connected_as(1).setup(  # LAN -- As net is 192.168.1/24, machine 1 on it becomes 192.168.1.1.
         # Parameters to setup() are services we expect the router to run for this network.
