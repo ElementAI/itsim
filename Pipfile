@@ -7,7 +7,7 @@ name = "pypi"
 greensim = "*"
 
 [dev-packages]
-pytest = "*"
+pytest = {version = ">=3.8.2", index = "pypi"}
 pytest-cov = {version = ">=2.5.1", index = "pypi"}
 flake8 = "*"
 mypy = "*"
