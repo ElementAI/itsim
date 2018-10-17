@@ -52,8 +52,8 @@ class Process(_Process):
     def kill(self) -> int:
         pass
 
-    def fork_exc(self, f: Callable[[Thread], None], *args, **kwargs) -> _Process:
-        kid = self._node.fork_exc(f, *args, **kwargs)
+    def fork_exec(self, f: Callable[[Thread], None], *args, **kwargs) -> _Process:
+        kid = self._node.fork_exec(f, *args, **kwargs)
         kid._parent = self
         self._children |= set([kid])
         return kid
