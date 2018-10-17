@@ -10,7 +10,7 @@ from itertools import cycle
 from queue import Queue
 from typing import Any, Callable, cast, Generator, Iterable, Optional, MutableMapping, List, Set, Tuple, Union
 
-from greensim import now, Process, Signal
+import greensim
 
 from itsim import _Node
 from itsim.it_objects import ITObject, Simulator
@@ -74,7 +74,7 @@ class Socket(ITObject):
         self._src = src
         self._node = node
         self._packet_queue: Queue[Packet] = Queue()
-        self._packet_signal: Signal = Signal()
+        self._packet_signal: greensim.Signal = greensim.Signal()
         self._packet_signal.turn_off()
         # Keeps track of packets waiting for responses so they can be logged together
         # The float keeps track of the time that the packet was queued up
@@ -96,7 +96,7 @@ class Socket(ITObject):
     # Designed to keep this hack contained. This allows unit tests without a Simulation to succeed
     def get_time_with_fallback(self):
         try:
-            return now()
+            return greensim.now()
         except TypeError:
             return 0
 
@@ -299,7 +299,7 @@ class Node(_Node):
         if src.port in self._networks[src.host_as_address()].ports.keys():
             raise PortAlreadyInUse()
 
-        self._networks[src.host_as_address()].ports[src.port] = Process.current()
+        self._networks[src.host_as_address()].ports[src.port] = greensim.Process.current()
         try:
             yield src
         finally:

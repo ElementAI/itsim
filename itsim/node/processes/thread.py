@@ -1,7 +1,8 @@
 from itsim.it_objects import Simulator
 from itsim.node.processes import _Process, _Thread
 
-from typing import Callable
+from typing import Callable, Set
+
 
 class Thread(_Thread):
     """
@@ -16,7 +17,7 @@ class Thread(_Thread):
         super().__init__()
         self._sim: Simulator = sim
         self._process: _Process = parent
-        self._n = n
+        self._n: int = n
         self._scheduled: Set[Callable[[], None]] = set()
 
     def clone_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> None:

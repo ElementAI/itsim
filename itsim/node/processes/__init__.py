@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 from itsim.it_objects import AbstractITObject
 
+
 class _Thread(AbstractITObject):
     pass
 

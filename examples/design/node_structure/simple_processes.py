@@ -1,15 +1,10 @@
-from abc import ABC, abstractmethod
-
 from enum import Enum, unique
 
 from greensim import now, advance
 
-from itsim.it_objects import ITObject, Simulator
+from itsim.it_objects import Simulator
 from itsim.node import Node
-from itsim.node.processes.process import Process
 from itsim.node.processes.thread import Thread
-
-from typing import Callable, Optional, Set
 
 
 @unique

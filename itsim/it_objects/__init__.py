@@ -22,6 +22,7 @@ class ITObject(TaggedObject):
         t.__init__.__get__(self)(*args)  # type: ignore
     pass
 
+
 class AbstractITObject(ABC, ITObject):
     """
     Convenience class for managing multiple inheritance from ABC and ITObject.

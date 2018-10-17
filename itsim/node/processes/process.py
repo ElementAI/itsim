@@ -6,6 +6,7 @@ from itsim.types import Interrupt
 
 from typing import Callable, Optional, Set
 
+
 class Process(_Process):
     """
     Process objects hold a lot of information about their state and control the creation of Threads.
