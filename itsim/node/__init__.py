@@ -346,14 +346,14 @@ class Node(_Node):
     def procs(self) -> Set[Process]:
         return self._proc_set
 
-    def fork_exc_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> Process:
+    def fork_exec_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> Process:
         proc = Process(self.next_proc_number(), self, self._default_process_parent)
         self._proc_set |= set([proc])
         proc.exc_in(sim, time, f, *args, **kwargs)
         return proc
 
-    def fork_exc(self, sim: Simulator, f: Callable[[Thread], None], *args, **kwargs) -> Process:
-        return self.fork_exc_in(sim, 0, f, *args, **kwargs)
+    def fork_exec(self, sim: Simulator, f: Callable[[Thread], None], *args, **kwargs) -> Process:
+        return self.fork_exec_in(sim, 0, f, *args, **kwargs)
 
     def next_proc_number(self) -> int:
         self._process_counter += 1
@@ -364,7 +364,7 @@ class Node(_Node):
         print("Remaining Procs: %s" % ", ".join([str(pro.__hash__()) for pro in self._proc_set]))
 
     def with_proc_at(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
-        self.fork_exc_in(sim, time, f, *args, **kwargs)
+        self.fork_exec_in(sim, time, f, *args, **kwargs)
         return self
 
 

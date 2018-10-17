@@ -39,7 +39,7 @@ def run_sample() -> None:
         log("\t\t I'm in thread  number %s" % thread._n)
 
         # Show off forking from withing a process
-        proc.fork_exc(sim, short_kid)
+        proc.fork_exec(sim, short_kid)
 
         # This just fills the function set in the Thread object to show that it works and how it looks
         thread.clone(lambda _: advance(1))
@@ -49,8 +49,8 @@ def run_sample() -> None:
     pm = Node().with_proc_at(sim, 1, ping)
 
     # Setting up a new process, forking it from outside, and setting up some concurrent threads
-    proc = pm.fork_exc(sim, ping)
-    kid = proc.fork_exc(sim, ping)
+    proc = pm.fork_exec(sim, ping)
+    kid = proc.fork_exec(sim, ping)
     kid.exc_in(sim, 1, ping)
     kid.exc_in(sim, 2, ping)
     kid.exc_in(sim, 3, ping)
