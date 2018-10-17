@@ -12,7 +12,8 @@ from itsim.it_objects import ITObject, Simulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.networking.link import AddressError, AddressInUse, InvalidAddress
 from itsim.it_objects.packet import Packet
-from itsim.types import MS, S, MbPS, CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
+from itsim.types import CidrRepr, Cidr, as_cidr, Address, AddressRepr, as_address
+from itsim.units import MS, S, MbPS
 
 
 class NetworkFull(Exception):
