@@ -20,6 +20,8 @@ from itsim.it_objects.networking.link import AddressError, AddressInUse, Invalid
 from itsim.it_objects.payload import Payload, PayloadDictionaryType
 from itsim.it_objects.packet import Packet
 from itsim.network import Network
+from itsim.node.accounts.users import UserAccount, UserGroup
+from itsim.node.files.file import File
 from itsim.node.processes.process import Process
 from itsim.node.processes.thread import Thread
 from itsim.types import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr
@@ -354,6 +356,9 @@ class Node(_Node):
 
     def fork_exc(self, sim: Simulator, f: Callable[[Thread], None], *args, **kwargs) -> Process:
         return self.fork_exc_in(sim, 0, f, *args, **kwargs)
+
+    def run_file(self, sim: Simulator, file: File, user: UserAccount, group: UserGroup) -> None:
+        self.fork_exc(sim, file.get_executable(user, group))
 
     def next_proc_number(self) -> int:
         self._process_counter += 1

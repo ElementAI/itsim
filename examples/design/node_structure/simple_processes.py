@@ -4,7 +4,11 @@ from greensim import now, advance
 
 from itsim.it_objects import Simulator
 from itsim.node import Node
+from itsim.node.accounts.users import UserAccount, UserGroup
+from itsim.node.files.file import File, Policy
 from itsim.node.processes.thread import Thread
+
+from typing import Callable
 
 
 @unique
@@ -29,8 +33,7 @@ def run_sample() -> None:
         advance(10)
         log("I'm a child process! #%s > #%s" % (t._process._parent._n, t._process._n), Colors.YELLOW)
 
-    # The optional argument just proves type checking works for the Process and Thread even with extra args
-    def ping(thread: Thread, optional: object = None) -> None:
+    def ping(thread: Thread) -> None:
         proc = thread._process
         log("Howdy. It's %s O'clock" % now())
         log("\t I'm in process number %s" % proc._n)
@@ -54,6 +57,13 @@ def run_sample() -> None:
     kid.exc_in(sim, 1, ping)
     kid.exc_in(sim, 2, ping)
     kid.exc_in(sim, 3, ping)
+
+    user: UserAccount = UserAccount("demo")
+    group: UserGroup = UserGroup("demo")
+    group.add_members(user)
+    policy: Policy = Policy(user, group, 1, 0, 0)
+    runnable: File[Callable[[Thread], None]] = File(ping, policy)
+    pm.run_file(sim, runnable, user, group)
     sim.run()
 
 
