@@ -358,7 +358,7 @@ class Node(_Node):
         return self.fork_exec_in(sim, 0, f, *args, **kwargs)
 
     def run_file(self, sim: Simulator, file: File, user: UserAccount, group: UserGroup) -> None:
-        self.fork_exc(sim, file.get_executable(user, group))
+        self.fork_exec(sim, file.get_executable(user, group))
 
     def next_proc_number(self) -> int:
         self._process_counter += 1
