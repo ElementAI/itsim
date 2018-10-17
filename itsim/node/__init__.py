@@ -20,8 +20,8 @@ from itsim.it_objects.networking.link import AddressError, AddressInUse, Invalid
 from itsim.it_objects.payload import Payload, PayloadDictionaryType
 from itsim.it_objects.packet import Packet
 from itsim.network import Network
-from itsim.node.accounts.users import UserAccount, UserGroup
-from itsim.node.files.file import File
+from itsim.node.accounts import UserAccount, UserGroup
+from itsim.node.files import File
 from itsim.node.processes.process import Process
 from itsim.node.processes.thread import Thread
 from itsim.types import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr

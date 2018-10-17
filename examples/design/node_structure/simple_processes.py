@@ -4,8 +4,8 @@ from greensim import now, advance
 
 from itsim.it_objects import Simulator
 from itsim.node import Node
-from itsim.node.accounts.users import UserAccount, UserGroup
-from itsim.node.files.file import File, Policy
+from itsim.node.accounts import UserAccount, UserGroup
+from itsim.node.files import File, Policy
 from itsim.node.processes.thread import Thread
 
 from typing import Callable
