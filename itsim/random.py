@@ -1,7 +1,7 @@
 from numbers import Real
 from typing import cast, TypeVar, Optional
 
-from greensim.random import VarRandom, RandomOpt, linear, bounded, project_int, distribution
+from greensim.random import VarRandom, RandomOpt, linear, bounded, project_int
 
 
 T = TypeVar("T")
@@ -13,7 +13,7 @@ VarRandomBandwidth = VarRandom[int]
 
 def num_bytes(
     gen: VarRandom[Real],
-    header: Real = cast(Real, 0.0),
+    header: int = 0,
     upper: Optional[Real] = None,
     rng: RandomOpt = None
 ) -> VarRandom[int]:
