@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from enum import IntFlag
+from enum import Enum, IntFlag, unique
 from ipaddress import ip_address, \
     IPv4Address, IPv6Address, IPv4Network, IPv6Network, ip_network, _BaseNetwork
 from typing import Optional, Union, Iterable, Tuple
@@ -102,3 +102,26 @@ class PortRange(Ports):
 
 
 PortsRepr = Union[Iterable[Port], Tuple[Port, Port], Ports]
+
+
+class SystemCall(ABC):
+    """
+    Under construction. Since OS functions are being captured in Node, I think it is likely that these will need
+    to be implemented specifically.
+
+    Not used in this demo.
+    """
+    @abstractmethod
+    def make_call(self):
+        pass
+
+
+@unique
+class Interrupt(Enum):
+    """
+    Under construction. This borrows from the UNIX convention of numbering the signals.
+
+    Not used in this demo.
+    """
+    SIGINT = 0
+    SIGKILL = 1
