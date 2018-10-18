@@ -101,4 +101,4 @@ class PortRange(Ports):
         raise NotImplementedError()
 
 
-PortsRepr = Union[Iterable[Port], Tuple[Port, Port], Ports]
+PortsRepr = Union[Port, Iterable[Port], Tuple[Port, Port], Ports]

@@ -6,6 +6,7 @@ from itsim.it_objects import Socket
 from itsim.link import Internet, Daemon
 from itsim.random import num_bytes
 from itsim.simulator import Simulator
+from itsim.types import PortsRepr
 from itsim.units import KB, MbPS, MIN, S
 
 
