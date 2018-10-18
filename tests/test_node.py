@@ -85,7 +85,8 @@ def test_bind(loc_a, node):
 
     def bind_check():
         with node.bind(loc_a) as src:
-            assert node._networks[loc_a.hostname_as_address()].ports[loc_a.port].local.name == Process.current().local.name
+            assert node._networks[loc_a.hostname_as_address()].ports[loc_a.port].local.name == \
+                Process.current().local.name
             assert loc_a == src
 
     run_test_sim(bind_check)
@@ -175,7 +176,8 @@ def test_open_socket_on_location(loc_a, node):
     def socket_check():
         with node.open_socket(loc_a) as sock:
             assert loc_a == sock._src
-            assert Process.current().local.name == node._networks[loc_a.hostname_as_address()].ports[loc_a.port].local.name
+            assert Process.current().local.name == \
+                node._networks[loc_a.hostname_as_address()].ports[loc_a.port].local.name
         # Check cleanup
         assert loc_a.port not in node._networks[loc_a.hostname_as_address()].ports.keys()
         assert loc_a not in node._sockets
