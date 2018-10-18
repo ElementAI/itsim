@@ -39,7 +39,7 @@ class UserGroup(ITObject):
     def add_members(self, *members: UserAccount) -> None:
         self._members |= set(members)
 
-    def drop_members(self, *members: UserAccount) -> None:
+    def remove_members(self, *members: UserAccount) -> None:
         self._members -= set(members)
 
     def __eq__(self, o: Any) -> bool:
@@ -51,5 +51,6 @@ class UserGroup(ITObject):
             return self.name == o.name \
                 and self.members == o.members
 
-        def __hash__(self) -> int:
-            return self._name.__hash__() + self._members.__hash__()
+    def __hash__(self) -> int:
+        return self._name.__hash__() +\
+            sum([mem.__hash__() for mem in self._members])

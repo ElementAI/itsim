@@ -20,7 +20,7 @@ from itsim.it_objects.networking.link import AddressError, AddressInUse, Invalid
 from itsim.it_objects.payload import Payload, PayloadDictionaryType
 from itsim.it_objects.packet import Packet
 from itsim.network import Network
-from itsim.node.accounts import UserAccount, UserGroup
+from itsim.node.accounts import UserAccount
 from itsim.node.files import File
 from itsim.node.processes.process import Process
 from itsim.node.processes.thread import Thread
@@ -357,8 +357,8 @@ class Node(_Node):
     def fork_exec(self, sim: Simulator, f: Callable[[Thread], None], *args, **kwargs) -> Process:
         return self.fork_exec_in(sim, 0, f, *args, **kwargs)
 
-    def run_file(self, sim: Simulator, file: File, user: UserAccount, group: UserGroup) -> None:
-        self.fork_exec(sim, file.get_executable(user, group))
+    def run_file(self, sim: Simulator, file: File, user: UserAccount) -> None:
+        self.fork_exec(sim, file.get_executable(user))
 
     def next_proc_number(self) -> int:
         self._process_counter += 1
@@ -371,6 +371,9 @@ class Node(_Node):
     def with_proc_at(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
         self.fork_exec_in(sim, time, f, *args, **kwargs)
         return self
+
+    def with_files(self, *files: File) -> None:
+        pass
 
 
 class _DefaultAddressSetter(object):

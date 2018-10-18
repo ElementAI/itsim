@@ -3,7 +3,7 @@ from inspect import getfullargspec
 from itsim.it_objects import ITObject
 from itsim.node.accounts import UserAccount, UserGroup
 
-from typing import Generic, TypeVar
+from typing import Dict, Generic, TypeVar, Union
 
 
 class InvalidExecutable(Exception):
@@ -18,38 +18,66 @@ class InvalidPermission(Exception):
     pass
 
 
+class TargetedPolicy(ITObject):
+
+    def __init__(self, read: bool, write: bool, exc: bool):
+        self._read: bool = read
+        self._write: bool = write
+        self._exec: bool = exc
+
+    @property
+    def has_read_access(self) -> bool:
+        return self._read
+
+    @property
+    def has_write_access(self) -> bool:
+        return self._write
+
+    @property
+    def has_exec_access(self) -> bool:
+        return self._exec
+
+
 class Policy(ITObject):
 
     def __init__(self,
-                 owning_user: UserAccount,
-                 owning_group: UserGroup,
-                 # Uses chmod convention to be concise
-                 user: int, group: int, other: int):
-        self.owning_user: UserAccount = owning_user
-        self.owning_group: UserGroup = owning_group
+                 default: TargetedPolicy,
+                 rules: Dict[Union[UserAccount, UserGroup], TargetedPolicy] = {}) -> None:
+        self._default = default
+        self._rules = rules
 
-        if sum([0 > i or i > 7 for i in (user, group, other)]):
-            raise InvalidPermission()
+    def has_read_access(self, user: UserAccount) -> bool:
+        return self._has_access("has_read_access", user)
 
-        self.user: int = user
-        self.group: int = group
-        self.other: int = other
+    def has_write_access(self, user: UserAccount) -> bool:
+        return self._has_access("has_write_access", user)
 
-    def has_read(self, user: UserAccount, group: UserGroup):
-        return self._check_binary_digit(4, user, group)
+    def has_exec_access(self, user: UserAccount) -> bool:
+        return self._has_access("has_exec_access", user)
 
-    def has_write(self, user: UserAccount, group: UserGroup):
-        return self._check_binary_digit(2, user, group)
+    def _has_access(self, access_type: str, user: UserAccount) -> bool:
+        user_policies = [policy[1] for policy in self._rules.items() if policy[0] == user]
+        user_access = [getattr(p, access_type) for p in user_policies]
 
-    def has_exec(self, user: UserAccount, group: UserGroup):
-        return self._check_binary_digit(1, user, group)
+        # If we find any False return False
+        if sum(user_access) < len(user_access):
+            return False
+        # If we find no False and at least one True, return True
+        elif len(user_access) > 0:
+            return True
 
-    def _check_binary_digit(self, dig: int, user: UserAccount, group: UserGroup):
-        if user == self.owning_user:
-            return self.user & dig == dig
-        elif group == self.owning_group:
-            return self.group & dig == dig
-        return self.other & dig == dig
+        groups = [policy_item for policy_item in self._rules.items() if isinstance(policy_item[0], UserGroup)]
+        group_policies = [policy[1] for policy in groups if user in policy[0].members]
+        group_access = [getattr(p, access_type) for p in group_policies]
+
+        # If we find any False return False
+        if sum(group_access) < len(group_access):
+            return False
+        # If we find no False and at least one True, return True
+        elif len(group_access) > 0:
+            return True
+
+        return getattr(self._default, access_type)
 
 
 T = TypeVar('T')
@@ -71,25 +99,25 @@ class File(ITObject, Generic[T]):
     def policy(self, new_policy: Policy):
         self._policy = new_policy
 
-    def read(self, user: UserAccount, group: UserGroup):
-        if not self._policy.has_read(user, group):
+    def read(self, user: UserAccount):
+        if not self._policy.has_read_access(user):
             raise PermissionDenied()
         else:
             return self._content
 
-    def write(self, user: UserAccount, group: UserGroup, new_content: T):
-        if not self._policy.has_read(user, group):
+    def write(self, user: UserAccount, new_content: T):
+        if not self._policy.has_write_access(user):
             raise PermissionDenied()
         else:
             self._content = new_content
 
-    def get_executable(self, user: UserAccount, group: UserGroup) -> T:
+    def get_executable(self, user: UserAccount) -> T:
         # Needs to be a function with exactly one argument for the thread
         if not (hasattr(self._content, "__call__") and len(getfullargspec(self._content).args) == 1):
             print(hasattr(self._content, "__call__"))
             print(len(getfullargspec(self._content).args))
             raise InvalidExecutable()
-        if not self._policy.has_exec(user, group):
+        if not self._policy.has_exec_access(user):
             raise PermissionDenied()
         else:
             return self._content
