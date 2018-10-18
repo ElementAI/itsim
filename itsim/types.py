@@ -52,9 +52,14 @@ def as_host(hr: HostRepr) -> Host:
 
 
 class Protocol(IntFlag):
+    # Transport
     UDP = 0x1
     TCP = 0x2
     BOTH = UDP | TCP
+    # Confidentiality protection
+    CLEAR = 0x40000000
+    SSL = 0x80000000
+    ANY = CLEAR | SSL
 
 
 class Ports(ABC):
