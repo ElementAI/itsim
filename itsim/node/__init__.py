@@ -189,6 +189,12 @@ class Socket(ITObject):
             self.log_pair(pair[0], None, pair[1], True)
 
 
+class Host(object):
+
+    def __init__(self):
+        raise NotImplementedError()
+
+
 class Node(_Node):
 
     LocationBind = Union[None, AddressRepr, PortRepr, Location, Tuple]

@@ -2,7 +2,8 @@ from inspect import isgenerator
 from ipaddress import ip_network
 
 from greensim.random import normal, constant
-from itsim.link import Internet, Link
+from itsim.internet import Internet
+from itsim.link import Link
 from itsim.node.endpoint import Endpoint
 from itsim.node.router import Router
 from itsim.simulator import Simulator
@@ -13,8 +14,7 @@ from itsim.network.services.firewall import Firewall, Allow, Deny, Protocol
 
 
 sim = Simulator()
-
-internet = Internet(sim)
+internet = Internet()
 
 PORTS_DNS = [53]
 PORTS_WWW = [80, 443]
