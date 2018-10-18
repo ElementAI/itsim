@@ -1,5 +1,5 @@
 from numbers import Real
-from typing import cast, TypeVar, Optional
+from typing import TypeVar, Optional
 
 from greensim.random import VarRandom, RandomOpt, linear, bounded, project_int
 
