@@ -8,7 +8,7 @@ T = TypeVar("T")
 
 VarRandomTime = VarRandom[float]
 VarRandomSize = VarRandom[int]
-VarRandomBandwidth = VarRandom[int]
+VarRandomBandwidth = VarRandom[float]
 
 
 def num_bytes(
