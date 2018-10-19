@@ -2,9 +2,9 @@ from typing import Optional, MutableMapping
 
 from greensim.random import expo, normal, bounded, linear, uniform
 
+from itsim.internet import Internet, Daemon
 from itsim.it_objects.location import Location
 from itsim.it_objects.payload import Payload, PayloadDictionaryType
-from itsim.link import Internet, Daemon
 from itsim.node import Socket
 from itsim.random import num_bytes
 from itsim.simulator import Simulator
@@ -43,7 +43,8 @@ for domain in ["youtube.com", "netflix.com", "spotify.com"]:
     ).web_streaming(
         sim,
         bandwidth_usage=linear(expo(1 * MbPS), 1.0, 1 * MbPS),
-        duration=expo(5 * MIN), frequency=1
+        duration=expo(5 * MIN),
+        frequency=1
     )
 
 for domain in ["google.com", "facebook.com"]:

@@ -1,10 +1,11 @@
 from typing import Optional, Callable
 
+from itsim.it_objects import ITObject
 from itsim.link import Link
 from itsim.node import Host
 from itsim.random import VarRandomSize, VarRandomTime, VarRandomBandwidth
 from itsim.simulator import Simulator
-from itsim.types import HostnameRepr, Protocol, Ports
+from itsim.types import HostnameRepr, Protocol, PortsRepr
 
 
 class InternetHost(Host):
@@ -30,7 +31,8 @@ class InternetHost(Host):
         self,
         sim: Simulator,
         bandwidth_usage: VarRandomBandwidth,
-        protocol: Protocol = Protocol.ANY,
+        duration: VarRandomTime,
+        protocol: Protocol = Protocol.SSL,
         frequency: float = 1
     ) -> "InternetHost":
         raise NotImplementedError()
@@ -49,6 +51,7 @@ class InternetHost(Host):
 
     def shell_server(
         self,
+        sim: Simulator,
         duration: VarRandomTime,
         interval: VarRandomTime,
         request: VarRandomSize,
@@ -61,8 +64,8 @@ class InternetHost(Host):
     def daemon(
         self,
         sim: Simulator,
-        tcp: Optional[Ports] = None,
-        udp: Optional[Ports] = None,
+        tcp: Optional[PortsRepr] = None,
+        udp: Optional[PortsRepr] = None,
         frequency: float = 1
     ) -> Callable:
         raise NotImplementedError()
@@ -79,3 +82,7 @@ class Internet(Link):
 
     def host(self, hostname: HostnameRepr, latency: VarRandomTime, bandwidth: VarRandomBandwidth) -> InternetHost:
         raise NotImplementedError()
+
+
+class Daemon(ITObject):
+    pass
