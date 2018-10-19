@@ -4,7 +4,6 @@ from itsim.it_objects import ITObject
 from itsim.network.services import Service
 from itsim.node import Node
 from itsim.random import VarRandomTime, VarRandomBandwidth
-from itsim.simulator import Simulator
 from itsim.types import AddressRepr, CidrRepr, Cidr, as_cidr
 
 
@@ -65,13 +64,4 @@ class Link(ITObject):
         """
         Iteration over the nodes connected to a link.
         """
-        raise NotImplementedError()
-
-
-class Internet(Link):
-    """
-    Special networking support that embodies the external environment to which a local network connects.
-    """
-
-    def __init__(self, sim: Simulator) -> None:
         raise NotImplementedError()

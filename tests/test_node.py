@@ -41,9 +41,9 @@ BROADCAST_ADDR = as_address("132.216.177.160")
 @patch("itsim.network.Network")
 def node(mock_net, loc_a):
     node = Node()
-    mock_net.link.return_value = loc_a.host_as_address()
+    mock_net.link.return_value = loc_a.hostname_as_address()
     mock_net.address_broadcast = BROADCAST_ADDR
-    node.link_to(mock_net, loc_a.host)
+    node.link_to(mock_net, loc_a.hostname)
     return node
 
 
@@ -85,7 +85,8 @@ def test_bind(loc_a, node):
 
     def bind_check():
         with node.bind(loc_a) as src:
-            assert node._networks[loc_a.host_as_address()].ports[loc_a.port].local.name == Process.current().local.name
+            assert node._networks[loc_a.hostname_as_address()].ports[loc_a.port].local.name == \
+                Process.current().local.name
             assert loc_a == src
 
     run_test_sim(bind_check)
@@ -98,7 +99,7 @@ def test_bind_releases_on_exception(loc_a, node):
             with node.bind(loc_a):
                 raise Exception()
         except Exception:
-            assert loc_a.port not in node._networks[loc_a.host_as_address()].ports.keys()
+            assert loc_a.port not in node._networks[loc_a.hostname_as_address()].ports.keys()
             with node.bind(loc_a):
                 pass
 
@@ -135,7 +136,7 @@ def test_open_socket_on_address(node):
             assert Process.current().local.name == node._networks[as_address("54.88.73.99")] \
                                                        .ports[src._port].local.name
         # Check cleanup
-        assert src._port not in node._networks[src.host_as_address()].ports.keys()
+        assert src._port not in node._networks[src.hostname_as_address()].ports.keys()
         assert src not in node._sockets
 
     run_test_sim(socket_check)
@@ -150,7 +151,7 @@ def test_open_socket_on_tuple(node):
             assert Process.current().local.name == node._networks[as_address("54.88.73.99")] \
                                                        .ports[443].local.name
         # Check cleanup
-        assert 443 not in node._networks[src.host_as_address()].ports.keys()
+        assert 443 not in node._networks[src.hostname_as_address()].ports.keys()
         assert src not in node._sockets
 
     run_test_sim(socket_check)
@@ -162,9 +163,9 @@ def test_open_socket_on_port(node):
         src = None
         with node.open_socket(100) as sock:
             src = sock._src
-            assert Process.current().local.name == node._networks[src.host_as_address()].ports[100].local.name
+            assert Process.current().local.name == node._networks[src.hostname_as_address()].ports[100].local.name
         # Check cleanup
-        assert 100 not in node._networks[src.host_as_address()].ports.keys()
+        assert 100 not in node._networks[src.hostname_as_address()].ports.keys()
         assert src not in node._sockets
 
     run_test_sim(socket_check)
@@ -175,9 +176,10 @@ def test_open_socket_on_location(loc_a, node):
     def socket_check():
         with node.open_socket(loc_a) as sock:
             assert loc_a == sock._src
-            assert Process.current().local.name == node._networks[loc_a.host_as_address()].ports[loc_a.port].local.name
+            assert Process.current().local.name == \
+                node._networks[loc_a.hostname_as_address()].ports[loc_a.port].local.name
         # Check cleanup
-        assert loc_a.port not in node._networks[loc_a.host_as_address()].ports.keys()
+        assert loc_a.port not in node._networks[loc_a.hostname_as_address()].ports.keys()
         assert loc_a not in node._sockets
 
     run_test_sim(socket_check)
@@ -191,7 +193,7 @@ def test_open_socket_releases_on_exception(loc_a, node):
                 raise Exception()
         except Exception:
             assert loc_a not in node._sockets
-            assert node._networks[loc_a.host_as_address()].network.address_broadcast not in node._sockets
+            assert node._networks[loc_a.hostname_as_address()].network.address_broadcast not in node._sockets
             with node.open_socket(loc_a):
                 pass
 
@@ -234,7 +236,7 @@ def test_send_to_network(node, packet):
     def send_check():
         with node.bind(packet.source):
             node._send_to_network(packet)
-            node._networks[packet.source.host_as_address()].network.transmit.assert_called_with(packet)
+            node._networks[packet.source.hostname_as_address()].network.transmit.assert_called_with(packet)
 
     run_test_sim(send_check)
 
@@ -261,12 +263,12 @@ def test_send_to_unlinked_port(node, packet):
 
 
 def test_get_broadcast(node, loc_a):
-    assert BROADCAST_ADDR == node._get_network_broadcast_address(loc_a.host)
+    assert BROADCAST_ADDR == node._get_network_broadcast_address(loc_a.hostname)
 
 
 def test_get_broadcast_from_unlinked_network(node, loc_b):
     with raises(NoNetworkLinked):
-        node._get_network_broadcast_address(loc_b.host)
+        node._get_network_broadcast_address(loc_b.hostname)
 
 
 def test_add_physical_link(node, link_a, link_b):
