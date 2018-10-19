@@ -8,18 +8,20 @@ from contextlib import contextmanager
 from ipaddress import _BaseAddress
 from itertools import cycle
 from queue import Queue
-from typing import Any, cast, Generator, Iterable, Optional, MutableMapping, List, Tuple, Union
+from typing import Any, Callable, cast, Generator, Iterable, Optional, MutableMapping, List, Set, Tuple, Union
 
-from greensim import now, Process, Signal
+import greensim
 
 from itsim import _Node
-from itsim.it_objects import ITObject
+from itsim.it_objects import ITObject, Simulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.networking import _Link
 from itsim.it_objects.networking.link import AddressError, AddressInUse, InvalidAddress
 from itsim.it_objects.payload import Payload, PayloadDictionaryType
 from itsim.it_objects.packet import Packet
 from itsim.network import Network
+from itsim.node.processes.process import Process
+from itsim.node.processes.thread import Thread
 from itsim.types import AddressRepr, Address, CidrRepr, as_address, Port, PortRepr
 
 
@@ -72,7 +74,7 @@ class Socket(ITObject):
         self._src = src
         self._node = node
         self._packet_queue: Queue[Packet] = Queue()
-        self._packet_signal: Signal = Signal()
+        self._packet_signal: greensim.Signal = greensim.Signal()
         self._packet_signal.turn_off()
         # Keeps track of packets waiting for responses so they can be logged together
         # The float keeps track of the time that the packet was queued up
@@ -94,7 +96,7 @@ class Socket(ITObject):
     # Designed to keep this hack contained. This allows unit tests without a Simulation to succeed
     def get_time_with_fallback(self):
         try:
-            return now()
+            return greensim.now()
         except TypeError:
             return 0
 
@@ -205,6 +207,9 @@ class Node(_Node):
         self._address_default: Optional[Address] = None
         self._sockets: MutableMapping[Location, Socket] = OrderedDict()
         self._links: MutableMapping[AddressRepr, _Link] = OrderedDict()
+        self._proc_set: Set[Process] = set()
+        self._process_counter: int = 0
+        self._default_process_parent = Process(-1, self)
 
     def add_physical_link(self, link: _Link, ar: AddressRepr) -> None:
         """
@@ -300,7 +305,7 @@ class Node(_Node):
         if src.port in self._networks[src.hostname_as_address()].ports.keys():
             raise PortAlreadyInUse()
 
-        self._networks[src.hostname_as_address()].ports[src.port] = Process.current()
+        self._networks[src.hostname_as_address()].ports[src.port] = greensim.Process.current()
         try:
             yield src
         finally:
@@ -343,6 +348,30 @@ class Node(_Node):
             raise NoNetworkLinked()
         network = self._networks[src_addr].network
         return network.address_broadcast
+
+    def procs(self) -> Set[Process]:
+        return self._proc_set
+
+    def fork_exec_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> Process:
+        proc = Process(self.next_proc_number(), self, self._default_process_parent)
+        self._proc_set |= set([proc])
+        proc.exc_in(sim, time, f, *args, **kwargs)
+        return proc
+
+    def fork_exec(self, sim: Simulator, f: Callable[[Thread], None], *args, **kwargs) -> Process:
+        return self.fork_exec_in(sim, 0, f, *args, **kwargs)
+
+    def next_proc_number(self) -> int:
+        self._process_counter += 1
+        return self._process_counter - 1
+
+    def proc_exit(self, p: Process) -> None:
+        self._proc_set -= set([p])
+        print("Remaining Procs: %s" % ", ".join([str(pro.__hash__()) for pro in self._proc_set]))
+
+    def with_proc_at(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
+        self.fork_exec_in(sim, time, f, *args, **kwargs)
+        return self
 
 
 class _DefaultAddressSetter(object):
