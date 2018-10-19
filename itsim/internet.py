@@ -55,8 +55,7 @@ class InternetHost(Host):
         duration: VarRandomTime,
         interval: VarRandomTime,
         request: VarRandomSize,
-        response: VarRandomSize,
-        frequency: float = 1
+        response: VarRandomSize
     ) -> "InternetHost":
         raise NotImplementedError()
         return self
@@ -65,10 +64,12 @@ class InternetHost(Host):
         self,
         sim: Simulator,
         tcp: Optional[PortsRepr] = None,
-        udp: Optional[PortsRepr] = None,
-        frequency: float = 1
+        udp: Optional[PortsRepr] = None
     ) -> Callable:
+        def _decorator(server_behaviour: Callable) -> Callable:
+            raise NotImplementedError()
         raise NotImplementedError()
+        return _decorator
 
 
 class Internet(Link):

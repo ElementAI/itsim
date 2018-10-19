@@ -83,8 +83,7 @@ for domain in ["amazonaws.com", "digitalocean.com"]:
         duration=expo(10.0 * MIN),
         interval=expo(5.0 * S),
         request=num_bytes(expo(200 * B), header=128 * B),
-        response=num_bytes(expo(200 * B), header=128 * B),
-        frequency=4
+        response=num_bytes(expo(200 * B), header=128 * B)
     )
 
 
@@ -100,7 +99,7 @@ for hostname in ["mother.ru", "77.88.55.66"]:
     )
 
     @cnc_host.daemon(sim, tcp=[80, 443])
-    def command_and_control(peer: Location, socket: Socket):
+    def command_and_control(peer: Location, socket: Socket) -> None:
         socket.recv()
         socket.send(
             peer,
