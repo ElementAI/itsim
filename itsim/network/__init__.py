@@ -109,18 +109,18 @@ class Network(ITObject):
         return self._cidr.broadcast_address
 
     def transmit(self, packet: Packet, receiver_maybe: Optional[_Node] = None) -> None:
-        if not isinstance(packet.dest.host, _BaseAddress):
-            raise InvalidAddress(packet.dest.host)
+        if not isinstance(packet.dest.hostname, _BaseAddress):
+            raise InvalidAddress(packet.dest.hostname)
 
         receivers: Iterable[_Node]
         if receiver_maybe is not None:
             receivers = [cast(_Node, receiver_maybe)]
-        elif packet.dest.host == self.address_broadcast:
+        elif packet.dest.hostname == self.address_broadcast:
             receivers = self._nodes.values()
-        elif packet.dest.host in self._nodes:
-            receivers = [self._nodes[packet.dest.host]]
+        elif packet.dest.hostname in self._nodes:
+            receivers = [self._nodes[packet.dest.hostname_as_address()]]
         else:
-            receivers = [self._get_forwarder(cast(Address, packet.dest.host))]
+            receivers = [self._get_forwarder(cast(Address, packet.dest.hostname))]
 
         def transmission():
             advance(next(self._latency) + len(packet) / next(self._bandwidth))

@@ -65,12 +65,3 @@ class Link(ITObject):
         Iteration over the nodes connected to a link.
         """
         raise NotImplementedError()
-
-
-class Internet(Link):
-    """
-    Special networking support that embodies the external environment to which a local network connects.
-    """
-
-    def __init__(self, sim: Simulator) -> None:
-        raise NotImplementedError()

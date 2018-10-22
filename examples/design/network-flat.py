@@ -2,7 +2,8 @@ from inspect import isgenerator
 from ipaddress import ip_network
 
 from greensim.random import normal, constant
-from itsim.link import Internet, Link
+from itsim.internet import Internet
+from itsim.link import Link
 from itsim.node.endpoint import Endpoint
 from itsim.node.router import Router
 from itsim.simulator import Simulator
@@ -13,8 +14,7 @@ from itsim.network.services.firewall import Firewall, Allow, Deny, Protocol
 
 
 sim = Simulator()
-
-internet = Internet(sim)
+internet = Internet()
 
 PORTS_DNS = [53]
 PORTS_WWW = [80, 443]
@@ -33,6 +33,7 @@ for aname in ["latency", "bandwidth"]:
 # forwards between. In this case, there is a single local network, so all forwarding is towards the WAN.
 #
 router = Router(
+    sim,
     internet.connected_as("24.192.132.23").setup(NAT()),  # WAN
     net.connected_as(1).setup(  # LAN -- As net is 192.168.1/24, machine 1 on it becomes 192.168.1.1.
         # Parameters to setup() are services we expect the router to run for this network.

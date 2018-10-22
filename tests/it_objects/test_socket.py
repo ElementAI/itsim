@@ -61,7 +61,7 @@ def test_send(socket, loc_a, loc_b, packet):
 def test_broadcast(socket, loc_a):
     socket.broadcast(80, 10, Payload())
     broadcast_packet = Packet(loc_a, Location(BROADCAST_ADDR, 80), 10, Payload())
-    socket._node._get_network_broadcast_address.assert_called_with(loc_a.host)
+    socket._node._get_network_broadcast_address.assert_called_with(loc_a.hostname)
     socket._node._send_to_network.assert_called_with(broadcast_packet)
 
 

@@ -3,36 +3,36 @@ from ipaddress import _BaseAddress
 from typing import cast, Any
 
 from itsim.it_objects import ITObject
-from itsim.types import Address, as_host, as_port, Host, HostRepr, Port, PortRepr
+from itsim.types import Address, as_hostname, as_port, Hostname, HostnameRepr, Port, PortRepr
 
 
 @total_ordering
 class Location(ITObject):
-    def __init__(self, host: HostRepr = None, port: PortRepr = None) -> None:
+    def __init__(self, host: HostnameRepr = None, port: PortRepr = None) -> None:
         super().__init__()
-        self._host = as_host(host)
+        self._hostname = as_hostname(host)
         self._port = as_port(port)
 
     @property
-    def host(self) -> Host:
-        return self._host
+    def hostname(self) -> Hostname:
+        return self._hostname
 
     @property
     def port(self) -> Port:
         return self._port
 
-    def host_as_address(self) -> Address:
-        if not isinstance(self.host, _BaseAddress):
+    def hostname_as_address(self) -> Address:
+        if not isinstance(self.hostname, _BaseAddress):
             raise ValueError("Location carries a domain name for host, which resolution must be simulated explicitly.")
-        return cast(Address, self._host)
+        return cast(Address, self._hostname)
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Location):
             raise ValueError(f"Cannot compare for equality {str(self)} to {str(other)} (type {type(other)}).")
-        return self.host == other.host and self.port == other.port
+        return self.hostname == other.hostname and self.port == other.port
 
     def __str__(self) -> str:
-        return f"{str(self.host)}:{str(self.port)}"
+        return f"{str(self.hostname)}:{str(self.port)}"
 
     def __repr__(self) -> str:
         return repr(str(self))
@@ -43,6 +43,6 @@ class Location(ITObject):
     def __lt__(self, other) -> bool:
         if not isinstance(other, Location):
             raise ValueError(f"Cannot compare for order {str(self)} to {str(other)} (type {type(other)}).")
-        if self.host == other.host:
+        if self.hostname == other.hostname:
             return self.port < other.port
-        return str(self.host) < str(other.host)
+        return str(self.hostname) < str(other.hostname)

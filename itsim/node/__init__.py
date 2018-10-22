@@ -130,7 +130,7 @@ class Socket(ITObject):
         self.correlate_outbound_packet(dest, ob_packet)
 
     def broadcast(self, port: int, byte_size: int, payload: Payload) -> None:
-        dest_addr = self._node._get_network_broadcast_address(self._src.host)
+        dest_addr = self._node._get_network_broadcast_address(self._src.hostname)
         self.send(Location(dest_addr, port), byte_size, payload)
 
     def _enqueue(self, packet: Packet) -> None:
@@ -165,10 +165,10 @@ class Socket(ITObject):
                 remote_ip = str(cast(Address,
                                      packet_out._payload._entries[PayloadDictionaryType.ADDRESS]))
             else:
-                remote_ip = str(packet_out.dest.host)
+                remote_ip = str(packet_out.dest.hostname)
 
         self.get_logger().info(json.dumps({"Connection_Type": "UDP",
-                                           "Local_IP": 0 if packet_in is None else str(packet_in.dest.host),
+                                           "Local_IP": 0 if packet_in is None else str(packet_in.dest.hostname),
                                            "Local_Port": 0 if packet_in is None else str(packet_in.dest.port),
                                            "Direction": "Inbound" if is_inbound else "Outbound",
                                            "Remote_IP": remote_ip,
@@ -189,6 +189,12 @@ class Socket(ITObject):
 
         for pair in self._inbound_packets.values():
             self.log_pair(pair[0], None, pair[1], True)
+
+
+class Host(object):
+
+    def __init__(self):
+        raise NotImplementedError()
 
 
 class Node(_Node):
@@ -279,12 +285,12 @@ class Node(_Node):
         loc = self._as_location(lb)  # type: ignore
 
         # Address here must be one of the node's addresses.
-        if not isinstance(loc.host, _BaseAddress) or loc.host not in self.addresses:
-            raise InvalidAddress(loc.host)
-        elif loc.host not in self.addresses:
-            raise InvalidAddress(loc.host)
+        if not isinstance(loc.hostname, _BaseAddress) or loc.hostname not in self.addresses:
+            raise InvalidAddress(loc.hostname)
+        elif loc.hostname not in self.addresses:
+            raise InvalidAddress(loc.hostname)
         else:
-            address = loc.host
+            address = loc.hostname
 
         port: Port = loc.port
         if port == 0:
@@ -296,14 +302,14 @@ class Node(_Node):
     @contextmanager
     def bind(self, lb: Optional[LocationBind] = None) -> Generator[Location, None, None]:
         src = self._as_source_bind(lb)  # type: ignore
-        if src.port in self._networks[src.host_as_address()].ports.keys():
+        if src.port in self._networks[src.hostname_as_address()].ports.keys():
             raise PortAlreadyInUse()
 
-        self._networks[src.host_as_address()].ports[src.port] = greensim.Process.current()
+        self._networks[src.hostname_as_address()].ports[src.port] = greensim.Process.current()
         try:
             yield src
         finally:
-            del self._networks[src.host_as_address()].ports[src.port]
+            del self._networks[src.hostname_as_address()].ports[src.port]
 
     @contextmanager
     def open_socket(self, lb: Optional[LocationBind] = None) -> Generator[Socket, None, None]:
@@ -311,7 +317,7 @@ class Node(_Node):
             sock = Socket(src, self)
 
             # Listen on the broadcast address
-            broadcast_addr = self._get_network_broadcast_address(src.host_as_address())
+            broadcast_addr = self._get_network_broadcast_address(src.hostname_as_address())
             broadcast = Location(broadcast_addr, src.port)
 
             self._sockets[src] = sock
@@ -325,10 +331,10 @@ class Node(_Node):
 
     def _send_to_network(self, packet: Packet) -> None:
         src = packet.source
-        if src.host_as_address() not in self._networks or \
-           src.port not in self._networks[src.host_as_address()].ports.keys():
+        if src.hostname_as_address() not in self._networks or \
+           src.port not in self._networks[src.hostname_as_address()].ports.keys():
             raise NoNetworkLinked()
-        network = self._networks[src.host_as_address()].network
+        network = self._networks[src.hostname_as_address()].network
         network.transmit(packet)
 
     def _receive(self, packet: Packet) -> None:
