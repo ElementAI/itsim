@@ -1,10 +1,9 @@
 from typing import Iterator
 
-from itsim.it_objects import ITObject
+from itsim.it_objects import ITObject, Simulator
 from itsim.network.services import Service
 from itsim.node import Node
 from itsim.random import VarRandomTime, VarRandomBandwidth
-from itsim.simulator import Simulator
 from itsim.types import AddressRepr, CidrRepr, Cidr, as_cidr
 
 
@@ -52,10 +51,10 @@ class Link(ITObject):
         services.
 
         - :param ar: Address the node should take on this link.
-            - If an integer is given, it is considered as the host number of the machine on this network. In other
-              words, this number is added to the link's network number to form the node's full address.
-            - The use of None as address gives the node address 0.0.0.0 (which is fine if it uses DHCP to receive an
-              address from a router node).
+            -If an integer is given, it is considered as the host number of the machine on this network. In other
+            words, this number is added to the link's network number to form the node's full address.
+            The use of None as address gives the node address 0.0.0.0 (which is fine if it uses DHCP to receive an
+            address from a router node).
         """
         if ar is None:
             ar = "0.0.0.0"

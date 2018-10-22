@@ -1,5 +1,5 @@
+from itsim.it_objects import Simulator
 from itsim.node import Node
-from itsim.simulator import Simulator
 
 
 class Endpoint(Node):

@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from ipaddress import _BaseAddress
 from itertools import cycle
 from queue import Queue
-from typing import Any, Callable, cast, Generator, Iterable, Optional, MutableMapping, List, Set, Tuple, Union
+from typing import Any, Callable, cast, Generator, Iterable, MutableMapping, Optional, List, Set, Tuple, TypeVar
 
 import greensim
 
@@ -193,7 +193,7 @@ class Socket(ITObject):
 
 class Node(_Node):
 
-    LocationBind = Union[None, AddressRepr, PortRepr, Location, Tuple]
+    LocationBind = TypeVar("LocationBind", AddressRepr, PortRepr, Location, Tuple)
 
     def __init__(self):
         super().__init__()
@@ -262,7 +262,7 @@ class Node(_Node):
         except StopIteration:
             raise NoNetworkLinked()
 
-    def _as_location(self, lb: "Node.LocationBind") -> Location:
+    def _as_location(self, lb: Optional[LocationBind] = None) -> Location:
         if lb is None:
             return Location(self.address_default, 0)
         elif isinstance(lb, int):
@@ -275,8 +275,8 @@ class Node(_Node):
             return cast(Location, lb)
         raise ValueError("What is that LocationBind instance?")
 
-    def _as_source_bind(self, lb: "Node.LocationBind") -> Location:
-        loc = self._as_location(lb)
+    def _as_source_bind(self, lb: Optional[LocationBind] = None) -> Location:
+        loc = self._as_location(lb)  # type: ignore
 
         # Address here must be one of the node's addresses.
         if not isinstance(loc.host, _BaseAddress) or loc.host not in self.addresses:
@@ -294,8 +294,8 @@ class Node(_Node):
         return Location(address, port)
 
     @contextmanager
-    def bind(self, lb: "Node.LocationBind" = None) -> Generator[Location, None, None]:
-        src = self._as_source_bind(lb)
+    def bind(self, lb: Optional[LocationBind] = None) -> Generator[Location, None, None]:
+        src = self._as_source_bind(lb)  # type: ignore
         if src.port in self._networks[src.host_as_address()].ports.keys():
             raise PortAlreadyInUse()
 
@@ -306,9 +306,8 @@ class Node(_Node):
             del self._networks[src.host_as_address()].ports[src.port]
 
     @contextmanager
-    def open_socket(self, lb: "Node.LocationBind" = None) -> Generator[Socket, None, None]:
-
-        with self.bind(lb) as src:
+    def open_socket(self, lb: Optional[LocationBind] = None) -> Generator[Socket, None, None]:
+        with self.bind(lb) as src:  # type: ignore
             sock = Socket(src, self)
 
             # Listen on the broadcast address
