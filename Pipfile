@@ -7,15 +7,17 @@ name = "pypi"
 greensim = "*"
 
 [dev-packages]
-pytest = {version = ">=3.8.2", index = "pypi"}
-pytest-cov = {version = ">=2.5.1", index = "pypi"}
 flake8 = "*"
+itsim = {editable = true, path = "."}
 mypy = "*"
 pudb = "*"
-twine = "*"
+pytest = {version = ">=3.8.2", index = "pypi"}
+pytest-cov = {version = ">=2.5.1", index = "pypi"}
 setuptools = "*"
+sphinx = "*"
+twine = "*"
 wheel = "*"
-itsim = {editable = true, path = "."}
+
 
 [requires]
 python_version = "3.6"
