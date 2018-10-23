@@ -8,13 +8,13 @@ with open("README.md", "r") as file_long_description:
 sphinx_cmd_list = ["sphinx-apidoc itsim -o sphinx/source/modules",
                    "make -C sphinx html"]
 
-# sphinx_cmd = "(%s)" % " && ".join(sphinx_cmd_list)
 
 class PostInstall(install):
     def run(self) -> None:
         for cmd in sphinx_cmd_list:
             print(cmd.split(" "))
             check_call(cmd.split(" "))
+
 
 setup(
     name='itsim',
@@ -31,7 +31,5 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent"
     ),
-    cmdclass = {"install": PostInstall}
+    cmdclass={"install": PostInstall}
 )
-
-
