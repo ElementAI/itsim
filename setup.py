@@ -12,7 +12,6 @@ sphinx_cmd_list = ["sphinx-apidoc itsim -o sphinx/source/modules",
 class PostInstall(install):
     def run(self) -> None:
         for cmd in sphinx_cmd_list:
-            print(cmd.split(" "))
             check_call(cmd.split(" "))
 
 
