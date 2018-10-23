@@ -33,8 +33,8 @@ def two_node_setup(loc_a, loc_b):
                   bandwidth=constant(1),
                   latency=constant(5),
                   num_skip_addresses=100)
-    end_a = Endpoint("Antigonish", net, loc_a.host)
-    end_b = Endpoint("Bathurst", net, loc_b.host)
+    end_a = Endpoint("Antigonish", net, loc_a.hostname)
+    end_b = Endpoint("Bathurst", net, loc_b.hostname)
     return (simulator, net, end_a, end_b, loc_a, loc_b)
 
 
@@ -79,7 +79,7 @@ def test_packet_bounce(two_node_setup):
 @fixture
 def three_node_setup(two_node_setup, loc_c):
     sim, net, end_a, end_b, loc_a, loc_b = two_node_setup
-    end_c = Endpoint("Chicoutimi", net, loc_c.host)
+    end_c = Endpoint("Chicoutimi", net, loc_c.hostname)
     return (sim, net, end_a, end_b, end_c, loc_a, loc_b, loc_c)
 
 
@@ -140,14 +140,14 @@ def test_packet_broadcast(three_node_setup):
 
     def listen_a():
         nonlocal flag
-        with end_a.open_socket(Location(loc_a.host, 1867)) as sock:
+        with end_a.open_socket(Location(loc_a.hostname, 1867)) as sock:
             assert packet_c == sock.recv()
             flag += 1
             assert 5 == now()
 
     def listen_b():
         nonlocal flag
-        with end_b.open_socket(Location(loc_b.host, 1867)) as sock:
+        with end_b.open_socket(Location(loc_b.hostname, 1867)) as sock:
             assert packet_c == sock.recv()
             flag += 1
             assert 5 == now()

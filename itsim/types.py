@@ -8,8 +8,8 @@ Address = Union[IPv4Address, IPv6Address]
 AddressRepr = Union[None, str, int, Address]
 PortRepr = Optional[int]
 Port = int
-HostRepr = AddressRepr
-Host = Union[Address, str]
+HostnameRepr = AddressRepr
+Hostname = Union[Address, str]
 Cidr = Union[IPv4Network, IPv6Network]
 CidrRepr = Union[str, Cidr]
 
@@ -40,7 +40,7 @@ def as_port(pr: PortRepr) -> Port:
     return pr
 
 
-def as_host(hr: HostRepr) -> Host:
+def as_hostname(hr: HostnameRepr) -> Hostname:
     try:
         return as_address(hr)
     except ValueError:
@@ -51,9 +51,14 @@ def as_host(hr: HostRepr) -> Host:
 
 
 class Protocol(IntFlag):
+    # Transport
     UDP = 0x1
     TCP = 0x2
     BOTH = UDP | TCP
+    # Confidentiality protection
+    CLEAR = 0x40000000
+    SSL = 0x80000000
+    ANY = CLEAR | SSL
 
 
 class Ports(ABC):
@@ -100,7 +105,7 @@ class PortRange(Ports):
         raise NotImplementedError()
 
 
-PortsRepr = Union[Iterable[Port], Tuple[Port, Port], Ports]
+PortsRepr = Union[Port, Iterable[Port], Tuple[Port, Port], Ports]
 
 
 class SystemCall(ABC):
