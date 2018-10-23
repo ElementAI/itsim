@@ -1,0 +1,1 @@
+All of the ReStructuredText files are generated and compiled to HTML by running `pipenv run sphinx-apidoc ../itsim -o source && mv source/modules.rst source/index.rst && mkdir -p source/_static &&  pipenv run make html` in the `sphinx` directory of ITSim
