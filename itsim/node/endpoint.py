@@ -1,4 +1,3 @@
-from itsim.simulator import Simulator
 from itsim.node import Node
 
 

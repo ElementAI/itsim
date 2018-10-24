@@ -18,6 +18,7 @@ from itsim.network import AddressError, AddressInUse, InvalidAddress, Location, 
     PayloadDictionaryType, Packet
 from itsim.simulator import Simulator
 from itsim.it_objects.networking import _Link
+from itsim.network import Link
 from itsim.node.accounts import UserAccount
 from itsim.node.files import File
 from itsim.node.processes.process import Process
@@ -210,6 +211,15 @@ class Node(_Node):
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
+
+    def connected_to(self, link: Link) -> "Node":
+        """
+        Configures a budding node to be connected to a given link.
+
+        :return: The node instance, so it can be further built.
+        """
+        raise NotImplementedError()
+        return self
 
     def add_physical_link(self, link: _Link, ar: AddressRepr) -> None:
         """

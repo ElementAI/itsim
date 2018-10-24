@@ -61,7 +61,7 @@ assert router in nodes
 # TODO -- Complete proper endpoint instantiation and load up some software.
 # TODO -- Get endpoints to do some stuff against the Internet, and ensure it worked.
 # TODO -- Facilitate adding multiple endpoints to a link in one call?
-endpoints = [Endpoint(sim).connected_to(net) for _ in range(50)]
+endpoints = [Endpoint().connected_to(net) for _ in range(50)]
 
 assert all(ept.address_default == as_address(0) for ept in endpoints)
 

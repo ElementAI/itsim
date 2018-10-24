@@ -86,7 +86,7 @@ router_dc = Router(
 assert {router_main, router_farm, router_corp, router_dc} == set(lobby.iter_nodes())
 
 NUM_ENDPOINTS_PER_SUBNET = 30
-endpoints = [Endpoint(sim).link_to(net) for _ in range(NUM_ENDPOINTS_PER_SUBNET) for net in [farm, corp, dc]]
+endpoints = [Endpoint().connected_to(net) for _ in range(NUM_ENDPOINTS_PER_SUBNET) for net in [farm, corp, dc]]
 assert all(ept.address_default == as_address(0) for ept in endpoints)
 
 sim.run()
