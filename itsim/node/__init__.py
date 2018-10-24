@@ -388,10 +388,3 @@ class _DefaultAddressSetter(object):
 
     def set_default(self) -> None:
         self._node._address_default = self._address
-
-
-class Router(Node):
-
-    def __init__(self, lan: Network, wan: Network) -> None:
-        super().__init__()
-        raise NotImplementedError()
