@@ -1,8 +1,19 @@
 from setuptools import setup
-# from subprocess import check_output
+from setuptools.command.install import install
+from subprocess import check_call
 
 with open("README.md", "r") as file_long_description:
     long_description = file_long_description.read()
+
+sphinx_cmd_list = ["sphinx-apidoc itsim -o sphinx/source/modules",
+                   "make -C sphinx html"]
+
+
+class PostInstall(install):
+    def run(self) -> None:
+        for cmd in sphinx_cmd_list:
+            check_call(cmd.split(" "))
+
 
 setup(
     name='itsim',
@@ -18,5 +29,6 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent"
-    )
+    ),
+    cmdclass={"install": PostInstall}
 )

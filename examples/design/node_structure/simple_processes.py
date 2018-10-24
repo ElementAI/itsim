@@ -4,7 +4,12 @@ from greensim import now, advance
 
 from itsim.it_objects import Simulator
 from itsim.node import Node
+from itsim.node.accounts import UserAccount, UserGroup
+from itsim.node.files import File
+from itsim.node.files.access_policies import Policy, TargetedPolicy
 from itsim.node.processes.thread import Thread
+
+from typing import Callable
 
 
 @unique
@@ -29,8 +34,7 @@ def run_sample() -> None:
         advance(10)
         log("I'm a child process! #%s > #%s" % (t._process._parent._n, t._process._n), Colors.YELLOW)
 
-    # The optional argument just proves type checking works for the Process and Thread even with extra args
-    def ping(thread: Thread, optional: object = None) -> None:
+    def ping(thread: Thread) -> None:
         proc = thread._process
         log("Howdy. It's %s O'clock" % now())
         log("\t I'm in process number %s" % proc._n)
@@ -54,6 +58,21 @@ def run_sample() -> None:
     kid.exc_in(sim, 1, ping)
     kid.exc_in(sim, 2, ping)
     kid.exc_in(sim, 3, ping)
+
+    user: UserAccount = UserAccount("demo")
+    group: UserGroup = UserGroup("demo")
+    group.add_members(user)
+
+    default_policy = TargetedPolicy(False, False, False)
+    user_policy = TargetedPolicy(False, False, True)
+    group_policy = TargetedPolicy(False, False, True)
+
+    user_allowed: Policy = Policy(default_policy, user_rules={user: user_policy})
+    group_allowed: Policy = Policy(default_policy, group_rules={group: group_policy})
+    runnable_a: File[Callable[[Thread], None]] = File(ping, user_allowed)
+    runnable_b: File[Callable[[Thread], None]] = File(ping, group_allowed)
+    pm.run_file(sim, runnable_a, user)
+    pm.run_file(sim, runnable_b, user)
     sim.run()
 
 
