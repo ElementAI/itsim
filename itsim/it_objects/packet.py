@@ -4,6 +4,14 @@ from itsim.it_objects.payload import Payload
 
 
 class Packet(ITObject):
+    """
+    Embodiment of a packet of data relayed over a link managed as a IP network.
+
+    :param source: Source location of the packet.
+    :param dest: Destination location where the packet is being relayed.
+    :byte_size: Size of the packet's payload, in bytes.
+    :payload: Optional free-form data used as a helper for implementing certain models. Not used by ITsim.
+    """
 
     def __init__(self,
                  source: Location,

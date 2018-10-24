@@ -16,6 +16,14 @@ CidrRepr = Union[str, Cidr]
 
 
 def as_address(ar: AddressRepr) -> Address:
+    """
+    Returns a strict ``Address`` object from one of its representations:
+
+        - ``None``, which designates address 0.0.0.0.
+        - A string, in typical form (e.g. "a.b.c.d" for IPv4 addresses).
+        - An integer, which is cast to an address in big-endian byte order.
+        - An ``Address`` object, which is returned unaltered.
+    """
     if ar is None:
         return ip_address(0)
     elif isinstance(ar, int):
@@ -28,12 +36,20 @@ def as_address(ar: AddressRepr) -> Address:
 
 
 def as_cidr(cr: CidrRepr) -> Cidr:
+    """
+    Returns a strict network address expressed as in CIDR form: either a string, expressing the network address as
+    ``"<network number><zeros>/<mask bits>"``, or as a ``Cidr`` object, which is returned unaltered.
+    """
     if isinstance(cr, _BaseNetwork):
         return cr
     return ip_network(cr)
 
 
 def as_port(pr: PortRepr) -> Port:
+    """
+    Return a port number from one of its representation: either the port number itself, or ``None``, which is
+    assimilated to catch-all port number 0.
+    """
     if pr is None:
         return 0
     if pr < 0 or pr >= 2 ** 16:
@@ -42,6 +58,10 @@ def as_port(pr: PortRepr) -> Port:
 
 
 def as_hostname(hr: HostnameRepr) -> Hostname:
+    """
+    Returns a hostname from one of its representations: either an address or a string bearing a name formatted according
+    to RFC 1034 of the IETF.
+    """
     try:
         return as_address(hr)
     except ValueError:
@@ -52,6 +72,9 @@ def as_hostname(hr: HostnameRepr) -> Hostname:
 
 
 class Protocol(IntFlag):
+    """
+    Combinable indicators of network protocols, at the transport and application levels.
+    """
     # Transport
     UDP = 0x1
     TCP = 0x2
@@ -68,7 +91,7 @@ class Ports(ABC):
     """
 
     @staticmethod
-    def all():
+    def all() -> "Ports":
         return PortRange(0, 65536)
 
     @abstractmethod
@@ -83,7 +106,7 @@ class PortSet(Ports):
 
     def __init__(self, ports: Iterable[Port]) -> None:
         """
-        - :param ports: Ports assembled into the set.
+        :param ports: Ports assembled into the set.
         """
         raise NotImplementedError()
 
@@ -98,7 +121,7 @@ class PortRange(Ports):
 
     def __init__(self, lower: Port, upper: Port) -> None:
         """
-        The functional interval is [lower, upper[.
+        The functional interval is ``[lower, upper[``.
         """
         raise NotImplementedError()
 
