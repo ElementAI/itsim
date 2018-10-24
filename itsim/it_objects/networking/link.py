@@ -1,42 +1,16 @@
 import weakref
 
 from collections import OrderedDict
-from typing import Any, MutableMapping
+from typing import MutableMapping
 
 from greensim import advance
 from greensim.random import VarRandom
 
 from itsim import _Node
+from itsim.network import Packet, AddressInUse
 from itsim.simulator import Simulator
 from itsim.it_objects.networking import _Link
-from itsim.it_objects.packet import Packet
 from itsim.types import Address, AddressRepr, as_address
-
-
-class AddressError(Exception):
-    """
-    Generic superclass for Exception objects that refer to an issue with a specific address
-    """
-
-    def __init__(self, value: Any) -> None:
-        super().__init__()
-        self.value_for_address = value
-
-
-class AddressInUse(AddressError):
-    """
-    Indicates that the address requested is already in use by the class that threw the Exception
-    This is a non-fatal event and can be safely handled at runtime, occasionally with a retry
-    """
-    pass
-
-
-class InvalidAddress(AddressError):
-    """
-    Indicates that the address requested is not a valid IP address
-    This is non-fatal in general, but also should not be retried with the same address
-    """
-    pass
 
 
 class Link(_Link):

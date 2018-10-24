@@ -74,7 +74,7 @@ def test_drop_twice(link):
 
 
 @patch("itsim.simulator.Simulator")
-@patch("itsim.it_objects.packet.Packet")
+@patch("itsim.network.Packet")
 def test_transmit(mock_sim, mock_pack):
     guinea = Link(mock_sim, expo(10), normal(10, 1))
     guinea.transmit(mock_pack, Node())

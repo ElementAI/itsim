@@ -1,4 +1,4 @@
-from itsim.it_objects.payload import Payload, PayloadDictionaryType
+from itsim.network import Payload, PayloadDictionaryType
 
 
 entries = {PayloadDictionaryType.CONTENT: "48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21"}

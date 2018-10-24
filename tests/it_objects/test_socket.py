@@ -1,6 +1,4 @@
-from itsim.it_objects.location import Location
-from itsim.it_objects.packet import Packet
-from itsim.it_objects.payload import Payload
+from itsim.network import Location, Packet, Payload
 from itsim.node import Socket
 from itsim.types import as_address
 

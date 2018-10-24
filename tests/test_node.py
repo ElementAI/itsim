@@ -2,10 +2,8 @@ from greensim import Process
 from greensim.random import expo, normal
 
 from itsim.simulator import Simulator
-from itsim.it_objects.location import Location
-from itsim.it_objects.networking.link import AddressInUse, Link, InvalidAddress
-from itsim.it_objects.packet import Packet
-from itsim.it_objects.payload import Payload
+from itsim.network import AddressInUse, InvalidAddress, Location, Packet, Payload
+from itsim.it_objects.networking.link import Link
 from itsim.node import Node, NoNetworkLinked, PortAlreadyInUse
 from itsim.types import as_address
 

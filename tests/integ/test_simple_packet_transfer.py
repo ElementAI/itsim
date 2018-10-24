@@ -2,10 +2,7 @@ from greensim import add, now, Simulator
 from greensim.random import constant
 
 from itsim.it_objects.endpoint import Endpoint
-from itsim.it_objects.location import Location
-from itsim.it_objects.packet import Packet
-from itsim.it_objects.payload import Payload, PayloadDictionaryType
-from itsim.network import Network
+from itsim.network import Location, Packet, Payload, PayloadDictionaryType, Network
 
 from pytest import fixture
 

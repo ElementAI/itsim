@@ -14,13 +14,10 @@ import greensim
 
 from itsim import _Node
 from itsim import ITObject
+from itsim.network import AddressError, AddressInUse, InvalidAddress, Location, Network, Payload, \
+    PayloadDictionaryType, Packet
 from itsim.simulator import Simulator
-from itsim.it_objects.location import Location
 from itsim.it_objects.networking import _Link
-from itsim.it_objects.networking.link import AddressError, AddressInUse, InvalidAddress
-from itsim.it_objects.payload import Payload, PayloadDictionaryType
-from itsim.it_objects.packet import Packet
-from itsim.network import Network
 from itsim.node.accounts import UserAccount
 from itsim.node.files import File
 from itsim.node.processes.process import Process
