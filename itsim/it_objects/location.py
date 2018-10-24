@@ -8,6 +8,13 @@ from itsim.types import Address, as_hostname, as_port, Hostname, HostnameRepr, P
 
 @total_ordering
 class Location(ITObject):
+    """
+    Location of a service on a network, designated by a host name and a port number.
+
+    :param host: Hostname representation.
+    :param port: Port representation.
+    """
+
     def __init__(self, host: HostnameRepr = None, port: PortRepr = None) -> None:
         super().__init__()
         self._hostname = as_hostname(host)
@@ -15,13 +22,23 @@ class Location(ITObject):
 
     @property
     def hostname(self) -> Hostname:
+        """
+        Returns the hostname of this location.
+        """
         return self._hostname
 
     @property
     def port(self) -> Port:
+        """
+        Returns the port of this location.
+        """
         return self._port
 
     def hostname_as_address(self) -> Address:
+        """
+        Provided the hostname corresponds to a duly formed IP address, this returns the address object corresponding to
+        the location's hostname.
+        """
         if not isinstance(self.hostname, _BaseAddress):
             raise ValueError("Location carries a domain name for host, which resolution must be simulated explicitly.")
         return cast(Address, self._hostname)

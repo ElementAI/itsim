@@ -348,7 +348,7 @@ def init():
         num_endpoints = args.num_endpoints
         if num_endpoints < MIN_NUM_ENDPOINTS:
             logger.warning(
-                f"Requested number of endpoints ({num_endpoints}) is insufficient; " +
+                f"Requested number of endpoints ({num_endpoints}) is insufficient; " +  # noqa: W504
                 f"raising it to {MIN_NUM_ENDPOINTS}."
             )
             num_endpoints = MIN_NUM_ENDPOINTS

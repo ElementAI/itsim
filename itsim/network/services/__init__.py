@@ -35,10 +35,9 @@ RulesForward = Mapping[Port, Tuple[AddressRepr, Port]]
 class PortForwarding(Service):
     """
     Network service that forwards ports from a given interface to a certain machines, at an equivalent range of ports.
+
+    :param rules_fw: Rules explaining where to forward certain input ports on the associated interface.
     """
 
     def __init__(self, rules_forward: RulesForward) -> None:
-        """
-        - :param rules_fw: Rules explaining where to forward certain input ports on the associated interface.
-        """
         raise NotImplementedError()
