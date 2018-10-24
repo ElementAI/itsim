@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from itsim.it_objects import AbstractITObject
+from itsim import AbstractITObject
 
 
 class _Thread(AbstractITObject):

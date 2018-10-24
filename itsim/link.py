@@ -1,6 +1,6 @@
 from typing import Iterator
 
-from itsim.it_objects import ITObject
+from itsim import ITObject
 from itsim.network.services import Service
 from itsim.node import Node
 from itsim.random import VarRandomTime, VarRandomBandwidth

@@ -1,7 +1,7 @@
 from greensim import Process
 from greensim.random import expo, normal
 
-from itsim.it_objects import Simulator
+from itsim.simulator import Simulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.networking.link import AddressInUse, Link, InvalidAddress
 from itsim.it_objects.packet import Packet

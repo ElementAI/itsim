@@ -1,7 +1,7 @@
 from typing import Callable
 
 from greensim import tagged
-from itsim.it_objects import Tag
+from itsim import Tag
 
 
 def malware(event: Callable) -> Callable:

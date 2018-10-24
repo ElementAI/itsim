@@ -1,6 +1,6 @@
 from enum import Enum, unique
 from typing import Dict
-from itsim.it_objects import ITObject
+from itsim import ITObject
 
 
 @unique

@@ -1,6 +1,7 @@
 from typing import Optional, Callable
 
-from itsim.it_objects import ITObject, Simulator
+from itsim import ITObject
+from itsim.simulator import Simulator
 from itsim.link import Link
 from itsim.node import Host
 from itsim.random import VarRandomSize, VarRandomTime, VarRandomBandwidth

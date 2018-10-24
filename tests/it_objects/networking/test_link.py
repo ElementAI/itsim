@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from greensim.random import expo, normal
 
-from itsim.it_objects import Simulator
+from itsim.simulator import Simulator
 from itsim.it_objects.networking.link import AddressInUse, Link
 from itsim.node import Node
 from itsim.types import as_address
@@ -73,7 +73,7 @@ def test_drop_twice(link):
     assert not link.drop_node(addr)
 
 
-@patch("itsim.it_objects.Simulator")
+@patch("itsim.simulator.Simulator")
 @patch("itsim.it_objects.packet.Packet")
 def test_transmit(mock_sim, mock_pack):
     guinea = Link(mock_sim, expo(10), normal(10, 1))

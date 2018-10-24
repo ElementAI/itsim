@@ -13,7 +13,8 @@ from typing import Any, Callable, cast, Generator, Iterable, MutableMapping, Opt
 import greensim
 
 from itsim import _Node
-from itsim.it_objects import ITObject, Simulator
+from itsim import ITObject
+from itsim.simulator import Simulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.networking import _Link
 from itsim.it_objects.networking.link import AddressError, AddressInUse, InvalidAddress

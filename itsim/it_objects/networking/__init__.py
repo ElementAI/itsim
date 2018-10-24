@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from itsim import _Node
-from itsim.it_objects import ITObject
+from itsim import ITObject
 from itsim.types import AddressRepr
 
 

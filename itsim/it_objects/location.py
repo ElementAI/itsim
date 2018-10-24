@@ -2,7 +2,7 @@ from functools import total_ordering
 from ipaddress import _BaseAddress
 from typing import cast, Any
 
-from itsim.it_objects import ITObject
+from itsim import ITObject
 from itsim.types import Address, as_hostname, as_port, Hostname, HostnameRepr, Port, PortRepr
 
 

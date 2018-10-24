@@ -7,7 +7,7 @@ from greensim import advance
 from greensim.random import VarRandom
 
 from itsim import _Node
-from itsim.it_objects import Simulator
+from itsim.simulator import Simulator
 from itsim.it_objects.networking import _Link
 from itsim.it_objects.packet import Packet
 from itsim.types import Address, AddressRepr, as_address

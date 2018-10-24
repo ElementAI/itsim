@@ -8,7 +8,8 @@ from greensim import advance
 from greensim.random import VarRandom, bounded, expo
 
 from itsim import _Node
-from itsim.it_objects import ITObject, Simulator
+from itsim import ITObject
+from itsim.simulator import Simulator
 from itsim.it_objects.location import Location
 from itsim.it_objects.networking.link import AddressError, AddressInUse, InvalidAddress
 from itsim.it_objects.packet import Packet

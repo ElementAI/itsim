@@ -1,9 +1,9 @@
-from itsim.it_objects import ITObject
+from itsim import _Packet
 from itsim.it_objects.location import Location
 from itsim.it_objects.payload import Payload
 
 
-class Packet(ITObject):
+class Packet(_Packet):
     """
     Embodiment of a packet of data relayed over a link managed as a IP network.
 
