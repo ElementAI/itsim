@@ -1,3 +1,5 @@
+# === WARNING: deprecated ===
+
 from typing import Any, Callable
 
 from itsim.simulator import Simulator

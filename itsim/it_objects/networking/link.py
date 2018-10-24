@@ -1,3 +1,5 @@
+# === WARNING: deprecated ===
+
 import weakref
 
 from collections import OrderedDict

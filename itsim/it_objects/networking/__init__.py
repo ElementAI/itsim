@@ -1,3 +1,5 @@
+# === WARNING -- Deprecated ===
+
 from abc import ABC, abstractmethod
 
 from itsim import _Node

@@ -17,7 +17,6 @@ from itsim import ITObject
 from itsim.network import AddressError, AddressInUse, InvalidAddress, Location, Network, Payload, \
     PayloadDictionaryType, Packet
 from itsim.simulator import Simulator
-from itsim.it_objects.networking import _Link
 from itsim.network import Link
 from itsim.node.accounts import UserAccount
 from itsim.node.files import File
@@ -207,7 +206,7 @@ class Node(_Node):
         self._networks: MutableMapping[Address, _NetworkLink] = OrderedDict()
         self._address_default: Optional[Address] = None
         self._sockets: MutableMapping[Location, Socket] = OrderedDict()
-        self._links: MutableMapping[AddressRepr, _Link] = OrderedDict()
+        self._links: MutableMapping[AddressRepr, Link] = OrderedDict()
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
@@ -221,7 +220,7 @@ class Node(_Node):
         raise NotImplementedError()
         return self
 
-    def add_physical_link(self, link: _Link, ar: AddressRepr) -> None:
+    def add_physical_link(self, link: Link, ar: AddressRepr) -> None:
         """
         Attempt to connect this Node to the given Link at the given AddressRepr.
         If the AddressRepr is already being used to point to a Link, this will throw AddressInUse.
