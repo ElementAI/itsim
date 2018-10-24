@@ -22,17 +22,16 @@ class Connection(object):
 class Link(ITObject):
     """
     Physical medium network communications, intended to support a certain IP network.
+
+    :param c: CIDR prefix for the network supported by the link instance.
+    :param latency:
+        Latency model (PRNG) for packets exchanged on this link (sampled every time a packet is transmitted on
+        this link).
+    :param bandwidth:
+        Bandwidth (PRNG) for packets exchanged on this link (idem).
     """
 
     def __init__(self, c: CidrRepr, latency: VarRandomTime, bandwidth: VarRandomBandwidth) -> None:
-        """
-        - :param c: CIDR prefix for the network supported by the link instance.
-        - :param latency:
-              Latency model (PRNG) for packets exchanged on this link (sampled every time a packet is transmitted on
-              this link).
-        - :param bandwidth:
-              Bandwidth (PRNG) for packets exchanged on this link (idem).
-        """
         super().__init__()
         self._cidr = as_cidr(c)
         self._latency = latency
@@ -50,11 +49,10 @@ class Link(ITObject):
         from an incipient node that, in order to be connected to this link, it implements a certain number of network
         services.
 
-        - :param ar: Address the node should take on this link.
-            -If an integer is given, it is considered as the host number of the machine on this network. In other
-            words, this number is added to the link's network number to form the node's full address.
-            The use of None as address gives the node address 0.0.0.0 (which is fine if it uses DHCP to receive an
-            address from a router node).
+        :param ar: Address the node should take on this link.  If an integer is given, it is considered as the host
+            number of the machine on this network. In other words, this number is added to the link's network number to
+            form the node's full address.  The use of None as address gives the node address 0.0.0.0 (which is fine if
+            it uses DHCP to receive an address from a router node).
         """
         if ar is None:
             ar = "0.0.0.0"
