@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 from enum import Enum, IntFlag, unique
-from ipaddress import ip_address, \
-    IPv4Address, IPv6Address, IPv4Network, IPv6Network, ip_network, _BaseNetwork
+from ipaddress import ip_address, _BaseAddress, ip_network, _BaseNetwork
 from typing import Optional, Union, Iterable, Tuple
 
-Address = Union[IPv4Address, IPv6Address]
+
+Address = _BaseAddress
 AddressRepr = Union[None, str, int, Address]
 PortRepr = Optional[int]
 Port = int
 HostnameRepr = AddressRepr
 Hostname = Union[Address, str]
-Cidr = Union[IPv4Network, IPv6Network]
+Cidr = _BaseNetwork
 CidrRepr = Union[str, Cidr]
 
 
