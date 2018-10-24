@@ -3,14 +3,14 @@ from ipaddress import ip_network
 
 from greensim.random import normal, constant
 from itsim.internet import Internet
-from itsim.link import Link
+from itsim.network import Link
+from itsim.network.service import DHCP, NAT
+from itsim.network.service.firewall import Firewall, Allow, Deny, Protocol
 from itsim.node.endpoint import Endpoint
 from itsim.node.router import Router
 from itsim.simulator import Simulator
 from itsim.types import as_address
 from itsim.units import MS, GbPS
-from itsim.network.services import DHCP, NAT
-from itsim.network.services.firewall import Firewall, Allow, Deny, Protocol
 
 
 sim = Simulator()
