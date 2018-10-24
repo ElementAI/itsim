@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Iterable
+from typing import Iterable, Callable
 
+from greensim import tagged
 from greensim.tags import Tags, TaggedObject
 from itsim.types import Address
 
@@ -29,6 +30,14 @@ class AbstractITObject(ABC, ITObject):
         """
         self._bind_and_call_constructor(ABC)
         self._bind_and_call_constructor(ITObject)
+
+
+def malware(event: Callable) -> Callable:
+    """
+    Convenience decorator for identifying malware.
+    Through the methods in greensim this label is cascaded through the actions of the Process
+    """
+    return tagged(Tag.MALWARE)(event)
 
 
 class _Packet(ITObject):
