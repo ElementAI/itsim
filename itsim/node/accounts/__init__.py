@@ -1,4 +1,4 @@
-from itsim.it_objects import ITObject
+from itsim import ITObject
 
 from typing import Any, Set
 
