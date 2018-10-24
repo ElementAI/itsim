@@ -121,7 +121,7 @@ class PortRange(Ports):
 
     def __init__(self, lower: Port, upper: Port) -> None:
         """
-        The functional interval is ``[lower, upper[``.
+        The functional interval is ``[lower, upper)``.
         """
         raise NotImplementedError()
 
