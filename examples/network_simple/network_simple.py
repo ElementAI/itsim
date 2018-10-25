@@ -204,7 +204,7 @@ def mdns_daemon(ws: Workstation) -> None:
                         if i_del is not None:
                             del queries[i_del]
 
-                    elif (pl_ent[PayloadDictionaryType.CONTENT] == "resolve" and /
+                    elif (pl_ent[PayloadDictionaryType.CONTENT] == "resolve" and \
                           pl_ent[PayloadDictionaryType.HOSTNAME] == ws.name):
                         logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
                         socket.broadcast(
