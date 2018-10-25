@@ -108,3 +108,6 @@ Pipfile.lock
 
 #Papyrus
 .project
+
+# Vim
+.*.sw*
