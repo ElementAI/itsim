@@ -10,7 +10,9 @@ from ipaddress import ip_address
 
 from itsim import _Node
 from itsim import ITObject
-from itsim.network import AddressInUse, InvalidAddress, Link, Location, Payload, Packet
+from itsim.network.link import Link
+from itsim.network.location import AddressInUse, InvalidAddress, Location
+from itsim.network.packet import Payload, Packet
 from itsim.node.accounts import UserAccount
 from itsim.node.files import File
 from itsim.node.processes.process import Process

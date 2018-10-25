@@ -9,7 +9,8 @@ from greensim import Simulator, Signal, advance, local, now, Process, add
 from greensim.logging import Filter
 from greensim.random import VarRandom, constant, normal, expo, distribution
 
-from itsim.network import Location, Payload, PayloadDictionaryType
+from itsim.network.location import Location
+from itsim.network.packet import Payload, PayloadDictionaryType
 from itsim.random import num_bytes
 from itsim.types import AddressRepr, CidrRepr
 from itsim.units import MS, US, MIN, H, B, GbPS

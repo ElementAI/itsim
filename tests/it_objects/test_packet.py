@@ -1,4 +1,5 @@
-from itsim.network import Location, Packet, Payload, PayloadDictionaryType
+from itsim.network.location import Location
+from itsim.network.packet import Packet, Payload, PayloadDictionaryType
 
 
 src = Location("54.88.73.99", 443)
