@@ -184,6 +184,8 @@ def mdns_daemon(ws: Workstation) -> None:
                         packet = socket.recv()
                     pl_ent = packet.payload.entries
                     logger.debug(f"Received message {pl_ent} from {packet.source}")
+                    content_resolve = pl_ent[PayloadDictionaryType.CONTENT] == "resolve"
+                    hostname_match = pl_ent[PayloadDictionaryType.HOSTNAME] == ws.name
                     if pl_ent[PayloadDictionaryType.CONTENT] == "query":
                         queries.append(packet)
                         socket.broadcast(
@@ -204,8 +206,7 @@ def mdns_daemon(ws: Workstation) -> None:
                         if i_del is not None:
                             del queries[i_del]
 
-                    elif (pl_ent[PayloadDictionaryType.CONTENT] == "resolve" and \
-                          pl_ent[PayloadDictionaryType.HOSTNAME] == ws.name):
+                    elif content_resolve and hostname_match:
                         logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
                         socket.broadcast(
                             5353,
