@@ -1,4 +1,4 @@
-from itsim.it_objects import Simulator
+from itsim.simulator import Simulator
 from itsim.node.processes import _Process, _Thread
 
 from typing import Callable, Set

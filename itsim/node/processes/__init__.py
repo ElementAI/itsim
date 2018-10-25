@@ -15,7 +15,7 @@ all running Threads in all Processes in all Nodes
 
 from abc import abstractmethod
 
-from itsim.it_objects import AbstractITObject
+from itsim import AbstractITObject
 
 
 class _Thread(AbstractITObject):

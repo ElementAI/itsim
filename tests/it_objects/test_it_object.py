@@ -1,4 +1,4 @@
-from itsim.it_objects import ITObject, Tag
+from itsim import ITObject, Tag
 
 
 def test_empty_constructor():

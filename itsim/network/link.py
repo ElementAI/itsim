@@ -1,10 +1,9 @@
 from typing import Iterator
 
-from itsim.it_objects import ITObject
-from itsim.network.services import Service
-from itsim.node import Node
+from itsim import _Node, ITObject
+from itsim.network.service import Service
 from itsim.random import VarRandomTime, VarRandomBandwidth
-from itsim.types import AddressRepr, CidrRepr, Cidr, as_cidr
+from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr
 
 
 class Connection(object):
@@ -58,7 +57,7 @@ class Link(ITObject):
             ar = "0.0.0.0"
         raise NotImplementedError()
 
-    def iter_nodes(self) -> Iterator[Node]:
+    def iter_nodes(self) -> Iterator[_Node]:
         """
         Iteration over the nodes connected to a link.
         """

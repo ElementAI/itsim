@@ -1,6 +1,5 @@
-from itsim.it_objects.location import Location
-from itsim.it_objects.packet import Packet
-from itsim.it_objects.payload import Payload, PayloadDictionaryType
+from itsim.network.location import Location
+from itsim.network.packet import Packet, Payload, PayloadDictionaryType
 
 
 src = Location("54.88.73.99", 443)

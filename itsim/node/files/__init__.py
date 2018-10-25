@@ -1,6 +1,6 @@
 from inspect import getfullargspec
 
-from itsim.it_objects import ITObject
+from itsim import ITObject
 from itsim.node.accounts import UserAccount
 from itsim.node.files.access_policies import Policy
 

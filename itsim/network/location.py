@@ -1,9 +1,35 @@
 from functools import total_ordering
 from ipaddress import _BaseAddress
-from typing import cast, Any
+from typing import Any, cast
 
-from itsim.it_objects import ITObject
-from itsim.types import Address, as_hostname, as_port, Hostname, HostnameRepr, Port, PortRepr
+from itsim import ITObject
+from itsim.types import Address, HostnameRepr, PortRepr, as_hostname, as_port, Hostname, Port
+
+
+class AddressError(Exception):
+    """
+    Generic superclass for Exception objects that refer to an issue with a specific address
+    """
+
+    def __init__(self, value: Any) -> None:
+        super().__init__()
+        self.value_for_address = value
+
+
+class AddressInUse(AddressError):
+    """
+    Indicates that the address requested is already in use by the class that threw the Exception
+    This is a non-fatal event and can be safely handled at runtime, occasionally with a retry
+    """
+    pass
+
+
+class InvalidAddress(AddressError):
+    """
+    Indicates that the address requested is not a valid IP address
+    This is non-fatal in general, but also should not be retried with the same address
+    """
+    pass
 
 
 @total_ordering

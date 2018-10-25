@@ -2,15 +2,15 @@ from inspect import isgenerator
 from ipaddress import ip_network
 
 from greensim.random import normal, constant
-from itsim.internet import Internet
-from itsim.link import Link
+from itsim.network import Link
+from itsim.network.internet import Internet
+from itsim.network.service import DHCP, NAT
+from itsim.network.service.firewall import Firewall, Allow, Deny, Protocol
 from itsim.node.endpoint import Endpoint
 from itsim.node.router import Router
 from itsim.simulator import Simulator
 from itsim.types import as_address
 from itsim.units import MS, GbPS
-from itsim.network.services import DHCP, NAT
-from itsim.network.services.firewall import Firewall, Allow, Deny, Protocol
 
 
 sim = Simulator()
@@ -33,7 +33,6 @@ for aname in ["latency", "bandwidth"]:
 # forwards between. In this case, there is a single local network, so all forwarding is towards the WAN.
 #
 router = Router(
-    sim,
     internet.connected_as("24.192.132.23").setup(NAT()),  # WAN
     net.connected_as(1).setup(  # LAN -- As net is 192.168.1/24, machine 1 on it becomes 192.168.1.1.
         # Parameters to setup() are services we expect the router to run for this network.
@@ -62,7 +61,7 @@ assert router in nodes
 # TODO -- Complete proper endpoint instantiation and load up some software.
 # TODO -- Get endpoints to do some stuff against the Internet, and ensure it worked.
 # TODO -- Facilitate adding multiple endpoints to a link in one call?
-endpoints = [Endpoint(sim).connected_to(net) for _ in range(50)]
+endpoints = [Endpoint().connected_to(net) for _ in range(50)]
 
 assert all(ept.address_default == as_address(0) for ept in endpoints)
 
