@@ -9,12 +9,12 @@ from greensim import Simulator, Signal, advance, local, now, Process, add
 from greensim.logging import Filter
 from greensim.random import VarRandom, constant, normal, expo, distribution
 
-from itsim.network import Network
-from itsim.it_objects.endpoint import Endpoint
-from itsim.it_objects.location import Location
-from itsim.it_objects.payload import Payload, PayloadDictionaryType
+from itsim.network import Location, Payload, PayloadDictionaryType
 from itsim.random import num_bytes
-from itsim.types import MS, US, MIN, H, B, GbPS, AddressRepr, CidrRepr
+from itsim.types import AddressRepr, CidrRepr
+from itsim.units import MS, US, MIN, H, B, GbPS
+
+from network_simple_overrides import Endpoint, Network
 
 
 NUM_ADDRESSES_RESERVED = 2  # Address 0 and broadcast address.
@@ -136,7 +136,7 @@ def get_address_from_dhcp(ws: Workstation) -> None:
         packet_offer = socket.recv()
         logger.info("%s from %s" %
                     (packet_offer.payload.entries[PayloadDictionaryType.CONTENT],
-                     packet_offer.source.host))  # FIXME
+                     packet_offer.source.hostname))  # FIXME
         # Address request.
         socket.send(packet_offer.source,
                     next(size_packet_dhcp),
@@ -145,7 +145,7 @@ def get_address_from_dhcp(ws: Workstation) -> None:
         packet_ack = socket.recv()
         logger.info("%s from %s" %
                     (packet_ack.payload.entries[PayloadDictionaryType.CONTENT],
-                     packet_ack.source.host))  # FIXME
+                     packet_ack.source.hostname))  # FIXME
 
 
 def dhcp_serve(ws: Workstation) -> None:
@@ -159,9 +159,10 @@ def dhcp_serve(ws: Workstation) -> None:
             packet_client = socket.recv()
             type_msg = packet_client.payload.entries[PayloadDictionaryType.CONTENT]
             if type_msg not in responses:
-                logger.warning(f"Received unknown message {repr(type_msg)} from {packet_client.source.host} -- DROP")
+                logger.warning(f"Received unknown message {repr(type_msg)} " +
+                               "from {packet_client.source.hostname} -- DROP")
             else:
-                logger.info(f"Received {type_msg} from {packet_client.source.host}")
+                logger.info(f"Received {type_msg} from {packet_client.source.hostname}")
                 socket.send(packet_client.source, next(size_packet_dhcp), dhcp_payload(responses[type_msg]))
 
 
@@ -170,7 +171,7 @@ size_packet_dns = num_bytes(expo(192.0 * B), header=68 * B, upper=576 * B)
 
 
 def mdns_daemon(ws: Workstation) -> None:
-    # This models only mDNS local host name resolution; service discovery is TBD.
+    # This models only mDNS local hostname name resolution; service discovery is TBD.
     local.name = f"{ws.name} / mDNS responder"
     logger = get_logger("mdns_responder")
     while True:
@@ -202,8 +203,8 @@ def mdns_daemon(ws: Workstation) -> None:
                         if i_del is not None:
                             del queries[i_del]
 
-                    elif pl_ent[PayloadDictionaryType.CONTENT] == "resolve" and
-                    pl_ent[PayloadDictionaryType.HOSTNAME] == ws.name:
+                    elif (pl_ent[PayloadDictionaryType.CONTENT] == "resolve" and
+                          pl_ent[PayloadDictionaryType.HOSTNAME] == ws.name):
                         logger.info(f"Resolve hostname {ws.name} as {ws.address_default}")
                         socket.broadcast(
                             5353,

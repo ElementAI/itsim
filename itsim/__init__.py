@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractproperty
 from typing import Iterable, Callable
 
 from greensim import tagged
@@ -50,7 +50,3 @@ class _Node(ABC, ITObject):
     def addresses(self) -> Iterable[Address]:
         raise NotImplementedError("Meant to be implemented by class itsim.node.Node.")
         return []
-
-    @abstractmethod
-    def _send_to_network(self, packet: _Packet) -> None:
-        raise NotImplementedError("Meant to be implemented by class itsim.node.Node.")
