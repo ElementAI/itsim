@@ -1,5 +1,8 @@
 """
-This file contains a broad set of overrides of ITSim behavior, tailored specifically to the network_simple and malware_simple examples. Everything in this file has been formally deprecated in the main library, so this file is retained to allow the examples to remain functional while the contents of this file are gradually replaced.
+This file contains a broad set of overrides of ITSim behavior, tailored specifically
+to the network_simple and malware_simple examples. Everything in this file has been formally
+deprecated in the main library, so this file is retained to allow the examples to remain
+functional while the contents of this file are gradually replaced.
 """
 from collections import OrderedDict
 from contextlib import contextmanager
