@@ -2,13 +2,13 @@ from typing import Optional, Callable
 
 from itsim import ITObject
 from itsim.simulator import Simulator
-from itsim.link import Link
-from itsim.node import Host
+from itsim.network.link import Link
+from itsim.node import Node
 from itsim.random import VarRandomSize, VarRandomTime, VarRandomBandwidth
 from itsim.types import HostnameRepr, Protocol, PortsRepr
 
 
-class InternetHost(Host):
+class Host(Node):
     """
     Internet-facing node that provides various application services. This is a lightweight ``Host`` instance, for which
     no internal visibility is granted throughout the simulation.
@@ -21,7 +21,7 @@ class InternetHost(Host):
     def __init__(self) -> None:
         raise NotImplementedError()
 
-    def dns(self, sim: Simulator, frequency: float = 1) -> "InternetHost":
+    def dns(self, sim: Simulator, frequency: float = 1) -> "Host":
         """
         Makes the node run a DNS service over UDP port 53.
         """
@@ -34,7 +34,7 @@ class InternetHost(Host):
         len_response: VarRandomSize,
         protocol: Protocol = Protocol.ANY,
         frequency: float = 1
-    ) -> "InternetHost":
+    ) -> "Host":
         """
         Makes the node run a web server over common HTTP ports, in a request/reply paradigm (one logical request packet,
         one logical reply packet).
@@ -63,7 +63,7 @@ class InternetHost(Host):
         duration: VarRandomTime,
         protocol: Protocol = Protocol.SSL,
         frequency: float = 1
-    ) -> "InternetHost":
+    ) -> "Host":
         """
         Makes the node run a web server over common HTTP ports, in a streaming paradigm (one logical request packet,
         followed by a sequence of logical reply packets).
@@ -93,7 +93,7 @@ class InternetHost(Host):
         request_interval: VarRandomTime,
         update_interval: VarRandomTime,
         len_beacon: VarRandomSize
-    ) -> "InternetHost":
+    ) -> "Host":
         """
         Makes the node run a websocket session from a connection initiated through a request/reply ``web_server``. The
         paradigm is that the client periodically sends new *request* packets over the same socket connection, which get
@@ -120,7 +120,7 @@ class InternetHost(Host):
         interval: VarRandomTime,
         request: VarRandomSize,
         response: VarRandomSize
-    ) -> "InternetHost":
+    ) -> "Host":
         """
         Makes the node run a secure shell server (SSH). The service paradigm is a sequence of requests and responses,
         over a single connection. The service is provided over port 22.
@@ -184,7 +184,7 @@ class Internet(Link):
     def __init__(self) -> None:
         raise NotImplementedError()
 
-    def host(self, hostname: HostnameRepr, latency: VarRandomTime, bandwidth: VarRandomBandwidth) -> InternetHost:
+    def host(self, hostname: HostnameRepr, latency: VarRandomTime, bandwidth: VarRandomBandwidth) -> Host:
         """
         Instantiates a new host connected to the Internet. This returns the new host instance so it may be set up with
         various services.
