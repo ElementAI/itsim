@@ -4,17 +4,19 @@ Setting up Internet hosts
 
 Local networking is fun, but the good stuff is all on the Internet. To
 simulate users communicating with various services on the Internet, special
-nodes implicitly connected to the Internet as a ``Link`` instance can be set
-up. We call these *Internet hosts*.
+nodes implicitly connected to the Internet as a
+:py:class:`~itsim.network.link.Link` instance can be set up. We call these
+*Internet hosts*.
 
 
 Instantiation
 =============
 
-From an `itsim.network.internet.Internet` instance, we can instantiate and
-build Internet hosts by invoking the `host()` method. Like instantiating local
-links, we must specify probability models for the communication properties of
-the implicit link between the local network and this node::
+From an :py:class:`~itsim.network.internet.Internet` instance, we can
+instantiate and build Internet hosts by invoking the
+:py:meth:`~itsim.network.internet.Internet.host` method. Like instantiating
+local links, we must specify probability models for the communication
+properties of the implicit link between the local network and this node::
 
     from greensim.random import normal, expo
     from itsim.network.internet import Internet
@@ -44,18 +46,20 @@ Add DNS service over both UDP and TCP, on port 53::
     internet.host("8.8.8.8", normal(10 * MS, 5 * MS), expo(20 * MbPS)).dns(sim)
 
 Simple! Notice how each service, as an agent for resolving an intent within
-the simulated world, must be set up with a ``Simulator`` instance.
+the simulated world, must be set up with a
+:py:class:`itsim.simulator.Simulator` instance.
 
 
 Web servers (HTTP and HTTPS)
 ============================
 
-The ``web_server()`` method of the ``itsim.node.Node`` instance returned by
-``Internet.host()`` sets up a web server over a common port. The communication
-paradigm involves the host sending one request, then getting one response,
-after which the TCP connection is closed. Whatever the length of the request
-issued, the length of the response is sampled from a probability model
-provided at setup. Example::
+The :py:meth:`~itsim.network.internet.Host.web_server` method of the
+:py:class:`~itsim.network.internet.Host` instance returned by
+:py:meth:`~itsim.network.internet.Internet.host` sets up a web server over a
+common port. The communication paradigm involves the host sending one request,
+then getting one response, after which the TCP connection is closed. Whatever
+the length of the request issued, the length of the response is sampled from a
+probability model provided at setup. Example::
 
     from itsim.random import num_bytes
     from itsim.types import Protocol
@@ -67,13 +71,15 @@ provided at setup. Example::
         protocol=Protocol.ANY
     )
 
-The ``num_bytes()`` probability model wraps around a continuous model,
-projecting its samples to the nearest int, and adding a systematic fixed
+The :py:func:`~itsim.random.num_bytes` probability model wraps around a
+continuous model, projecting its samples to the nearest int, and adding a
+systematic fixed
 number of bytes acting as header to the packet or buffer. The ``protocol``
 parameter specifies here that service should be provided on both cleartext
 or crypted protocols, hence both HTTP and HTTPS; clients will thus be able to
-connect to both ports 80 and 443. The alternatives are ``Protocol.CLEAR`` and
-``Protocol.SSL`` to limit the connectivity possibilities.
+connect to both ports 80 and 443. The alternatives are
+:py:const:`itsim.types.Protocol.CLEAR` and
+:py:const:`itsim.types.Protocol.SSL` to limit the connectivity possibilities.
 
 
 Streaming service over HTTP(S)
@@ -172,9 +178,9 @@ Custom daemon
 =============
 
 Should a service to model not be implemented, one can always implement their
-own, by using the ``Internet.daemon`` decorator method. To implement a
-stateless service, one can thus decorate a function articulating the
-server-side logic::
+own, by using the :py:meth:`~itsim.network.internet.Host.daemon` decorator
+method. To implement a stateless service, one can thus decorate a function
+articulating the server-side logic::
 
     from itsim.network.location import Location
     from itsim.node.socket import Socket
@@ -186,10 +192,11 @@ server-side logic::
         # Code for running the connection goes here.
 
 Alternatively, one may implement a stateful connection through similarly
-decorating a class. The class is instantiated by the ``daemon()`` decorator
-method and is used to manage all packets delivered to the locations indicated
-by the ``tcp`` and ``udp`` parameters to the decorator. The decorated class
-must subclass ``itsim.network.internet.Daemon``, as as such may override any
+decorating a class. The class is instantiated by the
+:py:meth:`~itsim.network.internet.Host.daemon` decorator method and is used to
+manage all packets delivered to the locations indicated by the ``tcp`` and
+``udp`` parameters to the decorator. The decorated class must subclass
+:py:class:`~itsim.network.internet.Daemon`, as as such may override any
 of its inner workings. **TBD: enhance this example.** ::
 
     from itsim.network.internet import Daemon

@@ -3,12 +3,13 @@ Setting up networks
 ===================
 
 In ITsim, a *network* is the composition of two discrete components: a set of
-``Link`` instances, which represent a logical medium binding together a set of
-nodes, so that they may communicate over an intended IP network; and a
-``Router`` instance, a node that articulates packet forwarding between
-connected routers, as well as other modern networking services. The following
-sections illustrate how to set up increasingly complex networks, given that
-such network constructions can in turn be themselves thus composed.
+:py:class:`~itsim.network.link.Link` instances, which represent a logical
+medium binding together a set of nodes, so that they may communicate over an
+intended IP network; and a :py:class:`~itsim.node.router.Router` instance, a
+node that articulates packet forwarding between connected routers, as well as
+other modern networking services. The following sections illustrate how to set
+up increasingly complex networks, given that such network constructions can in
+turn be themselves thus composed.
 
 
 Prelude: the Internet
@@ -16,11 +17,11 @@ Prelude: the Internet
 
 While it is possible to simulate a local network outside of a global
 communications environment, typical IT infrastructures do connect to such an
-environment. It is here represented as an instance of the ``Internet`` class,
-which is deployed as a special kind of *link*. We will :doc:`return
-<internet>` to setting up a realistic Internet environment against
-certain needs. For the time being, the following examples all assume that an
-Internet has been instantiated::
+environment. It is here represented as an instance of the
+:py:class:`~itsim.network.internet.Internet` class, which is deployed as a
+special kind of *link*. We will :doc:`return <internet>` to setting up a
+realistic Internet environment against certain needs. For the time being, the
+following examples all assume that an Internet has been instantiated::
 
     from itsim.network.internet import Internet
     internet = Internet()
@@ -37,15 +38,16 @@ be bound to the internet through a single router, which would perform network
 address translation against the Internet, and provide firewall and DHCP
 service to the network. This is a common home network configuration.
 
-Given all nodes on this network are connected, a single ``Link`` instance
-suffices. It is configured with the intended *network address* (expressed in
-CIDR form). We must also specify *probability models* for its latency and
-bandwidth. These are pseudo-random generators that express the variability of
-these properties for the network. These generators are both sampled from for
-every packet that must be transmitted over the link. Note that neither
-quantity can be expressed with a negative number: thus, the probability models
-provided when instantiating the link are *clipped* when sampled -- any
-negative value sampled from these generators are replaced with 0. ::
+Given all nodes on this network are connected, a single
+:py:class:`~itsim.network.link.Link` instance suffices. It is configured with
+the intended *network address* (expressed in CIDR form). We must also specify
+*probability models* for its latency and bandwidth. These are pseudo-random
+generators that express the variability of these properties for the network.
+These generators are both sampled from for every packet that must be
+transmitted over the link. Note that neither quantity can be expressed with a
+negative number: thus, the probability models provided when instantiating the
+link are *clipped* when sampled -- any negative value sampled from these
+generators are replaced with 0. ::
 
     from greensim.random import normal, constant
     from itsim.network import Link
@@ -72,30 +74,34 @@ what is going on with it. ::
         local.connected_as(1).setup(DHCP(), Firewall())
     )
 
-A lot of things are going on here, so let us break it down. The ``Router``
-instantiation bears two parameters: the result of
-``internet.connected_as(...).setup(...)`` and that of
-``local.connected_as(1).setup(...)``. These two parameters correspond,
-respectively, to the configuration of the WAN and LAN interface. As we will
-see :ref:`later <segmented-1router>`, the router has a
-single WAN interface, but may bind together any number of LANs.
+A lot of things are going on here, so let us break it down. The
+:py:class:`~itsim.node.router.Router` instantiation bears two parameters: the
+result of :py:meth:`~itsim.network.link.Connection.setup` applied to the
+result of :py:meth:`~itsim.network.link.Link.connected_as`.
+These two parameters correspond, respectively, to the configuration of the WAN
+and LAN interface. As we will see :ref:`later <segmented-1router>`, the router
+has a single WAN interface, but may bind together any number of LANs.
 
 .. _address_fullyqual_machinenum:
 
-The ``connected_as()`` method indicates how the router is meant to be
-connected to each of the ``internet`` and ``local`` links. The parameter is
-the IP address meant for the router on these links, either fully qualified (as
-``"24.192.132.23"``), or expressed as a machine number to bitwise-OR to the
-link's network number (as ``1``, which bitwise-ORed to 192.168.1.0/24 is
-expressed as 192.168.1.1 in fully qualified form).
+The :py:meth:`~itsim.network.link.Link.connected_as` method indicates how
+the router is meant to be connected to each of the ``internet`` and ``local``
+links. The parameter is the IP address meant for the router on these links,
+either fully qualified (as ``"24.192.132.23"``), or expressed as a machine
+number to bitwise-OR to the link's network number (as ``1``, which
+bitwise-ORed to 192.168.1.0/24 is expressed as 192.168.1.1 in fully qualified
+form).
 
-The result of the ``connected_as()`` method is an object for which a
-``setup()`` method can be called in turn, which indicates the services the
-router should enact against this link. In the case of the Internet link, the
-router must implement NATting (hence the ``NAT()`` service instantiation); in
-that of the local network, it must implement DHCP address distribution (hence
-``DHCP()``) and a firewall (hence ``Firewall()``). The latter has the default
-configuration of allowing all packets outbound, but none inbound.
+The result of the :py:meth:`~itsim.network.link.Link.connected_as` method is
+an :py:class:`~itsim.network.link.Connection` object for which a
+:py:meth:`~itsim.network.link.Connection.setup` method can be called in turn,
+which indicates the services the router should enact against this link. In the
+case of the Internet link, the router must implement NATting (hence the
+:py:class:`~itsim.network.service.NAT` service instantiation); in that of the
+local network, it must implement :py:class:`~itsim.network.service.DHCP`
+address distribution and a
+:py:class:`~itsim.network.service.firewall.Firewall`). The latter has the
+default configuration of allowing all packets outbound, but none inbound.
 
 This interface is rather complicating for setting up a simple network, but it
 enables the flexibility required for more complicated architectures.
@@ -108,9 +114,9 @@ Segmented network with a single router
 So, the job of a router is not merely to forward between a LAN and a WAN -- it
 will also readily forward between multiple LANs. This is how we can leverage a
 single router to implement a segmented network, with each segment hosted on
-its own ``Link``. In this example, consider an organization splitting the
-class-B address space 10.1.0.0/16. We will consider three segments, each with
-its own needs in terms of communications:
+its own :py:class:`~itsim.network.link.Link`. In this example, consider an
+organization splitting the class-B address space 10.1.0.0/16. We will consider
+three segments, each with its own needs in terms of communications:
 
 #. The server farm, subnet 10.1.128.0/18 is where the organization's web
    servers are made to live.  HTTP and HTTPS requests (ports 80 and 443,
@@ -127,7 +133,6 @@ its own needs in terms of communications:
    all outbound communications from its nodes.
 
 The code to implement this network::
-
 
     from greensim.random import normal, constant
     from itsim.network import Link
@@ -181,8 +186,8 @@ The code to implement this network::
 Beyond the generalization of the :ref:`flat network <flat>` to connecting
 multiple LAN links to the router, two new details have emerged. The first is
 the configuration of a port forwarding service on the WAN interface
-(``PortForwarding(...)``), which is set up to carry certain inbound ports to a
-specific node on the local network.
+(:py:class:`~itsim.network.service.PortForwarding`), which is set up to carry
+certain inbound ports to a specific node on the local network.
 
 The second detail is the configuration of the LAN firewalls with ``inbound``
 and ``outbound`` rules. Such rules are applied in sequence, and prepended to
