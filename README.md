@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/ElementAI/itsim/tree/master.svg?style=svg)](https://circleci.com/gh/ElementAI/itsim/tree/master)
 
-Full documentation: https://itsim.readthedocs.io
+Full documentation is here: https://itsim.readthedocs.io
 
 Everything in the class_diagram folder was produced using [Papyrus](https://www.eclipse.org/papyrus/), an open-source product of the [Eclipse Foundation](https://www.eclipse.org/). It can be downloaded from [their website](https://www.eclipse.org/papyrus/download.html).
 
