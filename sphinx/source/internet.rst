@@ -85,7 +85,7 @@ connect to both ports 80 and 443. The alternatives are
 Streaming service over HTTP(S)
 ==============================
 
-When hosts implement regular HTTP(S) service, they may allow a certain number
+When hosts implement a regular HTTP(S) service, they may allow a certain number
 of requests to the host to yield a *streamed response*. This allows modeling
 audio/video streaming services, such as youtube.com. The stream server is set
 up so that the duration of the response to a request is sampled from a

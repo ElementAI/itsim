@@ -84,16 +84,8 @@ has a single WAN interface, but may bind together any number of LANs.
 
 .. _address_fullyqual_machinenum:
 
-The :py:meth:`~itsim.network.link.Link.connected_as` method indicates how
-the router is meant to be connected to each of the ``internet`` and ``local``
-links. The parameter is the IP address meant for the router on these links,
-either fully qualified (as ``"24.192.132.23"``), or expressed as a machine
-number to bitwise-OR to the link's network number (as ``1``, which
-bitwise-ORed to 192.168.1.0/24 is expressed as 192.168.1.1 in fully qualified
-form).
-
 The result of the :py:meth:`~itsim.network.link.Link.connected_as` method is
-an :py:class:`~itsim.network.link.Connection` object for which a
+a :py:class:`~itsim.network.link.Connection` object for which a
 :py:meth:`~itsim.network.link.Connection.setup` method can be called in turn,
 which indicates the services the router should enact against this link. In the
 case of the Internet link, the router must implement NATting (hence the
