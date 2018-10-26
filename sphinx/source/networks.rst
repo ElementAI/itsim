@@ -92,7 +92,7 @@ expressed as 192.168.1.1 in fully qualified form).
 The result of the ``connected_as()`` method is an object for which a
 ``setup()`` method can be called in turn, which indicates the services the
 router should enact against this link. In the case of the Internet link, the
-router must implement NATting (hence the ``NAT()`` service instantiation); in
+router must implement NATting (hence the ``NAT()`` service instantiation). In
 that of the local network, it must implement DHCP address distribution (hence
 ``DHCP()``) and a firewall (hence ``Firewall()``). The latter has the default
 configuration of allowing all packets outbound, but none inbound.
