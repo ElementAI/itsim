@@ -1,4 +1,4 @@
-from itsim.network import Link
+from itsim.network.link import Link
 from itsim.node import Node
 
 
