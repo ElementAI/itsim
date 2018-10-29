@@ -7,7 +7,7 @@ sys.path.append(os.path.join(DIR_ROOT))
 import pytest
 from flake8.main.cli import main as flake8_main
 from mypy.main import main as mypy_main
-
+from subprocess import call
 
 if __name__ == '__main__':
     print("### Checking PEP-8 code adherence ###")
@@ -25,6 +25,9 @@ if __name__ == '__main__':
 
     print("### Running unit tests ###")
     success_pytest = (pytest.main(sys.argv[1:] + ["--cov-config", ".coveragerc", "--cov=itsim", "--cov-report=term-missing", "tests/"]) == 0)
+
+    print("### Building documentation ###")
+    call("./testdocs.sh", shell=True)
 
     if all([success_flake8, success_mypy, success_pytest]):
         print("### Success ###")
