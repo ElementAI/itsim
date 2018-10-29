@@ -4,7 +4,7 @@
 
 UUID=$(cat /proc/sys/kernel/random/uuid)
 TDOCS_BKUP="sphinx-source-modules.runtestsbackup.temp.$UUID"
-TDOCS_MODULES="sphinx/source/modules"
+TDOCS_MODULES="../sphinx/source/modules"
 # Include dotted files in globbing
 shopt -s dotglob
 # Make a backup folder
