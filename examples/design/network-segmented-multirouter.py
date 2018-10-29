@@ -1,6 +1,6 @@
 from greensim.random import normal, constant
 
-from itsim.network import Link
+from itsim.network.link import Link
 from itsim.network.internet import Internet
 from itsim.network.service import DHCP, NAT, PortForwarding
 from itsim.network.service.firewall import Firewall, Allow, Deny, Protocol
