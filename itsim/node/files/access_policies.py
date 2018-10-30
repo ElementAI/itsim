@@ -5,10 +5,10 @@ These classes embody the rules that govern access to files.
 :py:class:`Policy <itsim.node.file_system.access_policies.Policy>` object collects
 :py:class:`TargetedPolicy <itsim.node.file_system.access_policies.TargetedPolicy>` objects into
 three groups. One group is the default policy, containing exactly one
-:py:class:`TargetedPolicy <itsim.node.file_system.access_policies.TargetedPolicy>`. The default is 
-a catch-all rule for entities that do not meet a more specific grouping. The second and third are 
-dictionaries mapping from :py:class:`UserAccount <itsim.node.accounts.UserAccount>` and 
-:py:class:`UserGroup <itsim.node.accounts.UserGroup>` objects to 
+:py:class:`TargetedPolicy <itsim.node.file_system.access_policies.TargetedPolicy>`. The default is
+a catch-all rule for entities that do not meet a more specific grouping. The second and third are
+dictionaries mapping from :py:class:`UserAccount <itsim.node.accounts.UserAccount>` and
+:py:class:`UserGroup <itsim.node.accounts.UserGroup>` objects to
 :py:class:`TargetedPolicy <itsim.node.file_system.access_policies.TargetedPolicy>` objects.
 """
 from itsim import ITObject
@@ -23,7 +23,7 @@ class InvalidPermission(Exception):
 
 class TargetedPolicy(ITObject):
     """
-    This class is simply a named 3-tuple of bools indicating read, write, and exec access. The 
+    This class is simply a named 3-tuple of bools indicating read, write, and exec access. The
     :py:class:`Policy <itsim.node.file_system.access_policies.Policy>` object collects these into
     groups to determined access. A TargetedPolicy should not be used to control access on its own
     (except as the default of a :py:class:`Policy <itsim.node.file_system.access_policies.Policy>`)
@@ -57,8 +57,8 @@ class Policy(ITObject):
     three groups. One group is the default policy, containing exactly one
     :py:class:`TargetedPolicy <itsim.node.file_system.access_policies.TargetedPolicy>`. The default
     is a catch-all rule for entities that do not meet a more specific grouping. The second and third
-    are dictionaries mapping from :py:class:`UserAccount <itsim.node.accounts.UserAccount>` and 
-    :py:class:`UserGroup <itsim.node.accounts.UserGroup>` objects to 
+    are dictionaries mapping from :py:class:`UserAccount <itsim.node.accounts.UserAccount>` and
+    :py:class:`UserGroup <itsim.node.accounts.UserGroup>` objects to
     :py:class:`TargetedPolicy <itsim.node.file_system.access_policies.TargetedPolicy>` objects.
 
     Precedence is given to rules matching the :py:class:`UserAccount <itsim.node.accounts.UserAccount>`, then
@@ -75,7 +75,7 @@ class Policy(ITObject):
         :py:class:`TargetedPolicy <itsim.node.file_system.access_policies.TargetedPolicy>`,
         indicating a rule for a specific user
     :param group_rules:
-        A dictionary mapping from :py:class:`UserGroup <itsim.node.accounts.UserGroup>` to 
+        A dictionary mapping from :py:class:`UserGroup <itsim.node.accounts.UserGroup>` to
         :py:class:`TargetedPolicy <itsim.node.file_system.access_policies.TargetedPolicy>`,
         indicating a rule for a specific group
     """

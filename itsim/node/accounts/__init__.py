@@ -22,7 +22,7 @@ class UserAccount(ITObject):
     def __hash__(self) -> int:
         return self._name.__hash__()
 
-    
+
 class UserGroup(ITObject):
     def __init__(self, name: str) -> None:
         self._name: str = name
