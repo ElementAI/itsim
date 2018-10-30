@@ -12,7 +12,7 @@ dictionaries mapping from :py:class:`UserAccount <itsim.node.accounts.UserAccoun
 :py:class:`TargetedPolicy <itsim.node.file_system.access_policies.TargetedPolicy>` objects.
 """
 from itsim import ITObject
-from itsim.node.accounts import UserAccount, UserGroup
+from itsim.node.user_management import UserAccount, UserGroup
 
 from typing import Dict
 
