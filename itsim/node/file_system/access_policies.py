@@ -1,5 +1,5 @@
 from itsim import ITObject
-from itsim.node.accounts import UserAccount, UserGroup
+from itsim.node.user_management import UserAccount, UserGroup
 
 from typing import Dict
 
