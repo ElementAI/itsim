@@ -14,9 +14,9 @@ from itsim.network.link import Link
 from itsim.network.location import AddressInUse, InvalidAddress, Location
 from itsim.network.packet import Payload, Packet
 from itsim.node.accounts import UserAccount
-from itsim.node.files import File
-from itsim.node.processes.process import Process
-from itsim.node.processes.thread import Thread
+from itsim.node.file_system import File
+from itsim.node.process_management.process import Process
+from itsim.node.process_management.thread import Thread
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, Port, PortRepr
 

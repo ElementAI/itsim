@@ -2,7 +2,7 @@ from inspect import getfullargspec
 
 from itsim import ITObject
 from itsim.node.accounts import UserAccount
-from itsim.node.files.access_policies import Policy
+from itsim.node.file_system.access_policies import Policy
 
 from sys import getsizeof
 
