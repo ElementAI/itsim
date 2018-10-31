@@ -18,15 +18,10 @@ fi
 mkdir $TDOCS_MODULES
 # Build the document tree
 sphinx-apidoc itsim -METf -o $TDOCS_MODULES
-
-SUCCESS=0
 # Compile the document tree
 make -C sphinx html
 # Check for and record a failure
-if [ $? -eq 0 ]
-then
-    SUCCESS=1
-fi
+SUCCESS=$?
 # Delete the document tree
 rm -r $TDOCS_MODULES
 # Replace anything that was backed up
@@ -41,7 +36,4 @@ fi
 # Clean up
 rm -r $TDOCS_BKUP
 # Report a failure or die happy
-if [ $SUCCESS != 1 ]
-then
-    exit 1
-fi
+exit $SUCCESS
