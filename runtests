@@ -28,11 +28,7 @@ if __name__ == '__main__':
 
     print("### Building documentation ###")
     try:
-        ret = call("tests/testdocs.sh", shell=True)
-        if ret == 0:
-            success_docs = True
-        else:
-            success_docs = False
+        success_docs = (0 == call("tests/testdocs.sh", shell=True))
     except SystemExit as err:
         success_docs = False
 
