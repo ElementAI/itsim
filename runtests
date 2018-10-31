@@ -27,15 +27,23 @@ if __name__ == '__main__':
     success_pytest = (pytest.main(sys.argv[1:] + ["--cov-config", ".coveragerc", "--cov=itsim", "--cov-report=term-missing", "tests/"]) == 0)
 
     print("### Building documentation ###")
-    call("tests/testdocs.sh", shell=True)
+    try:
+        ret = call("tests/testdocs.sh", shell=True)
+        if ret == 0:
+            success_docs = True
+        else:
+            success_docs = False
+    except SystemExit as err:
+        success_docs = False
 
-    if all([success_flake8, success_mypy, success_pytest]):
+    if all([success_flake8, success_mypy, success_pytest, success_docs]):
         print("### Success ###")
     else:
         for success, msg in [
             (success_flake8, "PEP-8 linting"),
             (success_mypy, "Type verifications"),
-            (success_pytest, "Unit tests")
+            (success_pytest, "Unit tests"),
+            (success_docs, "Documentation build")
         ]:
             if not success:
                 print(f"### FAIL: {msg} ###")
