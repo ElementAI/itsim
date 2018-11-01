@@ -25,7 +25,7 @@ class TargetedPolicy(ITObject):
     """
     This class is a named 3-tuple of bools indicating read, write, and exec access. The
     :py:class:`Policy <itsim.node.file_system.access_policies.Policy>` object collects these into
-    groups to determined access. A TargetedPolicy should not be used to control access on its own
+    groups to determine access. A TargetedPolicy should not be used to control access on its own
     (except as the default of a :py:class:`Policy <itsim.node.file_system.access_policies.Policy>`)
 
     :param read: Whether or not this grants read access
