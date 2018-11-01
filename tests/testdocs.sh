@@ -10,7 +10,7 @@ shopt -s dotglob
 # Make a backup folder
 mkdir $TDOCS_BKUP
 # Back up everything that is currently in the modules folder
-if [ -e $TDOCS_MODULES ]
+if [ -d $TDOCS_MODULES ]
 then
     mv $TDOCS_MODULES $TDOCS_BKUP
 fi
