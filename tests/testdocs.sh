@@ -26,11 +26,7 @@ rm -r $TDOCS_MODULES
 # Replace anything that was backed up
 if [ -d $TDOCS_BKUP/modules ]
 then
-    mkdir $TDOCS_MODULES
-    if [ -e $TDOCS_BKUP/modules/* ]
-    then
-        mv -n $TDOCS_BKUP/modules/* $TDOCS_MODULES
-    fi
+    mv $TDOCS_BKUP/modules $TDOCS_MODULES
 fi
 # Clean up
 rm -r $TDOCS_BKUP
