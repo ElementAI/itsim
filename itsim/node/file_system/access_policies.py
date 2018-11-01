@@ -32,7 +32,7 @@ class TargetedPolicy(ITObject):
     :param write: Whether or not this grants write access
     :param exec: Whether or not this grants exec access
     """
-    
+
     def __init__(self, read: bool, write: bool, exc: bool):
         self._read: bool = read
         self._write: bool = write
