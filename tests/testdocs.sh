@@ -16,10 +16,9 @@ then
 fi
 # Create a fresh folder
 mkdir $TDOCS_MODULES
-# Build the document tree
-sphinx-apidoc itsim -METf -o $TDOCS_MODULES
+# Build and compile the document tree
+sphinx-apidoc itsim -METf -o $TDOCS_MODULES && make -C sphinx html
 # Compile the document tree
-make -C sphinx html
 # Check for and record a failure
 SUCCESS=$?
 # Delete the document tree
