@@ -10,7 +10,7 @@ shopt -s dotglob
 # Make a backup folder
 mkdir $TDOCS_BKUP
 # Back up everything that is currently in the modules folder
-if [ -e $TDOCS_MODULES ]
+if [ -d $TDOCS_MODULES ]
 then
     mv $TDOCS_MODULES $TDOCS_BKUP
 fi
@@ -24,7 +24,7 @@ SUCCESS=$?
 # Delete the document tree
 rm -r $TDOCS_MODULES
 # Replace anything that was backed up
-if [ -e $TDOCS_BKUP/modules ]
+if [ -d $TDOCS_BKUP/modules ]
 then
     mkdir $TDOCS_MODULES
     if [ -e $TDOCS_BKUP/modules/* ]
