@@ -24,7 +24,7 @@ SUCCESS=$?
 # Delete the document tree
 rm -r $TDOCS_MODULES
 # Replace anything that was backed up
-if [ -e $TDOCS_BKUP/modules ]
+if [ -d $TDOCS_BKUP/modules ]
 then
     mkdir $TDOCS_MODULES
     if [ -e $TDOCS_BKUP/modules/* ]
