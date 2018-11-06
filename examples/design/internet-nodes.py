@@ -1,4 +1,4 @@
-from typing import Optional, MutableMapping
+from typing import MutableMapping
 
 from greensim.random import expo, normal, bounded, linear, uniform
 
@@ -9,7 +9,7 @@ from itsim.node import Socket
 from itsim.node.process_management.daemon import Daemon
 from itsim.random import num_bytes
 from itsim.simulator import Simulator
-from itsim.types import Protocol, PortsRepr
+from itsim.types import Protocol
 from itsim.units import B, KB, KbPS, MbPS, MIN, S, MS
 
 
@@ -99,7 +99,7 @@ for hostname in ["mother.ru", "77.88.55.66"]:
         bandwidth=bounded(expo(100 * MbPS), lower=1 * MbPS)
     )
 
-    @cnc_host.daemon(sim, tcp=[80, 443])
+    @cnc_host.daemon()
     def command_and_control(peer: Location, socket: Socket) -> None:
         socket.recv()
         socket.send(
@@ -112,11 +112,10 @@ for hostname in ["mother.ru", "77.88.55.66"]:
 c2_host = internet.host("baidu-search.com", normal(200 * MS, 40 * MS), bounded(expo(1 * MbPS), lower=4 * KbPS))
 
 
-@c2_host.daemon(sim, udp=80)
+@c2_host.daemon()
 class C2(Daemon):
 
-    def __init__(self, sim: Simulator, tcp: Optional[PortsRepr] = None, udp: Optional[PortsRepr] = None) -> None:
-        super().__init__(sim, tcp, udp)
+    def __init__(self) -> None:
         self._num_beacons: MutableMapping[str, int] = {}
         self._len_response = num_bytes(expo(2 * KB), header=128 * B)
 
@@ -128,3 +127,6 @@ class C2(Daemon):
             socket.send(peer, next(self._len_response) + 1 * KB, Payload({PayloadDictionaryType.CONTENT: "exploit"}))
         else:
             socket.send(peer, next(self._len_response), Payload({PayloadDictionaryType.CONTENT: "pong"}))
+
+    def trigger(self, *args, **kwargs) -> None:
+        self.handle_tcp_connection(*args, **kwargs)
