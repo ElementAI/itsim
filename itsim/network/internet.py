@@ -1,11 +1,11 @@
-from typing import Optional, Callable
+from typing import Callable, cast
 
-from itsim import ITObject
 from itsim.simulator import Simulator
 from itsim.network.link import Link
 from itsim.node import Node
+from itsim.node.process_management.daemon import Daemon
 from itsim.random import VarRandomSize, VarRandomTime, VarRandomBandwidth
-from itsim.types import HostnameRepr, Protocol, PortsRepr
+from itsim.types import HostnameRepr, Protocol
 
 
 class Host(Node):
@@ -137,27 +137,18 @@ class Host(Node):
         raise NotImplementedError()
         return self
 
-    def daemon(
-        self,
-        sim: Simulator,
-        tcp: Optional[PortsRepr] = None,
-        udp: Optional[PortsRepr] = None
-    ) -> Callable:
+    def add_daemon(self, daemon: Daemon) -> None:
+        """
+        This method will eventually contain logic subscribing the daemon to relevant events
+        """
+        pass
+
+    def daemon(self) -> Callable:
         """
         Makes the node run a daemon with custom request handling behaviour.
 
-        :param sim: Simulator instance.
-        :param tcp: Set of TCP ports over which the service is provided.
-        :param udp: Set of UDP ports over which the service is provided.
-
-        Port sets can be specified in 4 ways:
-
-          - ``None`` -- no service over this transport. Nothing useful can be done if both ``tcp`` and ``udp``
-             parameters are set to ``None``.
-          - A single port number: the set containing this number.
-          - A *tuple* with two numbers: all ports in an interval that includes the lower number, up to but excluding the
-            upper number.
-          - Any other sequence of port numbers: the set that exhaustively contains all these numbers.
+        There are currently no parameters, but the events which trigger this Daemon should eventually be determined from
+        the arguments
 
         This routine is meant to be used as a decorator over either a class, or some other callable. In the case of a
         class, it must subclass the `Daemon` class, and implement the service's discrete event logic by overriding the
@@ -169,9 +160,17 @@ class Host(Node):
         The daemon instance will run client connections acceptance. The resulting socket will be forwarded to the
         callable input to the decorator.
         """
-        def _decorator(server_behaviour: Callable) -> Callable:
-            raise NotImplementedError()
-        raise NotImplementedError()
+        def _decorator(server_behaviour: object) -> Daemon:
+            daemon = None
+            if hasattr(server_behaviour, "__call__"):
+                daemon = Daemon(cast(Callable, server_behaviour))
+            elif hasattr(server_behaviour, "trigger"):
+                daemon = cast(Daemon, server_behaviour)
+            else:
+                raise TypeError("Daemon must have trigger() or be of type Callable")
+            self.add_daemon(daemon)
+            return daemon
+
         return _decorator
 
 
@@ -195,16 +194,4 @@ class Internet(Link):
 
         :return: A new host instance, so it can be built up with various services.
         """
-        raise NotImplementedError()
-
-
-class Daemon(ITObject):
-    """
-    Base class for application services provided by Internet nodes.
-
-    :param tcp: Set of TCP ports on which this daemon listens.
-    :param udp: Set of UDP ports on which this daemon listens.
-    """
-
-    def __init__(self, sim: Simulator, tcp: Optional[PortsRepr] = None, udp: Optional[PortsRepr] = None) -> None:
         raise NotImplementedError()

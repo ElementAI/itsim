@@ -10,7 +10,7 @@ from ipaddress import ip_address
 
 from itsim import _Node
 from itsim import ITObject
-from itsim.network.link import Link
+from itsim.network import _Link
 from itsim.network.location import AddressInUse, InvalidAddress, Location
 from itsim.network.packet import Payload, Packet
 from itsim.node.file_system import File
@@ -76,12 +76,12 @@ class Node(_Node):
         super().__init__()
         self._address_default: Optional[Address] = None
         self._sockets: MutableMapping[Location, Socket] = OrderedDict()
-        self._links: MutableMapping[AddressRepr, Link] = OrderedDict()
+        self._links: MutableMapping[AddressRepr, _Link] = OrderedDict()
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
 
-    def connected_to(self, link: Link) -> "Node":
+    def connected_to(self, link: _Link) -> "Node":
         """
         Configures a budding node to be connected to a given link.
 
@@ -90,7 +90,7 @@ class Node(_Node):
         raise NotImplementedError()
         return self
 
-    def add_physical_link(self, link: Link, ar: AddressRepr) -> None:
+    def add_physical_link(self, link: _Link, ar: AddressRepr) -> None:
         """
         Attempt to connect this Node to the given Link at the given AddressRepr.
         If the AddressRepr is already being used to point to a Link, this will throw AddressInUse.

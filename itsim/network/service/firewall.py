@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Iterable, Optional
 
 from itsim import ITObject
-from itsim.network.service import Service
+from itsim.node.process_management.daemon import Service
 from itsim.types import CidrRepr, Ports, PortsRepr, Protocol
 
 

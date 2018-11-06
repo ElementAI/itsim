@@ -1,7 +1,8 @@
 from typing import Iterator
 
-from itsim import _Node, ITObject
-from itsim.network.service import Service
+from itsim import _Node
+from itsim.network import _Link
+from itsim.node.process_management.daemon import Service
 from itsim.random import VarRandomTime, VarRandomBandwidth
 from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr
 
@@ -18,7 +19,7 @@ class Connection(object):
         raise NotImplementedError()
 
 
-class Link(ITObject):
+class Link(_Link):
     """
     Physical medium network communications, intended to support a certain IP network.
 
