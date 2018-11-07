@@ -1,9 +1,8 @@
 from typing import Optional, Callable
 
-from itsim import ITObject
 from itsim.simulator import Simulator
 from itsim.network.link import Link
-from itsim.node import Node
+from itsim.node.node_object import Node
 from itsim.random import VarRandomSize, VarRandomTime, VarRandomBandwidth
 from itsim.types import HostnameRepr, Protocol, PortsRepr
 
@@ -195,16 +194,4 @@ class Internet(Link):
 
         :return: A new host instance, so it can be built up with various services.
         """
-        raise NotImplementedError()
-
-
-class Daemon(ITObject):
-    """
-    Base class for application services provided by Internet nodes.
-
-    :param tcp: Set of TCP ports on which this daemon listens.
-    :param udp: Set of UDP ports on which this daemon listens.
-    """
-
-    def __init__(self, sim: Simulator, tcp: Optional[PortsRepr] = None, udp: Optional[PortsRepr] = None) -> None:
         raise NotImplementedError()

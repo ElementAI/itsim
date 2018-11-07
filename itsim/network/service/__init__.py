@@ -1,14 +1,7 @@
 from typing import Tuple, Mapping
 
-from itsim import ITObject
+from itsim.node.process_management.daemon import Service
 from itsim.types import AddressRepr, Port
-
-
-class Service(ITObject):
-    """
-    Description of a service implemented over a network.
-    """
-    pass
 
 
 class DHCP(Service):

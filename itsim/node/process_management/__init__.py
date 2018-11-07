@@ -18,7 +18,7 @@ from abc import abstractmethod
 from itsim import AbstractITObject
 
 
-class _Thread(AbstractITObject):
+class _Daemon(AbstractITObject):
     pass
 
 
@@ -26,3 +26,11 @@ class _Process(AbstractITObject):
     @abstractmethod
     def thread_complete(self, t) -> None:
         pass
+
+
+class _Service(AbstractITObject):
+    pass
+
+
+class _Thread(AbstractITObject):
+    pass

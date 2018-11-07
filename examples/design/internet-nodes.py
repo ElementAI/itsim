@@ -2,10 +2,11 @@ from typing import Optional, MutableMapping
 
 from greensim.random import expo, normal, bounded, linear, uniform
 
-from itsim.network.internet import Internet, Daemon
+from itsim.network.internet import Internet
 from itsim.network.location import Location
 from itsim.network.payload import Payload, PayloadDictionaryType
 from itsim.node import Socket
+from itsim.node.process_management.daemon import Daemon
 from itsim.random import num_bytes
 from itsim.simulator import Simulator
 from itsim.types import Protocol, PortsRepr
