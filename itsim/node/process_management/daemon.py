@@ -2,7 +2,7 @@ from typing import Callable
 
 from itsim import _Node, ITObject
 from itsim.simulator import Simulator
-from itsim.node.process_management import _Thread
+from itsim.node.process_management import _Service, _Thread
 
 
 class Daemon(ITObject):
@@ -22,7 +22,7 @@ class Daemon(ITObject):
         self._trigger_event(*args, **kwargs)
 
 
-class Service(ITObject):
+class Service(_Service):
     """
     Base class for services, which contain a simulation event in the form of a :py:class:`~typing.Callable` which will
     be added to the simulation whenever :py:meth:`~call` is called. The :py:class:`~typing.Callable` should be passed to

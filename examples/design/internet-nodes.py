@@ -99,7 +99,7 @@ for hostname in ["mother.ru", "77.88.55.66"]:
         bandwidth=bounded(expo(100 * MbPS), lower=1 * MbPS)
     )
 
-    @cnc_host.daemon()
+    @cnc_host.daemon(Protocol.TCP, 80, 433)
     def command_and_control(peer: Location, socket: Socket) -> None:
         socket.recv()
         socket.send(
@@ -112,7 +112,7 @@ for hostname in ["mother.ru", "77.88.55.66"]:
 c2_host = internet.host("baidu-search.com", normal(200 * MS, 40 * MS), bounded(expo(1 * MbPS), lower=4 * KbPS))
 
 
-@c2_host.daemon()
+@c2_host.daemon(Protocol.UDP, 80)
 class C2(Daemon):
 
     def __init__(self) -> None:
