@@ -2,5 +2,8 @@ from itsim import AbstractITObject
 
 
 class _Link(AbstractITObject):
-    def __init__(self):
-        super().__init__()
+    pass
+
+
+class _Connection(AbstractITObject):
+    pass

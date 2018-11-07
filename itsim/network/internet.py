@@ -2,10 +2,10 @@ from typing import Callable, cast
 
 from itsim.simulator import Simulator
 from itsim.network.link import Link
-from itsim.node import Node
+from itsim.node.node_object import Node
 from itsim.node.process_management.daemon import Daemon
 from itsim.random import VarRandomSize, VarRandomTime, VarRandomBandwidth
-from itsim.types import HostnameRepr, Protocol
+from itsim.types import HostnameRepr, PortRepr, Protocol
 
 
 class Host(Node):
@@ -137,19 +137,12 @@ class Host(Node):
         raise NotImplementedError()
         return self
 
-    def add_daemon(self, daemon: Daemon) -> None:
-        """
-        This method will eventually contain logic subscribing the daemon to relevant events
-        """
-        pass
-
-    def daemon(self) -> Callable:
+    def daemon(self, protocol: Protocol, *ports: PortRepr) -> Callable:
         """
         Makes the node run a daemon with custom request handling behaviour.
 
         There are currently no parameters, but the events which trigger this Daemon should eventually be determined from
         the arguments
-
         This routine is meant to be used as a decorator over either a class, or some other callable. In the case of a
         class, it must subclass the `Daemon` class, and implement the service's discrete event logic by overriding the
         methods of this class. This grants the most control over connection acceptance behaviour and client handling.
@@ -168,7 +161,7 @@ class Host(Node):
                 daemon = cast(Daemon, server_behaviour)
             else:
                 raise TypeError("Daemon must have trigger() or be of type Callable")
-            self.add_daemon(daemon)
+            self.subscribe_daemon(daemon, protocol, *ports)
             return daemon
 
         return _decorator

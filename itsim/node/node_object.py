@@ -11,14 +11,16 @@ from ipaddress import ip_address
 from itsim import _Node
 from itsim import ITObject
 from itsim.network import _Link
+from itsim.network.connection import Connection
 from itsim.network.location import AddressInUse, InvalidAddress, Location
 from itsim.network.packet import Payload, Packet
 from itsim.node.file_system import File
+from itsim.node.process_management import _Daemon
 from itsim.node.process_management.process import Process
 from itsim.node.process_management.thread import Thread
 from itsim.node.user_management import UserAccount
 from itsim.simulator import Simulator
-from itsim.types import Address, AddressRepr, Port, PortRepr
+from itsim.types import Address, AddressRepr, as_port, Port, PortRepr, Protocol
 
 
 MapPorts = MutableMapping[Port, Process]
@@ -80,6 +82,7 @@ class Node(_Node):
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
+        self._port_table: MutableMapping[Port, Connection] = OrderedDict()
 
     def connected_to(self, link: _Link) -> "Node":
         """
@@ -217,6 +220,17 @@ class Node(_Node):
 
     def with_files(self, *files: File) -> None:
         pass
+
+    def subscribe_daemon(self, daemon: _Daemon, protocol: Protocol, *ports: PortRepr) -> None:
+        """
+        This method will eventually contain logic subscribing the daemon to relevant events.
+
+        It should be based on the PubSub functionality in https://github.com/ElementAI/itsim_private/pull/32
+        """
+        # TODO This behavior is not well-defined. Accessing this table should allow the packet to be
+        # passed to whichever entity is designated to manage it
+        for port in ports:
+            self._port_table[as_port(port)] = Connection()
 
 
 class _DefaultAddressSetter(object):

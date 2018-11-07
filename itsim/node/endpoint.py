@@ -1,4 +1,4 @@
-from itsim.node import Node
+from itsim.node.node_object import Node
 
 
 class Endpoint(Node):
