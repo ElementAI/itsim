@@ -137,7 +137,7 @@ class Host(Node):
         raise NotImplementedError()
         return self
 
-    def daemon(self, protocol: Protocol, *ports: PortRepr) -> Callable:
+    def networking_daemon(self, protocol: Protocol, *ports: PortRepr) -> Callable:
         """
         Makes the node run a daemon with custom request handling behaviour.
 
@@ -161,7 +161,7 @@ class Host(Node):
                 daemon = cast(Daemon, server_behaviour)
             else:
                 raise TypeError("Daemon must have trigger() or be of type Callable")
-            self.subscribe_daemon(daemon, protocol, *ports)
+            self.subscribe_networking_daemon(daemon, protocol, *ports)
             return daemon
 
         return _decorator

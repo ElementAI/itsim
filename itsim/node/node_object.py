@@ -221,7 +221,7 @@ class Node(_Node):
     def with_files(self, *files: File) -> None:
         pass
 
-    def subscribe_daemon(self, daemon: _Daemon, protocol: Protocol, *ports: PortRepr) -> None:
+    def subscribe_networking_daemon(self, daemon: _Daemon, protocol: Protocol, *ports: PortRepr) -> None:
         """
         This method will eventually contain logic subscribing the daemon to relevant events.
 
