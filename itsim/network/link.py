@@ -2,26 +2,14 @@ from typing import Iterator, Set
 
 from greensim.random import constant
 
-from itsim import _Node, ITObject
-from itsim.network.service import Service
+from itsim import _Node
+from itsim.network import _Connection, _Link
 from itsim.random import VarRandomTime, VarRandomBandwidth
 from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr
 from itsim.units import GbPS
 
 
-class Connection(object):
-    """
-    Connection object, tying a network interface of a node to a certain link.
-    """
-
-    def setup(self, *services: Service):
-        """
-        Lists services that the node connected to the link should arrange and get running.
-        """
-        raise NotImplementedError()
-
-
-class Link(ITObject):
+class Link(_Link):
     """
     Physical medium network communications, intended to support a certain IP network.
 
@@ -45,7 +33,7 @@ class Link(ITObject):
         """Returns the CIDR descriptor of the network."""
         return self._cidr
 
-    def connected_as(self, ar: AddressRepr = None) -> Connection:
+    def connected_as(self, ar: AddressRepr = None) -> _Connection:
         """
         Generates a Connection instance to tie a certain node to this network. This connection object requests
         from an incipient node that, in order to be connected to this link, it implements a certain number of network

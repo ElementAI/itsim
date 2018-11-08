@@ -1,9 +1,8 @@
 from typing import Optional, Callable
 
-from itsim import ITObject
 from itsim.simulator import Simulator
 from itsim.network.link import Link
-from itsim.node import Node
+from itsim.machine.node import Node
 from itsim.random import VarRandomSize, VarRandomTime, VarRandomBandwidth
 from itsim.types import HostnameRepr, Protocol, PortsRepr
 
@@ -164,7 +163,7 @@ class Host(Node):
         methods of this class. This grants the most control over connection acceptance behaviour and client handling.
         In the case of some other callable, such as a function, it is expected to handle this invocation prototype::
 
-            def handle_request(peer: itsim.types.Location, socket: itsim.node.Socket) -> None
+            def handle_request(peer: itsim.types.Location, socket: itsim.machine.Socket) -> None
 
         The daemon instance will run client connections acceptance. The resulting socket will be forwarded to the
         callable input to the decorator.
@@ -195,16 +194,4 @@ class Internet(Link):
 
         :return: A new host instance, so it can be built up with various services.
         """
-        raise NotImplementedError()
-
-
-class Daemon(ITObject):
-    """
-    Base class for application services provided by Internet nodes.
-
-    :param tcp: Set of TCP ports on which this daemon listens.
-    :param udp: Set of UDP ports on which this daemon listens.
-    """
-
-    def __init__(self, sim: Simulator, tcp: Optional[PortsRepr] = None, udp: Optional[PortsRepr] = None) -> None:
         raise NotImplementedError()
