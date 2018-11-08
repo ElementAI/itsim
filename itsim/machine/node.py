@@ -37,8 +37,8 @@ class Socket(ITObject):
         self._packet_signal.turn_off()
 
     def send(self, dest: Location, byte_size: int, payload: Payload) -> None:
-        ob_packet = Packet(self._src, dest, byte_size, payload)
-        self._node._send_to_network(ob_packet)
+        # Requires logic for forwarding the packet
+        pass
 
     # Placeholder method
     def broadcast(self, port: int, byte_size: int, payload: Payload) -> None:
@@ -62,12 +62,6 @@ class Socket(ITObject):
         if self._packet_queue.empty():
             self._packet_signal.turn_off()
         return output
-
-
-class Host(object):
-
-    def __init__(self):
-        raise NotImplementedError()
 
 
 class Node(_Node):
@@ -129,7 +123,7 @@ class Node(_Node):
         """
         This method is currently a placeholder under active development
         """
-        return []
+        return [ip_address('127.0.0.1')]
 
     @property
     def address_default(self) -> Address:
@@ -212,7 +206,6 @@ class Node(_Node):
 
     def proc_exit(self, p: Process) -> None:
         self._proc_set -= set([p])
-        print("Remaining Procs: %s" % ", ".join([str(pro.__hash__()) for pro in self._proc_set]))
 
     def with_proc_at(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
         self.fork_exec_in(sim, time, f, *args, **kwargs)
@@ -221,16 +214,26 @@ class Node(_Node):
     def with_files(self, *files: File) -> None:
         pass
 
-    def subscribe_daemon(self, daemon: _Daemon, protocol: Protocol, *ports: PortRepr) -> None:
+    def subscribe_networking_daemon(self,
+                                    sim: Simulator,
+                                    daemon: _Daemon,
+                                    protocol: Protocol,
+                                    *ports: PortRepr) -> None:
         """
-        This method will eventually contain logic subscribing the daemon to relevant events.
-
-        It should be based on the PubSub functionality in https://github.com/ElementAI/itsim_private/pull/32
+        This method contains simplified logic subscribing the daemon to network events
         """
         # TODO This behavior is not well-defined. Accessing this table should allow the packet to be
         # passed to whichever entity is designated to manage it
         for port in ports:
-            self._port_table[as_port(port)] = Connection()
+            with self.open_socket(port) as new_sock:
+                self._port_table[as_port(port)] = new_sock
+
+                def forward_recv(thread: Thread, socket: Socket):
+                    while True:
+                        pack = socket.recv()
+                        daemon.trigger(thread, pack)
+
+                self.fork_exec(sim, forward_recv, new_sock)
 
 
 class _DefaultAddressSetter(object):

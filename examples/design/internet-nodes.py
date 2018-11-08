@@ -4,8 +4,8 @@ from greensim.random import expo, normal, bounded, linear, uniform
 
 from itsim.network.internet import Internet
 from itsim.network.location import Location
-from itsim.network.payload import Payload, PayloadDictionaryType
-from itsim.machine import Socket
+from itsim.network.packet import Payload, PayloadDictionaryType
+from itsim.machine.node import Socket
 from itsim.machine.process_management.daemon import Daemon
 from itsim.random import num_bytes
 from itsim.simulator import Simulator
@@ -91,6 +91,7 @@ for domain in ["amazonaws.com", "digitalocean.com"]:
 decision_exploit = uniform(0, 1)
 len_response = num_bytes(expo(1 * KB), header=128 * B)
 
+sim = Simulator()
 
 for hostname in ["mother.ru", "77.88.55.66"]:
     cnc_host = internet.host(
@@ -99,7 +100,7 @@ for hostname in ["mother.ru", "77.88.55.66"]:
         bandwidth=bounded(expo(100 * MbPS), lower=1 * MbPS)
     )
 
-    @cnc_host.networking_daemon(Protocol.TCP, 80, 433)
+    @cnc_host.networking_daemon(sim, Protocol.TCP, 80, 433)
     def command_and_control(peer: Location, socket: Socket) -> None:
         socket.recv()
         socket.send(
@@ -112,7 +113,7 @@ for hostname in ["mother.ru", "77.88.55.66"]:
 c2_host = internet.host("baidu-search.com", normal(200 * MS, 40 * MS), bounded(expo(1 * MbPS), lower=4 * KbPS))
 
 
-@c2_host.networking_daemon(Protocol.UDP, 80)
+@c2_host.networking_daemon(sim, Protocol.UDP, 80)
 class C2(Daemon):
 
     def __init__(self) -> None:

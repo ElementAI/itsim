@@ -1,4 +1,4 @@
-from typing import Callable, cast
+from typing import Callable, cast, Union
 
 from itsim.simulator import Simulator
 from itsim.machine.node import Node
@@ -19,7 +19,7 @@ class Host(Node):
     """
 
     def __init__(self) -> None:
-        raise NotImplementedError()
+        super().__init__()
 
     def dns(self, sim: Simulator, frequency: float = 1) -> "Host":
         """
@@ -137,7 +137,7 @@ class Host(Node):
         raise NotImplementedError()
         return self
 
-    def networking_daemon(self, protocol: Protocol, *ports: PortRepr) -> Callable:
+    def networking_daemon(self, sim: Simulator, protocol: Protocol, *ports: PortRepr) -> Callable:
         """
         Makes the node run a daemon with custom request handling behaviour.
 
@@ -153,16 +153,16 @@ class Host(Node):
         The daemon instance will run client connections acceptance. The resulting socket will be forwarded to the
         callable input to the decorator.
         """
-        def _decorator(server_behaviour: object) -> Daemon:
+        def _decorator(server_behaviour: Union[Callable, Daemon]) -> Union[Callable, Daemon]:
             daemon = None
-            if hasattr(server_behaviour, "__call__"):
+            if hasattr(server_behaviour, "trigger"):
+                daemon = cast(Daemon, server_behaviour())
+            elif hasattr(server_behaviour, "__call__"):
                 daemon = Daemon(cast(Callable, server_behaviour))
-            elif hasattr(server_behaviour, "trigger"):
-                daemon = cast(Daemon, server_behaviour)
             else:
                 raise TypeError("Daemon must have trigger() or be of type Callable")
-            self.subscribe_networking_daemon(daemon, protocol, *ports)
-            return daemon
+            self.subscribe_networking_daemon(sim, daemon, protocol, *ports)
+            return server_behaviour
 
         return _decorator
 
