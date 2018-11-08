@@ -1,9 +1,9 @@
 from typing import Callable, cast
 
 from itsim.simulator import Simulator
+from itsim.machine.node import Node
+from itsim.machine.process_management.daemon import Daemon
 from itsim.network.link import Link
-from itsim.node.node_object import Node
-from itsim.node.process_management.daemon import Daemon
 from itsim.random import VarRandomSize, VarRandomTime, VarRandomBandwidth
 from itsim.types import HostnameRepr, PortRepr, Protocol
 
@@ -148,7 +148,7 @@ class Host(Node):
         methods of this class. This grants the most control over connection acceptance behaviour and client handling.
         In the case of some other callable, such as a function, it is expected to handle this invocation prototype::
 
-            def handle_request(peer: itsim.types.Location, socket: itsim.node.Socket) -> None
+            def handle_request(peer: itsim.types.Location, socket: itsim.machine.Socket) -> None
 
         The daemon instance will run client connections acceptance. The resulting socket will be forwarded to the
         callable input to the decorator.

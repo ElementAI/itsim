@@ -1,8 +1,8 @@
 from typing import Callable
 
 from itsim import _Node, ITObject
+from itsim.machine.process_management import _Service, _Thread
 from itsim.simulator import Simulator
-from itsim.node.process_management import _Service, _Thread
 
 
 class Daemon(ITObject):

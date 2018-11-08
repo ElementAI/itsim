@@ -2,11 +2,11 @@ from enum import Enum, unique
 
 from greensim import now, advance
 
-from itsim.node import Node
-from itsim.node.file_system import File
-from itsim.node.file_system.access_policies import Policy, TargetedPolicy
-from itsim.node.process_management.thread import Thread
-from itsim.node.user_management import UserAccount, UserGroup
+from itsim.machine import Node
+from itsim.machine.file_system import File
+from itsim.machine.file_system.access_policies import Policy, TargetedPolicy
+from itsim.machine.process_management.thread import Thread
+from itsim.machine.user_management import UserAccount, UserGroup
 from itsim.simulator import Simulator
 
 from typing import Callable

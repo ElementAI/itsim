@@ -21,7 +21,7 @@ from itsim.simulator import Simulator
 from itsim.network.location import AddressError, AddressInUse, InvalidAddress, Location
 from itsim.network.link import Link
 from itsim.network.packet import Packet, Payload, PayloadDictionaryType
-from itsim.node import Node as ParentNode, Socket as ParentSocket
+from itsim.machine import Node as ParentNode, Socket as ParentSocket
 from itsim.types import Address, AddressRepr, as_address, as_cidr, Cidr, CidrRepr, Port, PortRepr
 from itsim.units import MbPS, MS, S
 

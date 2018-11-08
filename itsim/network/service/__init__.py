@@ -1,6 +1,6 @@
 from typing import Tuple, Mapping
 
-from itsim.node.process_management.daemon import Service
+from itsim.machine.process_management.daemon import Service
 from itsim.types import AddressRepr, Port
 
 

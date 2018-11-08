@@ -4,8 +4,8 @@ from itsim.network.link import Link
 from itsim.network.internet import Internet
 from itsim.network.service import DHCP, NAT, PortForwarding
 from itsim.network.service.firewall import Firewall, Allow, Deny, Protocol
-from itsim.node.endpoint import Endpoint
-from itsim.node.router import Router
+from itsim.machine.endpoint import Endpoint
+from itsim.machine.router import Router
 from itsim.simulator import Simulator
 from itsim.types import as_address
 from itsim.units import MS, GbPS

@@ -48,5 +48,5 @@ class _Node(ABC, ITObject):
 
     @abstractproperty
     def addresses(self) -> Iterable[Address]:
-        raise NotImplementedError("Meant to be implemented by class itsim.node.Node.")
+        raise NotImplementedError("Meant to be implemented by class itsim.machine.Node.")
         return []
