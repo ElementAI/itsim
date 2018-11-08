@@ -38,12 +38,12 @@ class Link(ITObject):
         self._cidr = as_cidr(c)
         self._latency = latency
         self._bandwidth = bandwidth
+        self._nodes: Set[_Node] = set()
 
     @property
     def cidr(self) -> Cidr:
         """Returns the CIDR descriptor of the network."""
         return self._cidr
-        return
 
     def connected_as(self, ar: AddressRepr = None) -> Connection:
         """
@@ -56,8 +56,6 @@ class Link(ITObject):
             form the node's full address.  The use of None as address gives the node address 0.0.0.0 (which is fine if
             it uses DHCP to receive an address from a router node).
         """
-        if ar is None:
-            ar = "0.0.0.0"
         raise NotImplementedError()
 
     def iter_nodes(self) -> Iterator[_Node]:
@@ -65,6 +63,9 @@ class Link(ITObject):
         Iteration over the nodes connected to a link.
         """
         raise NotImplementedError()
+
+    def _connect(self, node: _Node) -> None:
+        self._nodes.add(node)
 
 
 class Loopback(Link):
