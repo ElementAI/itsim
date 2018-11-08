@@ -112,8 +112,6 @@ class PortAlreadyInUse(Exception):
 
 class Node(_Node):
 
-    LocationBind = TypeVar("LocationBind", AddressRepr, PortRepr, Location, Tuple)
-
     def __init__(self):
         super().__init__()
         self._interface_default = None
@@ -234,14 +232,3 @@ class Node(_Node):
         # passed to whichever entity is designated to manage it
         for port in ports:
             self._port_table[as_port(port)] = Connection()
-
-
-class _DefaultAddressSetter(object):
-
-    def __init__(self, node: Node, address: Address) -> None:
-        super().__init__()
-        self._node = node
-        self._address = address
-
-    def set_default(self) -> None:
-        self._node._address_default = self._address
