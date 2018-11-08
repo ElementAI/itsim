@@ -1,9 +1,12 @@
-from typing import Iterator
+from typing import Iterator, Set
+
+from greensim.random import constant
 
 from itsim import _Node, ITObject
 from itsim.network.service import Service
 from itsim.random import VarRandomTime, VarRandomBandwidth
 from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr
+from itsim.units import GbPS
 
 
 class Connection(object):
@@ -62,3 +65,9 @@ class Link(ITObject):
         Iteration over the nodes connected to a link.
         """
         raise NotImplementedError()
+
+
+class Loopback(Link):
+
+    def __init__(self):
+        super().__init__("127.0.0.0/8", constant(0), constant(100 * GbPS))
