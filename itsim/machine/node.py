@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from queue import Queue
-from typing import Callable, Generator, MutableMapping, Optional, Set, Tuple, TypeVar, Iterator
+from typing import Callable, Generator, MutableMapping, Optional, Set, Iterator
 
 import greensim
 
@@ -17,7 +17,7 @@ from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
 from itsim.machine.user_management import UserAccount
 from itsim.simulator import Simulator
-from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port
+from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol
 
 
 MapPorts = MutableMapping[Port, Process]
