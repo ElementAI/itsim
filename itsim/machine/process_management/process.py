@@ -1,7 +1,7 @@
 from itsim.simulator import Simulator
-from itsim.node.node_object import _Node
-from itsim.node.process_management import _Process
-from itsim.node.process_management.thread import Thread
+from itsim.machine.node import _Node
+from itsim.machine.process_management import _Process
+from itsim.machine.process_management.thread import Thread
 from itsim.types import Interrupt
 
 from typing import Callable, Optional, Set

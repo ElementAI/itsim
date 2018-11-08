@@ -14,11 +14,11 @@ from itsim.network import _Link
 from itsim.network.connection import Connection
 from itsim.network.location import AddressInUse, InvalidAddress, Location
 from itsim.network.packet import Payload, Packet
-from itsim.node.file_system import File
-from itsim.node.process_management import _Daemon
-from itsim.node.process_management.process import Process
-from itsim.node.process_management.thread import Thread
-from itsim.node.user_management import UserAccount
+from itsim.machine.file_system import File
+from itsim.machine.process_management import _Daemon
+from itsim.machine.process_management.process import Process
+from itsim.machine.process_management.thread import Thread
+from itsim.machine.user_management import UserAccount
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, as_port, Port, PortRepr, Protocol
 

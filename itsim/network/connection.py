@@ -1,5 +1,5 @@
 from itsim.network import _Connection
-from itsim.node.process_management import _Service
+from itsim.machine.process_management import _Service
 
 
 class Connection(_Connection):

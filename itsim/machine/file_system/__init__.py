@@ -1,8 +1,8 @@
 from inspect import getfullargspec
 
 from itsim import ITObject
-from itsim.node.file_system.access_policies import Policy
-from itsim.node.user_management import UserAccount
+from itsim.machine.file_system.access_policies import Policy
+from itsim.machine.user_management import UserAccount
 
 from sys import getsizeof
 

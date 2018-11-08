@@ -1,5 +1,5 @@
 from itsim.simulator import Simulator
-from itsim.node.process_management import _Process, _Thread
+from itsim.machine.process_management import _Process, _Thread
 
 from typing import Callable, Set
 
