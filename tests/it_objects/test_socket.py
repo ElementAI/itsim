@@ -1,6 +1,6 @@
 from itsim.network.location import Location
 from itsim.network.packet import Packet, Payload
-from itsim.node import Socket
+from itsim.machine.node import Socket
 from itsim.types import as_address
 
 from greensim import add, advance, local, Simulator
@@ -26,7 +26,7 @@ BROADCAST_ADDR = as_address("132.216.177.160")
 
 
 @fixture
-@patch("itsim.node.Node")
+@patch("itsim.machine.node.Node")
 def socket(mock_node, loc_a):
     return Socket(loc_a, mock_node)
 
@@ -41,7 +41,7 @@ def payload():
     return Payload()
 
 
-@patch("itsim.node.Node")
+@patch("itsim.machine.node.Node")
 def test_constructor(mock_node, loc_a):
     socket = Socket(loc_a, mock_node)
     assert socket._src == loc_a

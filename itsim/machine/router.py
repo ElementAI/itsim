@@ -1,5 +1,5 @@
 from itsim.network.link import Link
-from itsim.node import Node
+from itsim.machine.node import Node
 
 
 class Router(Node):

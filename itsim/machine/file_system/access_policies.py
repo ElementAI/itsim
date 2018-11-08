@@ -1,18 +1,18 @@
 """
 These classes embody the rules that govern access to files.
-:py:class:`~itsim.node.file_system.access_policies.TargetedPolicy` is only a named
+:py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy` is only a named
 3-tuple of bools indicating read, write, and exec access. The
-:py:class:`~itsim.node.file_system.access_policies.Policy` object collects
-:py:class:`~itsim.node.file_system.access_policies.TargetedPolicy` objects into
+:py:class:`~itsim.machine.file_system.access_policies.Policy` object collects
+:py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy` objects into
 three groups. One group is the default policy, containing exactly one
-:py:class:`~itsim.node.file_system.access_policies.TargetedPolicy`. The default is
+:py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy`. The default is
 a catch-all rule for entities that do not meet a more specific grouping. The second and third are
-dictionaries mapping from :py:class:`~itsim.node.accounts.UserAccount` and
-:py:class:`~itsim.node.accounts.UserGroup` objects to
-:py:class:`~itsim.node.file_system.access_policies.TargetedPolicy` objects.
+dictionaries mapping from :py:class:`~itsim.machine.accounts.UserAccount` and
+:py:class:`~itsim.machine.accounts.UserGroup` objects to
+:py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy` objects.
 """
 from itsim import ITObject
-from itsim.node.user_management import UserAccount, UserGroup
+from itsim.machine.user_management import UserAccount, UserGroup
 
 from typing import Dict
 
@@ -24,9 +24,9 @@ class InvalidPermission(Exception):
 class TargetedPolicy(ITObject):
     """
     This class only is a named 3-tuple of bools indicating read, write, and exec access. The
-    :py:class:`~itsim.node.file_system.access_policies.Policy` object collects these into
+    :py:class:`~itsim.machine.file_system.access_policies.Policy` object collects these into
     groups to determine access. A TargetedPolicy should not be used to control access on its own
-    (except as the default of a :py:class:`~itsim.node.file_system.access_policies.Policy`)
+    (except as the default of a :py:class:`~itsim.machine.file_system.access_policies.Policy`)
 
     :param read: Whether or not this grants read access
     :param write: Whether or not this grants write access
@@ -54,30 +54,30 @@ class TargetedPolicy(ITObject):
 class Policy(ITObject):
     """
     This object collects
-    :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy` objects into
+    :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy` objects into
     three groups. One group is the default policy, containing exactly one
-    :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy`. The default
+    :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy`. The default
     is a catch-all rule for entities that do not meet a more specific grouping. The second and third
-    are dictionaries mapping from :py:class:`~itsim.node.accounts.UserAccount` and
-    :py:class:`~itsim.node.accounts.UserGroup` objects to
-    :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy` objects.
+    are dictionaries mapping from :py:class:`~itsim.machine.accounts.UserAccount` and
+    :py:class:`~itsim.machine.accounts.UserGroup` objects to
+    :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy` objects.
 
-    Precedence is given to rules matching the :py:class:`~itsim.node.accounts.UserAccount`, then
-    the :py:class:`~itsim.node.accounts.UserGroup`, before falling back to the default.
+    Precedence is given to rules matching the :py:class:`~itsim.machine.accounts.UserAccount`, then
+    the :py:class:`~itsim.machine.accounts.UserGroup`, before falling back to the default.
 
     In the case of a collision at the same level of precedence, a denial of permission will always override the granting
     of permission.
 
     :param default:
-        A :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy` that
+        A :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy` that
         will serve as the fallback if a more specific role is not met
     :param user_rules:
-        A dictionary mapping from :py:class:`~itsim.node.accounts.UserAccount` to
-        :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy`,
+        A dictionary mapping from :py:class:`~itsim.machine.accounts.UserAccount` to
+        :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy`,
         indicating a rule for a specific user
     :param group_rules:
-        A dictionary mapping from :py:class:`~itsim.node.accounts.UserGroup` to
-        :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy`,
+        A dictionary mapping from :py:class:`~itsim.machine.accounts.UserGroup` to
+        :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy`,
         indicating a rule for a specific group
     """
 
@@ -92,7 +92,7 @@ class Policy(ITObject):
     def has_read_access(self, user: UserAccount) -> bool:
         """
         :param user:
-            The :py:class:`~itsim.node.accounts.UserAccount` attempting to
+            The :py:class:`~itsim.machine.accounts.UserAccount` attempting to
             get permission for the action
         """
         return self._has_access("has_read_access", user)
@@ -100,7 +100,7 @@ class Policy(ITObject):
     def has_write_access(self, user: UserAccount) -> bool:
         """
         :param user:
-            The :py:class:`~itsim.node.accounts.UserAccount` attempting to
+            The :py:class:`~itsim.machine.accounts.UserAccount` attempting to
             get permission for the action
         """
         return self._has_access("has_write_access", user)
@@ -108,37 +108,37 @@ class Policy(ITObject):
     def has_exec_access(self, user: UserAccount) -> bool:
         """
         :param user:
-            The :py:class:`~itsim.node.accounts.UserAccount` attempting to
+            The :py:class:`~itsim.machine.accounts.UserAccount` attempting to
             get permission for the action
         """
         return self._has_access("has_exec_access", user)
 
     def set_user_rule(self, user: UserAccount, rule: TargetedPolicy) -> None:
         """
-        Set a new :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy`
-        for a specific :py:class:`~itsim.node.accounts.UserAccount`
+        Set a new :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy`
+        for a specific :py:class:`~itsim.machine.accounts.UserAccount`
 
         :param user:
-            The :py:class:`~itsim.node.accounts.UserAccount` that is the
+            The :py:class:`~itsim.machine.accounts.UserAccount` that is the
             subject of the rule
 
         :param rule:
-            :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy` to be
+            :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy` to be
             applied for the given entity
         """
         self._user_rules[user] = rule
 
     def set_group_rule(self, group: UserGroup, rule: TargetedPolicy) -> None:
         """
-        Set a new :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy`
-        for a specific :py:class:`~itsim.node.accounts.UserGroup`
+        Set a new :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy`
+        for a specific :py:class:`~itsim.machine.accounts.UserGroup`
 
         :param user:
-            The :py:class:`~itsim.node.accounts.UserGroup` that is the
+            The :py:class:`~itsim.machine.accounts.UserGroup` that is the
             subject of the rule
 
         :param rule:
-            :py:class:`~itsim.node.file_system.access_policies.TargetedPolicy` to be
+            :py:class:`~itsim.machine.file_system.access_policies.TargetedPolicy` to be
             applied for the given entity
         """
         self._group_rules[group] = rule
