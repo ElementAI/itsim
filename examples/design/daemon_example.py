@@ -23,9 +23,10 @@ class Net_B(Daemon):
 
 
 def pack_send():
-    for port in [80, 433, 123, 321]:
-        bound_sock = host._port_table[as_port(port)]
-        bound_sock._enqueue(Packet(Location(), bound_sock._src, 0, Payload()))
+    for _ in range(3):
+        for port in [80, 433, 123, 321]:
+            bound_sock = host._port_table[as_port(port)]
+            bound_sock._enqueue(Packet(Location(), bound_sock._src, 0, Payload()))
 
 
 sim.add_in(1, pack_send)

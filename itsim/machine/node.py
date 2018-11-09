@@ -2,7 +2,7 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from ipaddress import _BaseAddress
 from queue import Queue
-from typing import Callable, cast, Generator, Iterable, MutableMapping, Optional, Set, Tuple, TypeVar
+from typing import Any, Callable, cast, Generator, Iterable, MutableMapping, Optional, Set, Tuple, TypeVar
 
 import greensim
 
@@ -231,9 +231,32 @@ class Node(_Node):
                 def forward_recv(thread: Thread, socket: Socket):
                     while True:
                         pack = socket.recv()
+                        thread._process.exc(sim, forward_recv, socket)
                         daemon.trigger(thread, pack)
 
                 self.fork_exec(sim, forward_recv, new_sock)
+
+    def __eq__(self, other: Any) -> bool:
+        # NB: MagicMock overrides the type definition and makes this check fail if _Node is replaced with Node
+        if not isinstance(other, _Node):
+            return False
+        elif self is other:
+            return True
+
+        return self._address_default == other._address_default
+
+    def __str__(self):
+        return "(%s)" % ", ".join([str(i) for i in [
+            self._address_default,
+            self._sockets,
+            self._links,
+            self._proc_set,
+            self._process_counter,
+            self._default_process_parent,
+            self._port_table]])
+
+    def __hash__(self):
+        return hash(self._address_default)
 
 
 class _DefaultAddressSetter(object):
