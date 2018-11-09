@@ -1,12 +1,13 @@
 from collections import OrderedDict
 from queue import Queue
-from typing import Callable, Generator, MutableMapping, Optional, Set, Iterator
+from typing import Callable, Generator, MutableMapping, Optional, Set, Iterator, List
 
 import greensim
 
 from itsim import _Node
 from itsim import ITObject
 from itsim.network.connection import Connection
+from itsim.network.forwarding import Forwarding
 from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
 from itsim.network.location import Location, LocationRepr
@@ -114,7 +115,6 @@ class Node(_Node):
 
     def __init__(self):
         super().__init__()
-        self._interface_default = None
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
         self.connected_to(Loopback(), "127.0.0.1")
         self._sockets: MutableMapping[Port, Socket] = OrderedDict()
@@ -124,17 +124,15 @@ class Node(_Node):
         self._default_process_parent = Process(-1, self)
         self._port_table: MutableMapping[Port, Connection] = OrderedDict()
 
-    def connected_to(self, link: Link, ar: AddressRepr = None, is_default: bool = True) -> "Node":
+    def connected_to(self, link: Link, ar: AddressRepr = None, forwardings: Optional[List[Forwarding]] = None) -> "Node":
         """
         Configures a budding node to be connected to a given link.
 
         :return: The node instance, so it can be further built.
         """
         link._connect(self)
-        interface = Interface(link, ar)
+        interface = Interface(link, as_address(ar), forwardings or [])
         self._interfaces[link.cidr] = interface
-        if is_default:
-            self._interface_default = interface
 
         # TODO -- Decide whether to set up DHCP client for this interface
         return self
@@ -147,13 +145,6 @@ class Node(_Node):
 
     def interfaces(self) -> Iterator[Interface]:
         yield from self._interfaces.values()
-
-    @property
-    def address_default(self) -> Address:
-        """
-        This method is currently a placeholder under active development
-        """
-        return self._interface_default.address
 
     def get_address_neighbour(self, neighbour: Address) -> Address:
         """
