@@ -1,14 +1,17 @@
+from typing import List
+
+from itsim.network.forwarding import Forwarding, Local
 from itsim.network.link import Link
 from itsim.types import AddressRepr, Address, as_address, Cidr
 
 
 class Interface:
 
-    def __init__(self, link: Link, ar: AddressRepr = None, has_gateway: bool = False) -> None:
+    def __init__(self, link: Link, address: Address, forwardings: List[Forwarding]) -> None:
         super().__init__()
         self._link = link
-        self._address = as_address(ar)  # Bypass the usual logic for initially null or invalid address.
-        self.has_gateway = has_gateway
+        self._address = address  # Bypass the usual logic for initially null or invalid address.
+        self.forwardings = forwardings
 
     @property
     def link(self) -> Link:
@@ -30,9 +33,9 @@ class Interface:
         self._address = address
 
     @property
-    def has_gateway(self) -> bool:
-        return self._has_gateway
+    def forwardings(self):
+        return [Local(self.cidr)] + self._forwardings
 
-    @has_gateway.setter
-    def has_gateway(self, hg: bool) -> None:
-        self._has_gateway = hg
+    @forwardings.setter
+    def forwardings(self, fs: List[Forwarding]):
+        self._forwardings = fs
