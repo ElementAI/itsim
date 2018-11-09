@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum, IntFlag, unique
 from ipaddress import ip_address, _BaseAddress, ip_network, _BaseNetwork
-from typing import Optional, Union, Iterable, Tuple
+from typing import Optional, Union, Iterable, Tuple, cast
 
 
 Address = _BaseAddress
@@ -14,7 +14,7 @@ Cidr = _BaseNetwork
 CidrRepr = Union[str, Cidr]
 
 
-def as_address(ar: AddressRepr) -> Address:
+def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
     """
     Returns a strict ``Address`` object from one of its representations:
 
@@ -22,16 +22,27 @@ def as_address(ar: AddressRepr) -> Address:
         - A string, in typical form (e.g. "a.b.c.d" for IPv4 addresses).
         - An integer, which is cast to an address in big-endian byte order.
         - An ``Address`` object, which is returned unaltered.
+
+    :param ar: Address representation.
+    :param rr:
+        This is a network (CIDR) representation, and the given address representation is relative to this network.
+        In other words, the address returned has its network number determined from ``rr``, and its machine number
+        determined from ``ar``. If the given address ``ar`` is too long given the size of ``rr``, its most significant
+        bits are overriden by the corresponding bits of ``rr``. By default, this network is 0.0.0.0/0, hence the given
+        address is effectively absolute.
     """
+    network = as_cidr(rr)
     if ar is None:
-        return ip_address(0)
+        machine = ip_address(0)
     elif isinstance(ar, int):
         if ar < 0 or ar >= 2 ** 32:
             raise ValueError(f"Given integer value {ar} does not correspond to a valid IPv4 address.")
-        return ip_address(ar)
+        machine = ip_address(ar)
     elif isinstance(ar, str):
-        return ip_address(ar)
-    return ar
+        machine = ip_address(ar)
+    else:
+        machine = cast(Address, ar)
+    return network.network_address + (int(machine) & int(network.hostmask))
 
 
 def as_cidr(cr: CidrRepr) -> Cidr:
