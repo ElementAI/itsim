@@ -64,6 +64,9 @@ class Socket(ITObject):
         self._node._close_socket(self.port)
         self._is_closed = True
 
+    def __del__(self) -> None:
+        self.close()
+
     def send(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
         if self._is_closed:
             raise ValueError("Socket is closed")
