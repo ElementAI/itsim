@@ -3,7 +3,7 @@ from itsim.machine.process_management.thread import Thread
 from itsim.simulator import Simulator
 from itsim.utils import assert_list
 
-from pytest import fixture
+from pytest import fixture, raises
 from unittest.mock import patch
 
 
@@ -108,3 +108,21 @@ def test_callback(mock_proc):
 
     assert thread._scheduled == set()
     mock_proc.thread_complete.assert_called_with(thread)
+
+
+@patch("itsim.machine.process_management.process.Process")
+def test_callback_args(mock_proc):
+
+    sim = Simulator()
+    thread = Thread(sim, mock_proc, 0)
+
+    class AdHocError(Exception):
+        pass
+
+    def f(thread, arg, kwarg):
+        if arg == 0 and kwarg == 1:
+            raise AdHocError()
+
+    thread.clone(f, 0, kwarg=1)
+    with raises(AdHocError):
+        sim.run()

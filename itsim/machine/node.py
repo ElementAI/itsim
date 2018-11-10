@@ -229,10 +229,9 @@ class Node(_Node):
                 self._port_table[as_port(port)] = new_sock
 
                 def forward_recv(thread: Thread, socket: Socket):
-                    while True:
-                        pack = socket.recv()
-                        thread._process.exc(sim, forward_recv, socket)
-                        daemon.trigger(thread, pack)
+                    pack = socket.recv()
+                    thread._process.exc(sim, forward_recv, socket)
+                    daemon.trigger(thread, pack, socket)
 
                 self.fork_exec(sim, forward_recv, new_sock)
 

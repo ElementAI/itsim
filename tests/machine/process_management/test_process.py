@@ -128,8 +128,8 @@ def test_fork_exec_args(mock_node):
 
     args = (1, 2, 3)
     kwargs = {"a": 0, "b": 1}
-    kid = proc.fork_exec(f, *args, *kwargs)
-    mock_node.fork_exec.assert_called_with(f, *args, *kwargs)
+    kid = proc.fork_exec(f, *args, **kwargs)
+    mock_node.fork_exec.assert_called_with(f, *args, **kwargs)
     assert proc == kid._parent
     assert set([kid]) == proc._children
 
