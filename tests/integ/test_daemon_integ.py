@@ -1,5 +1,3 @@
-from greensim import advance
-
 from itsim import _Packet
 from itsim.machine.node import Socket
 from itsim.machine.process_management import _Thread
@@ -15,6 +13,7 @@ sim = Simulator()
 packet_count = {}
 n = 3
 port_list = [80, 123, 321, 433]
+
 
 @host.networking_daemon(sim, Protocol.TCP, 80, 433)
 def net_a(thread: _Thread, packet: _Packet, socket: Socket) -> None:
@@ -40,7 +39,6 @@ def pack_send():
         for port in port_list:
             bound_sock = host._port_table[as_port(port)]
             bound_sock._enqueue(Packet(Location(), bound_sock._src, 0, Payload()))
-
 
 
 sim.add_in(1, pack_send)

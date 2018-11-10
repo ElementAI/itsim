@@ -38,4 +38,4 @@ def test_hash():
     assert hash(Node()) == hash(Node())
 
     node._address_default = ip_address("0.0.0.0")
-    assert hash(node) != hash(Node())    
+    assert hash(node) != hash(Node())
