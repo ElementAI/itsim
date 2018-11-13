@@ -220,10 +220,22 @@ class Node(_Node):
                                     protocol: Protocol,
                                     *ports: PortRepr) -> None:
         """
-        This method contains simplified logic subscribing the daemon to network events
+        This method contains the logic subscribing the daemon to network events
+
+        :param sim: Simulator instance.
+        :param daemon: The :py:class:`~itsim.machine.process_management.daemon.Daemon` that is subscribing to events
+        :param protocol: Member of the :py:class:`~itsim.types.Protocol` enum indicating the protocol of the
+            transmissions
+        :param ports: Variable number of :py:class:`~itsim.types.PortRepr` objects indicating the ports on which
+            to listen
+
+        This method does two things:
+
+        1. Attempts to open a socket at each of the specified ports
+        2. Schedules an event in `sim` that will wait for a packet on the socket, and once one is received call the
+            `trigger` method on `daemon`. After the packet receipt and before `trigger` is executed a new
+            :py:class:`~itsim.machine.process_management.thread.Thread` is opened to wait for another packet in parallel
         """
-        # TODO This behavior is not well-defined. Accessing this table should allow the packet to be
-        # passed to whichever entity is designated to manage it
         for port in ports:
             with self.open_socket(port) as new_sock:
                 self._port_table[as_port(port)] = new_sock
