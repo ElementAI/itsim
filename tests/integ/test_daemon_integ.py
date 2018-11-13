@@ -18,7 +18,7 @@ port_list = [80, 123, 321, 433]
 @host.networking_daemon(sim, Protocol.TCP, 80, 433)
 def net_a(thread: _Thread, packet: _Packet, socket: Socket) -> None:
     global packet_count
-    print(len(thread._process._threads))
+
     if packet.dest.port in packet_count:
         packet_count[packet.dest.port] += 1
     else:
