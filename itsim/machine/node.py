@@ -26,6 +26,9 @@ MapPorts = MutableMapping[Port, Process]
 
 
 class NameNotFound(Exception):
+    """
+    Raised when a domain name cannot be resolved to an IP address.
+    """
 
     def __init__(self, name: Hostname) -> None:
         super().__init__()
@@ -33,10 +36,28 @@ class NameNotFound(Exception):
 
 
 class Timeout(Exception):
+    """
+    Raised when the reception of a :py:class:`Packet` through a :py:class:`Socket` times out.
+    """
     pass
 
 
 class Socket(ITObject):
+    """
+    Resource reserved for a :py:class:`Process` running on a :py:class:`Node` to send and receive packets on the
+    networks the node is connected to. This class is not instantiated directly, but rather obtained as result of method
+    :py:meth:`Node.bind`.
+
+    The preferred way to handle a socket is to use it as a context manager (``with`` statement). Exiting the context
+    will trigger the :py:meth:`close`ing of the socket. Otherwise, the user must take care to invoke this method,
+    otherwise the resources on the associated :py:class:`Node` will stay associated to the socket even once it goes out
+    of scope.
+
+    :param port:
+        Port reserved on the host for running network transactions.
+    :param node:
+        Node that instantiated this object.
+    """
 
     def __init__(self, port: Port, node: _Node) -> None:
         super().__init__()
@@ -48,6 +69,9 @@ class Socket(ITObject):
 
     @property
     def port(self):
+        """
+        Port reserved by this socket on the :py:class:`Node`.
+        """
         if self.is_closed:
             raise ValueError("Socket is closed")
         return self._port
@@ -60,15 +84,34 @@ class Socket(ITObject):
         return False
 
     def close(self) -> None:
+        """
+        Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
+        """
         self._node._close_socket(self.port)
         self._is_closed = True
         self._packet_signal.turn_on()
 
     @property
     def is_closed(self) -> bool:
+        """
+        Tells whether the socket has been closed.
+        """
         return self._is_closed
 
     def send(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
+        """
+        Sends information to a certain destination, in the form of a :py:class:`Packet`. The source address of the
+        packet will be determined depending on its destination.
+
+        :param dr:
+            Destination of the packet, either provided as a :py:class:`Location` instance or as a (hostname, port)
+            tuple.
+        :param size:
+            Number of bytes to send.
+        :param payload:
+            Optional information payload added to the :py:class:`Packet` instance, which may be useful for simulating
+            the server-side part of the transaction or session.
+        """
         if self.is_closed:
             raise ValueError("Socket is closed")
         dest = Location.from_repr(dr)
@@ -88,6 +131,14 @@ class Socket(ITObject):
         self._packet_signal.turn_on()
 
     def recv(self, timeout: Optional[float] = None) -> Packet:
+        """
+        Blocks until a packet is received on the socket's :py:meth:`port`.
+
+        :param timeout:
+            If this parameter is set to a numerical value, the process invoking this method only blocks this much time.
+            If no packet is received when the timeout fires, the :py:class:`Timeout` exception is raised on the calling
+            process.
+        """
         if self.is_closed:
             raise ValueError("Socket is closed")
 
@@ -106,6 +157,10 @@ class Socket(ITObject):
 
 
 class PortAlreadyInUse(Exception):
+    """
+    Raised when attempting to :py:meth:`Node.bind` a socket that is already bound and for which the :py:class:`Socket`
+    has not yet been :py:meth:`Socket.close`d.
+    """
 
     def __init__(self, port: Port) -> None:
         super().__init__()
@@ -113,6 +168,9 @@ class PortAlreadyInUse(Exception):
 
 
 class Node(_Node):
+    """
+    Machine taking part to a network.
+    """
 
     def __init__(self):
         super().__init__()
@@ -133,7 +191,16 @@ class Node(_Node):
         forwardings: Optional[List[Forwarding]] = None
     ) -> "Node":
         """
-        Configures a budding node to be connected to a given link.
+        Configures a budding node to be connected to a given :py:class:`Link`. This thereby adds an
+        :py:class:`Interface` to the node.
+
+        :param link:
+            Link instance to connect this node to.
+        :param ar:
+            Optional address to assume as participant to the network embodied by the given link. If this is not
+            provided, the address assumed is 0.0.0.0.
+        :param forwardings:
+            List of forwarding rules known by this node in order to exchange packets with other internetworking nodes.
 
         :return: The node instance, so it can be further built.
         """
@@ -145,9 +212,15 @@ class Node(_Node):
         return self
 
     def addresses(self) -> Iterator[Address]:
+        """
+        Iterator through the IP addresses assumed by this node.
+        """
         return (interface.address for interface in self.interfaces())
 
     def interfaces(self) -> Iterator[Interface]:
+        """
+        Iterator through the networking interfaces set up for this node.
+        """
         yield from self._interfaces.values()
 
     # def get_address_neighbour(self, neighbour: Address) -> Address:
@@ -171,6 +244,18 @@ class Node(_Node):
                 return port
 
     def bind(self, pr: PortRepr = 0) -> Socket:
+        """
+        Reserves networking resources, in particular a port, for a calling process. If no port is provided, or port 0,
+        then a random free port is thus bound. The binding is embedded in a :py:class:`Socket` instance which may be
+        then used to send and receive packets of information.
+
+        :param pr:
+            Optional port to bind.
+
+        :return:
+            The :py:class:`Socket` instance suitable for sending packets (using the bound port as source) and receiving
+            packets (against the bound port).
+        """
         port = as_port(pr) or self._sample_port_unprivileged_free()
         if port in self._sockets:
             raise PortAlreadyInUse(port)
@@ -179,6 +264,9 @@ class Node(_Node):
         return socket
 
     def is_port_free(self, port: PortRepr) -> bool:
+        """
+        Tells whether the given port number is free, and thus can be used with :py:meth:`bind`.
+        """
         return port not in [0, 65535] and port not in self._sockets
 
     def _close_socket(self, port: Port) -> None:
@@ -191,6 +279,17 @@ class Node(_Node):
         raise NotImplementedError()
 
     def resolve_name(self, hostname: Hostname) -> Address:
+        """
+        Get a node to resolve the given name to an IP address. For this, the node must have been equipped with a domain
+        resolution configuration.
+
+        :param hostname:
+            Name to resolve.
+
+        :return:
+            IP address the name resolves to for this host. If resolution fails, the :py:class:`NameNotFound` exception
+            is raised.
+        """
         raise NotImplementedError()
 
     def procs(self) -> Set[Process]:

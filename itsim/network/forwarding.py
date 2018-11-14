@@ -6,6 +6,10 @@ from itsim.types import Address, as_cidr, Cidr, CidrRepr, AddressRepr, as_addres
 
 
 class Forwarding(ABC):
+    """
+    Rule indicating where a packet is to be transferred when its destination belongs to the CIDR associated to this
+    object.
+    """
 
     def __init__(self, cr: Optional[CidrRepr] = None) -> None:
         super().__init__()
@@ -13,6 +17,9 @@ class Forwarding(ABC):
 
     @property
     def cidr(self) -> Cidr:
+        """
+        CIDR targeted by this forwarding rule.
+        """
         return self._cidr
 
     @abstractmethod
@@ -26,12 +33,18 @@ class Forwarding(ABC):
 
 
 class Local(Forwarding):
+    """
+    Local forwarding: packet is delivered directly to its destination.
+    """
 
     def get_hop(self, packet: Packet) -> Address:
         return packet.dest.hostname_as_address()
 
 
 class Relay(Forwarding):
+    """
+    Packet relay through a gateway.
+    """
 
     def __init__(self, gr: AddressRepr, cr: Optional[CidrRepr] = None) -> None:
         super().__init__(cr)
