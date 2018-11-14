@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     print("### Verifying type annotations and type coherence ###")
     try:
-        mypy_main(None, ["--ignore-missing-imports", "--strict-optional", "--incremental", "."])
+        mypy_main(None, ["--ignore-missing-imports", "--namespace-packages", "--strict-optional", "--incremental", "."])
         success_mypy = True
     except SystemExit as err:
         success_mypy = False
