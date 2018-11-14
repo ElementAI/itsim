@@ -1,8 +1,9 @@
 from collections import OrderedDict
 from queue import Queue
-from typing import Callable, Generator, MutableMapping, Optional, Set, Iterator, List
+from typing import Callable, Generator, MutableMapping, Optional, Set, Iterator, List, cast
 
 import greensim
+from greensim.random import project_int, uniform
 
 from itsim import _Node
 from itsim import ITObject
@@ -31,12 +32,15 @@ class _DestinationError(Exception):
         self.dest = dest
 
 
-class NotNeighbouring(_DestinationError):
-    pass
-
-
 class NoSuitableSourceAddress(_DestinationError):
     pass
+
+
+class NameNotFound(Exception):
+
+    def __init__(self, name: Hostname) -> None:
+        super().__init__()
+        self.name = name
 
 
 class Socket(ITObject):
@@ -51,10 +55,12 @@ class Socket(ITObject):
 
     @property
     def port(self):
+        if self.is_closed:
+            raise ValueError("Socket is closed")
         return self._port
 
     def __enter__(self):
-        yield self
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> bool:
         self.close()
@@ -64,17 +70,17 @@ class Socket(ITObject):
         self._node._close_socket(self.port)
         self._is_closed = True
 
-    def __del__(self) -> None:
-        self.close()
+    @property
+    def is_closed(self) -> bool:
+        return self._is_closed
 
     def send(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
-        if self._is_closed:
+        if self.is_closed:
             raise ValueError("Socket is closed")
         dest = Location.from_repr(dr)
         address_dest = self._resolve_destination_final(dest.hostname)
-        address_src = self._find_address_source(address_dest)
         self._node._send_packet(
-            Packet(Location(address_src, self.port), Location(address_dest, dest.port), size, payload)
+            Packet(Location(None, self.port), Location(address_dest, dest.port), size, payload)
         )
 
     def _resolve_destination_final(self, hostname_dest: Hostname) -> Address:
@@ -83,20 +89,12 @@ class Socket(ITObject):
         except ValueError:
             return self._node.resolve_name(hostname_dest)
 
-    def _find_address_source(self, address_dest: Address) -> Address:
-        try:
-            return self._node.get_address_neighbour(address_dest)
-        except NotNeighbouring:
-            for address in self._node.iter_addresses_with_gateway(address_dest):
-                return address
-        raise NoSuitableSourceAddress(address_dest)
-
     def _enqueue(self, packet: Packet) -> None:
         self._packet_queue.put(packet)
         self._packet_signal.turn_on()
 
     def recv(self) -> Packet:
-        if self._is_closed:
+        if self.is_closed:
             raise ValueError("Socket is closed")
 
         self._packet_signal.wait()
@@ -121,6 +119,7 @@ class Node(_Node):
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
         self.connected_to(Loopback(), "127.0.0.1")
         self._sockets: MutableMapping[Port, Socket] = OrderedDict()
+        self._unprivileged_port = project_int(uniform(1024, 65536))
 
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
@@ -134,37 +133,37 @@ class Node(_Node):
         :return: The node instance, so it can be further built.
         """
         link._connect(self)
-        interface = Interface(link, as_address(ar), forwardings or [])
+        interface = Interface(link, as_address(ar, link.cidr), forwardings or [])
         self._interfaces[link.cidr] = interface
 
         # TODO -- Decide whether to set up DHCP client for this interface
         return self
 
     def addresses(self) -> Iterator[Address]:
-        """
-        This method is currently a placeholder under active development
-        """
         return (interface.address for interface in self.interfaces())
 
     def interfaces(self) -> Iterator[Interface]:
         yield from self._interfaces.values()
 
-    def get_address_neighbour(self, neighbour: Address) -> Address:
-        """
-        Gives the first address this node bears that is part of the same network as the given address.
-        """
-        for interface in self.interfaces():
-            if neighbour in interface.cidr:
-                return interface.address
-        raise NotNeighbouring(neighbour)
+    # def get_address_neighbour(self, neighbour: Address) -> Address:
+    #     """
+    #     Gives the first address this node bears that is part of the same network as the given address.
+    #     """
+    #     for interface in self.interfaces():
+    #         if neighbour in interface.cidr:
+    #             return interface.address
+    #     raise NotNeighbouring(neighbour)
 
-    def iter_addresses_with_gateway(self, address_dest: Address) -> Generator[Address, None, None]:
-        for interface in self.interfaces():
-            if interface.has_gateway:
-                yield interface.address
+    # def iter_addresses_with_gateway(self, address_dest: Address) -> Generator[Address, None, None]:
+    #     for interface in self.interfaces():
+    #         if interface.has_gateway:
+    #             yield interface.address
 
     def _sample_port_unprivileged_free(self) -> Port:
-        raise NotImplementedError()
+        while True:
+            port = cast(Port, next(self._unprivileged_port))
+            if self.is_port_free(port):
+                return port
 
     def bind(self, pr: PortRepr = 0) -> Socket:
         port = as_port(pr) or self._sample_port_unprivileged_free()
@@ -173,6 +172,9 @@ class Node(_Node):
         socket = Socket(port, self)
         self._sockets[port] = socket
         return socket
+
+    def is_port_free(self, port: PortRepr) -> bool:
+        return port not in [0, 65535] and port not in self._sockets
 
     def _close_socket(self, port: Port) -> None:
         del self._sockets[port]
