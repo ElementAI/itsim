@@ -173,6 +173,17 @@ Much of the process is driven by the client, whom gets suggested the various
 models for the duration of the connection, the interval between requests and
 the size of request packets.
 
+Specifying Ports
+================
+
+Port sets can be specified in 4 ways:
+
+- ``None`` -- no service over this transport. Nothing useful can be done if both ``tcp`` and ``udp``
+  parameters are set to ``None``.
+- A single port number: the set containing this number.
+- A *tuple* with two numbers: all ports in an interval that includes the lower number, up to but excluding the
+  upper number.
+- Any other sequence of port numbers: the set that exhaustively contains all these numbers.
 
 Custom daemon
 =============
