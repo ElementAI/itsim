@@ -43,6 +43,10 @@ class NameNotFound(Exception):
         self.name = name
 
 
+class Timeout(Exception):
+    pass
+
+
 class Socket(ITObject):
 
     def __init__(self, port: Port, node: _Node) -> None:
@@ -94,11 +98,15 @@ class Socket(ITObject):
         self._packet_queue.put(packet)
         self._packet_signal.turn_on()
 
-    def recv(self) -> Packet:
+    def recv(self, timeout: Optional[float] = None) -> Packet:
         if self.is_closed:
             raise ValueError("Socket is closed")
 
-        self._packet_signal.wait()
+        try:
+            self._packet_signal.wait(timeout)
+        except greensim.Timeout:
+            raise Timeout()
+
         if self.is_closed:
             raise ValueError("Socket is closed")
         output = self._packet_queue.get()

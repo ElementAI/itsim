@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import enum
 import random
 from unittest.mock import patch, call
 
@@ -6,8 +7,9 @@ import pytest
 
 from greensim import advance
 from greensim.random import constant
+
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import Socket, PortAlreadyInUse, NameNotFound
+from itsim.machine.node import Socket, PortAlreadyInUse, NameNotFound, Timeout
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
@@ -246,3 +248,42 @@ def test_recv_socket_closed_during_sim(socket80):
     with pytest.raises(ValueError):
         with run_simulation_receiving(socket80, 100.0, 50.0) as sim:
             sim.add(do_close)
+
+
+@enum.unique
+class SimulationResult(enum.Enum):
+    INCOMPLETE = enum.auto()
+    COMPLETE = enum.auto()
+    TIMEOUT = enum.auto()
+
+
+def run_simulation_timeout(socket, timeout):
+    packet = Packet(Location("192.168.2.89", 9887), Location("172.99.0.2", 443), 12345)
+    ret_value = SimulationResult.INCOMPLETE
+
+    def receive():
+        nonlocal ret_value
+        try:
+            pkt_received = socket.recv(timeout)
+            assert pkt_received == packet
+            ret_value = SimulationResult.COMPLETE
+        except Timeout:
+            ret_value = SimulationResult.TIMEOUT
+
+    def enqueue():
+        advance(100)
+        socket._enqueue(packet)
+
+    sim = Simulator()
+    sim.add(receive)
+    sim.add(enqueue)
+    sim.run()
+    return ret_value
+
+
+def test_recv_socket_timeout_none(socket80):
+    assert run_simulation_timeout(socket80, 1000) == SimulationResult.COMPLETE
+
+
+def test_recv_socket_timeout_fired(socket80):
+    assert run_simulation_timeout(socket80, 50) == SimulationResult.TIMEOUT
