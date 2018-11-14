@@ -15,7 +15,7 @@ from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet, Payload, PayloadDictionaryType
 from itsim.simulator import Simulator
-from itsim.types import as_cidr, as_address, AddressRepr, Hostname, as_hostname, Address
+from itsim.types import as_cidr, as_address, AddressRepr, as_hostname, Address
 
 
 def addr(*ar: AddressRepr):
@@ -134,8 +134,11 @@ def test_sample_free_port_after_reservations(endpoint):
 def test_bind_port_used(endpoint, socket80):
     with socket80:
         with pytest.raises(PortAlreadyInUse):
-            with endpoint.bind(80) as socket_other:
+            sock = endpoint.bind(80)
+            try:
                 pytest.fail()
+            finally:
+                sock.close()
 
 
 @pytest.fixture
@@ -181,7 +184,7 @@ def test_resolve_destination_final_address(socket80):
         assert socket80._resolve_destination_final(as_hostname(s)) == as_address(s)
 
 
-def test_resolve_destination_final_address(endpoint, socket80):
+def test_resolve_destination_final_hostname(endpoint, socket80):
     with socket80:
         with patch.object(endpoint, "resolve_name", return_value=as_address("172.99.0.2")) as mock:
             assert isinstance(socket80._resolve_destination_final(as_hostname("google.ca")), Address)

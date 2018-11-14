@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from queue import Queue
-from typing import Callable, Generator, MutableMapping, Optional, Set, Iterator, List, cast
+from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast
 
 import greensim
 from greensim.random import project_int, uniform
@@ -137,7 +137,12 @@ class Node(_Node):
         self._default_process_parent = Process(-1, self)
         self._port_table: MutableMapping[Port, Connection] = OrderedDict()
 
-    def connected_to(self, link: Link, ar: AddressRepr = None, forwardings: Optional[List[Forwarding]] = None) -> "Node":
+    def connected_to(
+        self,
+        link: Link,
+        ar: AddressRepr = None,
+        forwardings: Optional[List[Forwarding]] = None
+    ) -> "Node":
         """
         Configures a budding node to be connected to a given link.
 

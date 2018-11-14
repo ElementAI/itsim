@@ -1,5 +1,3 @@
-import pytest
-
 from itsim.network.forwarding import Local, Relay
 from itsim.network.location import Location
 from itsim.network.packet import Packet

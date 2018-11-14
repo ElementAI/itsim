@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, cast
 
 from itsim.network.packet import Packet
 from itsim.types import Address, as_cidr, Cidr, CidrRepr, AddressRepr, as_address
@@ -43,4 +43,4 @@ class Relay(Forwarding):
     def __eq__(self, other: object) -> bool:
         if not Forwarding.__eq__(self, other):
             return False
-        return self._gateway == other._gateway
+        return self._gateway == cast(Relay, other)._gateway

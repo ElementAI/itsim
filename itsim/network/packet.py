@@ -111,6 +111,5 @@ class Packet(_Packet):
     def __str__(self):
         return "<Src: %s, Dest: %s, Size: %s, Payload: %s>" % (self.source, self.dest, self.byte_size, self.payload)
 
-
     def __repr__(self):
         return repr(str(self))
