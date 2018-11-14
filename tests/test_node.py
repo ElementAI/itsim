@@ -1,8 +1,10 @@
+from contextlib import contextmanager
 import random
 from unittest.mock import patch, call
 
 import pytest
 
+from greensim import advance
 from greensim.random import constant
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.node import Socket, PortAlreadyInUse, NameNotFound
@@ -10,6 +12,7 @@ from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet, Payload, PayloadDictionaryType
+from itsim.simulator import Simulator
 from itsim.types import as_cidr, as_address, AddressRepr, Hostname, as_hostname, Address
 
 
@@ -195,9 +198,51 @@ def test_send_packet_hostname(endpoint):
         mock.assert_called_once_with(Packet(Location(None, 9887), Location("172.99.0.2", 443), 3398, Payload({})))
 
 
+@contextmanager
+def run_simulation_receiving(socket, delay_recv, expected_end_time):
+    packet = Packet(
+        Location("192.168.2.89", 9887),
+        Location("172.99.0.2", 443),
+        12345,
+        Payload({PayloadDictionaryType.CONTENT: "Hello recv!"})
+    )
+
+    def receiving_on_endpoint():
+        pkt_received = socket.recv()
+        assert pkt_received == packet
+
+    def enqueue_packet():
+        advance(delay_recv)
+        socket._enqueue(packet)
+
+    sim = Simulator()
+    sim.add(receiving_on_endpoint)
+    sim.add(enqueue_packet)
+    yield sim
+
+    try:
+        sim.run()
+    finally:
+        assert sim.now() == pytest.approx(expected_end_time)
+
+
 def test_recv(socket80):
-    pytest.fail()
+    with run_simulation_receiving(socket80, 100.0, 100.0):
+        pass
 
 
-def test_recv_socket_closed(socket80):
-    pytest.fail()
+def test_recv_socket_closed_in_setup(socket80):
+    socket80.close()
+    with pytest.raises(ValueError):
+        with run_simulation_receiving(socket80, 100.0, 0):
+            pass
+
+
+def test_recv_socket_closed_during_sim(socket80):
+    def do_close():
+        advance(50)
+        socket80.close()
+
+    with pytest.raises(ValueError):
+        with run_simulation_receiving(socket80, 100.0, 50.0) as sim:
+            sim.add(do_close)

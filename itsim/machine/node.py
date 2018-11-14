@@ -69,6 +69,7 @@ class Socket(ITObject):
     def close(self) -> None:
         self._node._close_socket(self.port)
         self._is_closed = True
+        self._packet_signal.turn_on()
 
     @property
     def is_closed(self) -> bool:
@@ -98,6 +99,8 @@ class Socket(ITObject):
             raise ValueError("Socket is closed")
 
         self._packet_signal.wait()
+        if self.is_closed:
+            raise ValueError("Socket is closed")
         output = self._packet_queue.get()
         if self._packet_queue.empty():
             self._packet_signal.turn_off()
