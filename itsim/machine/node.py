@@ -313,7 +313,6 @@ class Node(_Node):
 
     def proc_exit(self, p: Process) -> None:
         self._proc_set -= set([p])
-        print("Remaining Procs: %s" % ", ".join([str(pro.__hash__()) for pro in self._proc_set]))
 
     def with_proc_at(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
         self.fork_exec_in(sim, time, f, *args, **kwargs)
@@ -322,13 +321,44 @@ class Node(_Node):
     def with_files(self, *files: File) -> None:
         pass
 
-    def subscribe_daemon(self, daemon: _Daemon, protocol: Protocol, *ports: PortRepr) -> None:
+    def subscribe_networking_daemon(self,
+                                    sim: Simulator,
+                                    daemon: _Daemon,
+                                    protocol: Protocol,
+                                    *ports: PortRepr) -> None:
         """
-        This method will eventually contain logic subscribing the daemon to relevant events.
+        This method contains the logic subscribing the daemon to network events
 
-        It should be based on the PubSub functionality in https://github.com/ElementAI/itsim_private/pull/32
+        :param sim: Simulator instance.
+        :param daemon: The :py:class:`~itsim.machine.process_management.daemon.Daemon` that is subscribing to events
+        :param protocol: Member of the :py:class:`~itsim.types.Protocol` enum indicating the protocol of the
+            transmissions
+        :param ports: Variable number of :py:class:`~itsim.types.PortRepr` objects indicating the ports on which
+            to listen
+
+        This method does two things:
+
+        1. Attempts to open a socket at each of the specified ports
+        2. Schedules an event in `sim` that will wait for a packet on the socket, and once one is received call the
+            `trigger` method on `daemon`. After the packet receipt and before `trigger` is executed a new
+            :py:class:`~itsim.machine.process_management.thread.Thread` is opened to wait for another packet in parallel
         """
-        # TODO This behavior is not well-defined. Accessing this table should allow the packet to be
-        # passed to whichever entity is designated to manage it
         for port in ports:
-            self._port_table[as_port(port)] = Connection()
+            with self.bind(port) as new_sock:
+                self._port_table[as_port(port)] = new_sock
+
+                def forward_recv(thread: Thread, socket: Socket):
+                    pack = socket.recv()
+                    thread._process.exc(sim, forward_recv, socket)
+                    daemon.trigger(thread, pack, socket)
+
+                self.fork_exec(sim, forward_recv, new_sock)
+
+    def __str__(self):
+        return "(%s)" % ", ".join([str(i) for i in [
+            self._interfaces,
+            self._sockets,
+            self._proc_set,
+            self._process_counter,
+            self._default_process_parent,
+            self._port_table]])
