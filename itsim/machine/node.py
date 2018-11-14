@@ -48,7 +48,7 @@ class Socket(ITObject):
     :py:meth:`Node.bind`.
 
     The preferred way to handle a socket is to use it as a context manager (``with`` statement). Exiting the context
-    will trigger the :py:meth:`close`ing of the socket. Otherwise, the user must take care to invoke this method,
+    will trigger the :py:meth:`close`'ing of the socket. Otherwise, the user must take care to invoke this method,
     otherwise the resources on the associated :py:class:`Node` will stay associated to the socket even once it goes out
     of scope.
 
@@ -158,7 +158,7 @@ class Socket(ITObject):
 class PortAlreadyInUse(Exception):
     """
     Raised when attempting to :py:meth:`Node.bind` a socket that is already bound and for which the :py:class:`Socket`
-    has not yet been :py:meth:`Socket.close`d.
+    has not yet been :py:meth:`Socket.close`'d.
     """
 
     def __init__(self, port: Port) -> None:
