@@ -7,7 +7,6 @@ from greensim.random import project_int, uniform
 
 from itsim import _Node
 from itsim import ITObject
-from itsim.network.connection import Connection
 from itsim.network.forwarding import Forwarding
 from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
@@ -182,7 +181,6 @@ class Node(_Node):
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
-        self._port_table: MutableMapping[Port, Connection] = OrderedDict()
 
     def connected_to(
         self,
@@ -344,15 +342,14 @@ class Node(_Node):
             :py:class:`~itsim.machine.process_management.thread.Thread` is opened to wait for another packet in parallel
         """
         for port in ports:
-            with self.bind(port) as new_sock:
-                self._port_table[as_port(port)] = new_sock
+            new_sock = self.bind(port)
 
-                def forward_recv(thread: Thread, socket: Socket):
-                    pack = socket.recv()
-                    thread._process.exc(sim, forward_recv, socket)
-                    daemon.trigger(thread, pack, socket)
+            def forward_recv(thread: Thread, socket: Socket):
+                pack = socket.recv()
+                thread._process.exc(sim, forward_recv, socket)
+                daemon.trigger(thread, pack, socket)
 
-                self.fork_exec(sim, forward_recv, new_sock)
+            self.fork_exec(sim, forward_recv, new_sock)
 
     def __str__(self):
         return "(%s)" % ", ".join([str(i) for i in [
@@ -361,4 +358,4 @@ class Node(_Node):
             self._proc_set,
             self._process_counter,
             self._default_process_parent,
-            self._port_table]])
+        ]])
