@@ -2,7 +2,7 @@ from itsim.simulator import Simulator
 from itsim.machine.process_management import _Process, _Thread
 from itsim.utils import assert_list
 
-from typing import Any, Callable, Set
+from typing import Any, Callable, Set, Tuple
 
 
 class Thread(_Thread):
@@ -21,7 +21,7 @@ class Thread(_Thread):
         self._n: int = n
         self._scheduled: Set[Callable[[], None]] = set()
 
-    def clone_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> None:
+    def clone_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
         # Convenient object for putting in the tracking set
         def func() -> None:
             f(self, *args, **kwargs)  # type: ignore
@@ -36,7 +36,7 @@ class Thread(_Thread):
         # Not generally useful. For unit tests
         return (func, call_and_callback)
 
-    def clone(self, f: Callable[[_Thread], None], *args, **kwargs) -> None:
+    def clone(self, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
         return self.clone_in(0, f, *args, **kwargs)
 
     def exit_f(self, f: Callable[[], None]) -> None:

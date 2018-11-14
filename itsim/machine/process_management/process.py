@@ -27,7 +27,7 @@ class Process(_Process):
     def children(self) -> Set[_Process]:
         return self._children
 
-    def exc_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> None:
+    def exc_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> Thread:
         t = Thread(sim, self, self._thread_counter)
         self._thread_counter += 1
         t.clone_in(time, f, *args, **kwargs)
@@ -35,7 +35,7 @@ class Process(_Process):
         # Not generally useful. For unit tests
         return t
 
-    def exc(self, sim: Simulator, f: Callable[[Thread], None], *args, **kwargs) -> None:
+    def exc(self, sim: Simulator, f: Callable[[Thread], None], *args, **kwargs) -> Thread:
         return self.exc_in(sim, 0, f, *args, **kwargs)
 
     def thread_complete(self, t: Thread):
