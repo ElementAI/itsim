@@ -25,17 +25,6 @@ from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_addre
 MapPorts = MutableMapping[Port, Process]
 
 
-class _DestinationError(Exception):
-
-    def __init__(self, dest: Address) -> None:
-        super().__init__()
-        self.dest = dest
-
-
-class NoSuitableSourceAddress(_DestinationError):
-    pass
-
-
 class NameNotFound(Exception):
 
     def __init__(self, name: Hostname) -> None:
