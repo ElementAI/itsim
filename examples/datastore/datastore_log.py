@@ -9,7 +9,7 @@ from itsim.time import now_iso8601
 """
 
 
-def test_datastore_log_store():
+def example_datastore_log_store():
     """
         Requires a datastore server to be running
             From main directory:
@@ -39,3 +39,8 @@ def test_datastore_log_store():
     log, code = datastore.load_item('log', uuid=None, from_time=from_time, to_time=to_time)
 
     assert log.content == 'This is an error'
+    print("Log example completed successfully!")
+
+
+if __name__ == '__main__':
+    example_datastore_log_store()
