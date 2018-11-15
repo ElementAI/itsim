@@ -114,16 +114,10 @@ class Socket(ITObject):
         if self.is_closed:
             raise ValueError("Socket is closed")
         dest = Location.from_repr(dr)
-        address_dest = self._resolve_destination_final(dest.hostname)
+        address_dest = self._node.resolve_name(dest.hostname)
         self._node._send_packet(
             Packet(Location(None, self.port), Location(address_dest, dest.port), size, payload)
         )
-
-    def _resolve_destination_final(self, hostname_dest: Hostname) -> Address:
-        try:
-            return as_address(hostname_dest)
-        except ValueError:
-            return self._node.resolve_name(hostname_dest)
 
     def _enqueue(self, packet: Packet) -> None:
         self._packet_queue.put(packet)
@@ -286,9 +280,13 @@ class Node(_Node):
 
         :return:
             IP address the name resolves to for this host. If resolution fails, the :py:class:`NameNotFound` exception
-            is raised.
+            is raised. If the given hostname is actually an IP address, then it is returned as is.
         """
-        raise NotImplementedError()
+        try:
+            return as_address(hostname)
+        except ValueError:
+            # TODO -- Implement name resolution.
+            raise NotImplementedError()
 
     def procs(self) -> Set[Process]:
         return self._proc_set

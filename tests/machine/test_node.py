@@ -22,19 +22,13 @@ def addr(*ar: AddressRepr):
     return [as_address(a) for a in ar]
 
 
-def test_socket_resolve_destination_address():
-    socket = Socket(9887, None)
-    assert socket._resolve_destination_final(as_hostname("192.168.3.8")) == as_address("192.168.3.8")
+def test_resolve_destination_address(endpoint):
+    assert endpoint.resolve_name(as_hostname("192.168.3.8")) == as_address("192.168.3.8")
 
 
-def test_socket_resolve_destination_hostsname():
-    class NodeFakingResolution:
-        def resolve_name(self, name: str) -> Address:
-            if name == "hoho.com":
-                return as_address("45.67.89.12")
-            raise ValueError()
-    socket = Socket(9887, NodeFakingResolution())
-    assert socket._resolve_destination_final(as_hostname("hoho.com")) == as_address("45.67.89.12")
+def test_socket_resolve_destination_hostname(endpoint):
+    with patch.object(endpoint, "resolve_name", return_value=as_address("45.67.89.12")):
+        assert endpoint.resolve_name(as_hostname("hoho.com")) == as_address("45.67.89.12")
 
 
 @pytest.fixture
@@ -179,20 +173,9 @@ def test_send_packet_address(endpoint):
         )
 
 
-def test_resolve_destination_final_address(socket80):
+def test_resolve_destination_address(endpoint):
     for s in ["8.8.8.8", "192.168.1.8"]:
-        assert socket80._resolve_destination_final(as_hostname(s)) == as_address(s)
-
-
-def test_resolve_destination_final_hostname(endpoint, socket80):
-    with socket80:
-        with patch.object(endpoint, "resolve_name", return_value=as_address("172.99.0.2")) as mock:
-            assert isinstance(socket80._resolve_destination_final(as_hostname("google.ca")), Address)
-            mock.assert_called_once_with("google.ca")
-        with patch.object(endpoint, "resolve_name", side_effect=NameNotFound("asdf")) as mock:
-            with pytest.raises(NameNotFound):
-                socket80._resolve_destination_final(as_hostname("asdf"))
-            mock.assert_called_once_with("asdf")
+        assert endpoint.resolve_name(as_hostname(s)) == as_address(s)
 
 
 def test_send_packet_hostname(endpoint):
