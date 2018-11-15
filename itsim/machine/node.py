@@ -249,7 +249,7 @@ class Node(_Node):
             packets (against the bound port).
         """
         port = as_port(pr) or self._sample_port_unprivileged_free()
-        if port in self._sockets:
+        if not self.is_port_free(port):
             raise PortAlreadyInUse(port)
         socket = Socket(port, self)
         self._sockets[port] = socket
