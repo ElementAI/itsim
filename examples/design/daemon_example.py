@@ -1,5 +1,5 @@
 from itsim import _Packet
-from itsim.machine.process_management import _Thread
+from itsim.machine.process_management.__init__ import _Thread
 from itsim.machine.process_management.daemon import Daemon
 from itsim.network.internet import Host
 from itsim.network.location import Location

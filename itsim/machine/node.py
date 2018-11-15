@@ -14,11 +14,11 @@ from itsim.network import _Link
 from itsim.network.connection import Connection
 from itsim.network.location import AddressInUse, InvalidAddress, Location
 from itsim.network.packet import Payload, Packet
-from itsim.machine.file_system import File
-from itsim.machine.process_management import _Daemon
+from itsim.machine.file_system.__init__ import File
+from itsim.machine.process_management.__init__ import _Daemon
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
-from itsim.machine.user_management import UserAccount
+from itsim.machine.user_management.__init__ import UserAccount
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, as_port, Port, PortRepr, Protocol
 
@@ -188,13 +188,13 @@ class Node(_Node):
     def procs(self) -> Set[Process]:
         return self._proc_set
 
-    def fork_exec_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> Process:
+    def fork_exec_in(self, sim: Simulator, time: float, f: Callable[..., None], *args, **kwargs) -> Process:
         proc = Process(self.next_proc_number(), self, self._default_process_parent)
         self._proc_set |= set([proc])
         proc.exc_in(sim, time, f, *args, **kwargs)
         return proc
 
-    def fork_exec(self, sim: Simulator, f: Callable[[Thread], None], *args, **kwargs) -> Process:
+    def fork_exec(self, sim: Simulator, f: Callable[..., None], *args, **kwargs) -> Process:
         return self.fork_exec_in(sim, 0, f, *args, **kwargs)
 
     def run_file(self, sim: Simulator, file: File, user: UserAccount) -> None:
