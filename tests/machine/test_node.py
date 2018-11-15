@@ -9,7 +9,7 @@ from greensim import advance
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import PortAlreadyInUse, Timeout
+from itsim.machine.node import PortAlreadyInUse, Timeout, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, NUM_PORTS_EPHEMERAL
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
@@ -68,15 +68,11 @@ def test_is_port_free(endpoint):
         assert endpoint.is_port_free(random.randint(1, 65534))
 
 
-def exercise_free_port_sampling(endpoint):
-    for n in range(2000):
-        port = endpoint._sample_port_unprivileged_free()
-        assert port >= 1024
-        assert endpoint.is_port_free(port)
-
-
-def test_sample_free_port_no_socket(endpoint):
-    exercise_free_port_sampling(endpoint)
+def test_get_port_ephemeral(endpoint):
+    for expected in range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER):
+        port = endpoint._get_port_ephemeral()
+        assert expected == port
+    assert PORT_EPHEMERAL_MIN == endpoint._get_port_ephemeral()  # Cycle when reaching last.
 
 
 @pytest.fixture
@@ -103,14 +99,17 @@ def test_socket_context_manager(socket80):
     assert socket80.is_closed
 
 
-def test_sample_free_port_after_reservations(endpoint):
-    PORTS_RESERVED = [9887, 80, 65000, 45454, 12345]
+def test_ephemeral_port_after_reservations(endpoint):
+    PORTS_RESERVED = [9887, 80, 65000, 45454, PORT_EPHEMERAL_MIN, 12345]
     sockets = []
     try:
         sockets = [endpoint.bind(port) for port in PORTS_RESERVED]
         for port in PORTS_RESERVED:
             assert not endpoint.is_port_free(port)
-        exercise_free_port_sampling(endpoint)
+        for expected in range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER):
+            if expected not in PORTS_RESERVED:
+                port = endpoint._get_port_ephemeral()
+                assert endpoint.is_port_free(port)
     finally:
         for socket in sockets:
             socket.close()

@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from itertools import cycle
 from queue import Queue
 from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast
 
@@ -19,6 +20,11 @@ from itsim.machine.process_management.thread import Thread
 from itsim.machine.user_management.__init__ import UserAccount
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol
+
+
+PORT_EPHEMERAL_MIN = 32768
+PORT_EPHEMERAL_UPPER = 61000
+NUM_PORTS_EPHEMERAL = PORT_EPHEMERAL_UPPER - PORT_EPHEMERAL_MIN
 
 
 MapPorts = MutableMapping[Port, Process]
@@ -170,7 +176,7 @@ class Node(_Node):
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
         self.connected_to(Loopback(), "127.0.0.1")
         self._sockets: MutableMapping[Port, Socket] = OrderedDict()
-        self._unprivileged_port = project_int(uniform(1024, 65536))
+        self._cycle_ports_ephemeral = cycle(range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER))
 
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
@@ -215,11 +221,15 @@ class Node(_Node):
         """
         yield from self._interfaces.values()
 
-    def _sample_port_unprivileged_free(self) -> Port:
-        while True:
-            port = cast(Port, next(self._unprivileged_port))
+    def _get_port_ephemeral(self) -> Port:
+        num_ports_visited = 0
+        for port in self._cycle_ports_ephemeral:
             if self.is_port_free(port):
                 return port
+            num_ports_visited += 1
+            if num_ports_visited >= NUM_PORTS_EPHEMERAL:
+                break
+        raise RuntimeError("No ephemeral port left to allocate.")
 
     def bind(self, pr: PortRepr = 0) -> Socket:
         """
@@ -234,7 +244,7 @@ class Node(_Node):
             The :py:class:`Socket` instance suitable for sending packets (using the bound port as source) and receiving
             packets (against the bound port).
         """
-        port = as_port(pr) or self._sample_port_unprivileged_free()
+        port = as_port(pr) or self._get_port_ephemeral()
         if not self.is_port_free(port):
             raise PortAlreadyInUse(port)
         socket = Socket(port, self)
