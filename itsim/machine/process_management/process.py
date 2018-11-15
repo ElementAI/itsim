@@ -1,6 +1,7 @@
+from .__init__ import _Process
+
+from itsim.__init__ import _Node
 from itsim.simulator import Simulator
-from itsim.machine.node import _Node
-from itsim.machine.process_management import _Process
 from itsim.machine.process_management.thread import Thread
 from itsim.types import Interrupt
 from itsim.utils import assert_list
