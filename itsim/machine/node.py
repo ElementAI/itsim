@@ -1,8 +1,6 @@
 from collections import OrderedDict
-from queue import Queue
 from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast
 
-import greensim
 from greensim.random import project_int, uniform
 
 from itsim.machine.__init__ import _Node
@@ -10,6 +8,7 @@ from itsim.machine.file_system import File
 from itsim.machine.process_management import _Daemon
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
+from itsim.machine.socket import Socket
 from itsim.machine.user_management import UserAccount
 from itsim.network.forwarding import Forwarding
 from itsim.network.interface import Interface
@@ -30,127 +29,6 @@ class NameNotFound(Exception):
     def __init__(self, name: Hostname) -> None:
         super().__init__()
         self.name = name
-
-
-class Timeout(Exception):
-    """
-    Raised when the reception of a :py:class:`Packet` through a :py:class:`Socket` times out.
-    """
-    pass
-
-
-class Socket(ITObject):
-    """
-    Resource reserved for a :py:class:`Process` running on a :py:class:`Node` to send and receive packets on the
-    networks the node is connected to. This class is not instantiated directly, but rather obtained as result of method
-    :py:meth:`Node.bind`.
-
-    The preferred way to handle a socket is to use it as a context manager (``with`` statement). Exiting the context
-    will trigger the :py:meth:`close`'ing of the socket. Otherwise, the user must take care to invoke this method,
-    otherwise the resources on the associated :py:class:`Node` will stay associated to the socket even once it goes out
-    of scope.
-
-    :param port:
-        Port reserved on the host for running network transactions.
-    :param node:
-        Node that instantiated this object.
-    """
-
-    def __init__(self, port: Port, node: _Node) -> None:
-        super().__init__()
-        self._is_closed = False
-        self._port = port
-        self._node = node
-        self._packet_queue: Queue[Packet] = Queue()
-        self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
-
-    @property
-    def port(self):
-        """
-        Port reserved by this socket on the :py:class:`Node`.
-        """
-        if self.is_closed:
-            raise ValueError("Socket is closed")
-        return self._port
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> bool:
-        self.close()
-        return False
-
-    def close(self) -> None:
-        """
-        Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
-        """
-        self._node._close_socket(self.port)
-        self._is_closed = True
-        self._packet_signal.turn_on()
-
-    @property
-    def is_closed(self) -> bool:
-        """
-        Tells whether the socket has been closed.
-        """
-        return self._is_closed
-
-    def send(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
-        """
-        Sends information to a certain destination, in the form of a :py:class:`Packet`. The source address of the
-        packet will be determined depending on its destination.
-
-        :param dr:
-            Destination of the packet, either provided as a :py:class:`Location` instance or as a (hostname, port)
-            tuple.
-        :param size:
-            Number of bytes to send.
-        :param payload:
-            Optional information payload added to the :py:class:`Packet` instance, which may be useful for simulating
-            the server-side part of the transaction or session.
-        """
-        if self.is_closed:
-            raise ValueError("Socket is closed")
-        dest = Location.from_repr(dr)
-        address_dest = self._resolve_destination_final(dest.hostname)
-        self._node._send_packet(
-            Packet(Location(None, self.port), Location(address_dest, dest.port), size, payload)
-        )
-
-    def _resolve_destination_final(self, hostname_dest: Hostname) -> Address:
-        try:
-            return as_address(hostname_dest)
-        except ValueError:
-            return self._node.resolve_name(hostname_dest)
-
-    def _enqueue(self, packet: Packet) -> None:
-        self._packet_queue.put(packet)
-        self._packet_signal.turn_on()
-
-    def recv(self, timeout: Optional[float] = None) -> Packet:
-        """
-        Blocks until a packet is received on the socket's :py:meth:`port`.
-
-        :param timeout:
-            If this parameter is set to a numerical value, the process invoking this method only blocks this much time.
-            If no packet is received when the timeout fires, the :py:class:`Timeout` exception is raised on the calling
-            process.
-        """
-        if self.is_closed:
-            raise ValueError("Socket is closed")
-
-        try:
-            self._packet_signal.wait(timeout)
-        except greensim.Timeout:
-            raise Timeout()
-
-        if self.is_closed:
-            raise ValueError("Socket is closed")
-        output = self._packet_queue.get()
-        if self._packet_queue.empty():
-            self._packet_signal.turn_off()
-
-        return output
 
 
 class PortAlreadyInUse(Exception):

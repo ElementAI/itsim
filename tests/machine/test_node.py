@@ -9,7 +9,8 @@ from greensim import advance
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import Socket, PortAlreadyInUse, NameNotFound, Timeout
+from itsim.machine.node import PortAlreadyInUse, NameNotFound
+from itsim.machine.socket import Timeout, Socket
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
