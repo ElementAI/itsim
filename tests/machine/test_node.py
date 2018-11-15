@@ -284,3 +284,23 @@ def test_recv_socket_timeout_none(socket80):
 
 def test_recv_socket_timeout_fired(socket80):
     assert run_simulation_timeout(socket80, 50) == SimulationResult.TIMEOUT
+
+
+def test_send_packet(endpoint_2links, link_small, link_large):
+    for dest, link, relay in [
+        ("192.168.1.67", link_small, "192.168.1.67"),
+        ("10.10.192.245", link_large, "10.10.192.245"),
+        ("172.92.0.2", link_large, "10.10.128.1")
+    ]:
+        packet = Packet(Location(None, 9887), Location(dest, 443), 1234)
+
+        for interface in endpoint_2links.interfaces():
+            if as_address(dest) in interface.cidr:
+                source = interface.address
+                break
+        else:
+            pytest.fail()
+
+        with patch.object(link, "_transfer_packet") as mock:
+            endpoint_2links._send_packet(packet)
+            mock.assert_called_with(Packet(Location(source, 9887), Location(dest, 443), 1234), as_address(relay))

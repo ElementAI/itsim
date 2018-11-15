@@ -4,8 +4,9 @@ from greensim.random import constant
 
 from itsim.machine.__init__ import _Node
 from itsim.network import _Connection, _Link
+from itsim.network.packet import Packet
 from itsim.random import VarRandomTime, VarRandomBandwidth
-from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr
+from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr, Address
 from itsim.units import GbPS
 
 
@@ -54,6 +55,9 @@ class Link(_Link):
 
     def _connect(self, node: _Node) -> None:
         self._nodes.add(node)
+
+    def _transfer_packet(self, packet: Packet, hop: Address) -> None:
+        pass
 
 
 class Loopback(Link):
