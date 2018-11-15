@@ -76,7 +76,7 @@ def get_itsim_object_types() -> List[str]:
     return itsim_object_types
 
 
-def check_validity(data: Any, schema: Any) -> bool:
+def check_validity(data: Any, schema: Any) -> None:
     try:
         jsonschema.validate(data, schema)
     except jsonschema.ValidationError as e:
@@ -84,7 +84,7 @@ def check_validity(data: Any, schema: Any) -> bool:
         assert False
 
 
-def create_json_item(sim_uuid: str, timestamp: str, item_type: str = None, **kwargs) -> Any:
+def create_json_item(sim_uuid: str, timestamp: str, item_type: str, **kwargs) -> Any:
     # TODO: assert required kwargs for each type
     json_item = None
 
