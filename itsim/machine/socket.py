@@ -36,12 +36,12 @@ class Socket(_Socket):
         super().__init__()
         self._is_closed = False
         self._port = port
-        self._node = node
+        self._node: _Node = node
         self._packet_queue: Queue[Packet] = Queue()
         self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
 
     @property
-    def port(self):
+    def port(self) -> Port:
         """
         Port reserved by this socket on the :py:class:`Node`.
         """
