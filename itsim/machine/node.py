@@ -215,20 +215,6 @@ class Node(_Node):
         """
         yield from self._interfaces.values()
 
-    # def get_address_neighbour(self, neighbour: Address) -> Address:
-    #     """
-    #     Gives the first address this node bears that is part of the same network as the given address.
-    #     """
-    #     for interface in self.interfaces():
-    #         if neighbour in interface.cidr:
-    #             return interface.address
-    #     raise NotNeighbouring(neighbour)
-
-    # def iter_addresses_with_gateway(self, address_dest: Address) -> Generator[Address, None, None]:
-    #     for interface in self.interfaces():
-    #         if interface.has_gateway:
-    #             yield interface.address
-
     def _sample_port_unprivileged_free(self) -> Port:
         while True:
             port = cast(Port, next(self._unprivileged_port))
