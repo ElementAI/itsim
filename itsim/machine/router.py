@@ -1,11 +1,11 @@
-from itsim.internet.endpoint import Endpoint
+from itsim.machine import _Node
 from itsim.network.link import Link
 from itsim.network.service.dhcp import DHCPDaemon
 from itsim.simulator import Simulator
 from itsim.types import Protocol
 
 
-class Router(Endpoint):
+class Router(_Node):
     """
     Node tasked with forwarding messages between LANs connected to it, and over to a WAN interface. The router is
     configured through links it forwards between, and thus is made to implement certain network services over the

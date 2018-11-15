@@ -1,11 +1,11 @@
 from itsim.simulator import Simulator
-from itsim.network.endpoint import Endpoint
+from itsim.machine import _Node
 from itsim.network.link import Link
 from itsim.random import VarRandomSize, VarRandomTime, VarRandomBandwidth
 from itsim.types import HostnameRepr, Protocol
 
 
-class Host(Endpoint):
+class Host(_Node):
     """
     Internet-facing node that provides various application services. This is a lightweight ``Host`` instance, for which
     no internal visibility is granted throughout the simulation.

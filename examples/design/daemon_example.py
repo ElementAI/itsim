@@ -1,4 +1,3 @@
-from itsim import _Packet
 from itsim.machine.process_management.__init__ import _Thread
 from itsim.machine.process_management.daemon import Daemon
 from itsim.network.internet import Host
@@ -12,7 +11,7 @@ sim = Simulator()
 
 
 @host.networking_daemon(sim, Protocol.TCP, 80, 433)
-def net_a(thread: _Thread, packet: _Packet) -> None:
+def net_a(thread: _Thread, packet: Packet) -> None:
     print("Got a packet at port %s!" % packet.dest.port)
 
 

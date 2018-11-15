@@ -1,6 +1,6 @@
 from typing import Iterator
 
-from itsim import _Node
+from itsim.machine import _Node
 from itsim.network import _Connection, _Link
 from itsim.random import VarRandomTime, VarRandomBandwidth
 from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr

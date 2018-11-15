@@ -1,6 +1,6 @@
 from greensim.random import normal
 
-from itsim import _Packet
+from itsim.network import _Packet
 from itsim.machine.node import Socket
 from itsim.machine.process_management import _Thread
 from itsim.machine.process_management.daemon import Daemon

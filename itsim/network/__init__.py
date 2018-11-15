@@ -1,9 +1,13 @@
-from itsim import AbstractITObject
+from itsim import ITObject
 
 
-class _Link(AbstractITObject):
+class _Connection(ITObject):
     pass
 
 
-class _Connection(AbstractITObject):
+class _Link(ITObject):
+    pass
+
+
+class _Packet(ITObject):
     pass

@@ -1,14 +1,12 @@
-from itsim import _Packet
-from itsim.machine.node import Socket
+from itsim.machine.node import Node, Socket
 from itsim.machine.process_management import _Thread
 from itsim.machine.process_management.daemon import Daemon
-from itsim.network.endpoint import Endpoint
 from itsim.network.location import Location
 from itsim.network.packet import Packet, Payload
 from itsim.simulator import Simulator
 from itsim.types import as_port, Protocol
 
-end = Endpoint()
+end = Node()
 sim = Simulator()
 packet_count = {}
 n = 3
@@ -16,7 +14,7 @@ port_list = [80, 123, 321, 433]
 
 
 @end.networking_daemon(sim, Protocol.TCP, 80, 433)
-def net_a(thread: _Thread, packet: _Packet, socket: Socket) -> None:
+def net_a(thread: _Thread, packet: Packet, socket: Socket) -> None:
     global packet_count
 
     if packet.dest.port in packet_count:

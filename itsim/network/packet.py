@@ -1,7 +1,9 @@
+from .__init__ import _Packet
+
 from enum import Enum, unique
 from typing import Dict
 
-from itsim import _Packet, ITObject
+from itsim import ITObject
 from itsim.network.location import Location
 
 
