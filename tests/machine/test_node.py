@@ -9,26 +9,17 @@ from greensim import advance
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import Socket, PortAlreadyInUse, NameNotFound, Timeout
+from itsim.machine.node import PortAlreadyInUse, Timeout
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet, Payload, PayloadDictionaryType
 from itsim.simulator import Simulator
-from itsim.types import as_cidr, as_address, AddressRepr, as_hostname, Address
+from itsim.types import as_cidr, as_address, AddressRepr, as_hostname
 
 
 def addr(*ar: AddressRepr):
     return [as_address(a) for a in ar]
-
-
-def test_resolve_destination_address(endpoint):
-    assert endpoint.resolve_name(as_hostname("192.168.3.8")) == as_address("192.168.3.8")
-
-
-def test_socket_resolve_destination_hostname(endpoint):
-    with patch.object(endpoint, "resolve_name", return_value=as_address("45.67.89.12")):
-        assert endpoint.resolve_name(as_hostname("hoho.com")) == as_address("45.67.89.12")
 
 
 @pytest.fixture
