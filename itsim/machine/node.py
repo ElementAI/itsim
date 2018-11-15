@@ -91,7 +91,7 @@ class Socket(ITObject):
         """
         Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
         """
-        self._node._close_socket(self.port)
+        self._node._deallocate_socket(self.port)
         self._is_closed = True
         self._packet_signal.turn_on()
 
@@ -256,7 +256,7 @@ class Node(_Node):
         """
         return port not in [0, 65535] and port not in self._sockets
 
-    def _close_socket(self, port: Port) -> None:
+    def _deallocate_socket(self, port: Port) -> None:
         del self._sockets[port]
 
     def _send_packet(self, packet: Packet) -> None:
