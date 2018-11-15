@@ -1,10 +1,9 @@
 from collections import OrderedDict
 from itertools import cycle
 from queue import Queue
-from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast
+from typing import Callable, MutableMapping, Optional, Set, Iterator, List
 
 import greensim
-from greensim.random import project_int, uniform
 
 from itsim import _Node
 from itsim import ITObject

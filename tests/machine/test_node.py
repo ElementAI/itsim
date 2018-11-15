@@ -9,7 +9,7 @@ from greensim import advance
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import PortAlreadyInUse, Timeout, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, NUM_PORTS_EPHEMERAL
+from itsim.machine.node import PortAlreadyInUse, Timeout, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
