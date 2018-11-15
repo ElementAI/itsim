@@ -18,9 +18,6 @@ from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol
 
 
-MapPorts = MutableMapping[Port, Process]
-
-
 class NameNotFound(Exception):
     """
     Raised when a domain name cannot be resolved to an IP address.
