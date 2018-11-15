@@ -51,11 +51,6 @@ def test_constructor(mock_node, loc_a):
     assert not socket._packet_signal.is_on
 
 
-def test_send(socket, loc_a, loc_b, packet):
-    socket.send(loc_b, packet.byte_size, packet.payload)
-    socket._node._send_to_network.assert_called_with(packet)
-
-
 def test_enqueue(socket, packet):
     assert socket._packet_queue.empty()
     socket._enqueue(packet)

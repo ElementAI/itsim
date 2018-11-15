@@ -1,7 +1,9 @@
-from itsim.simulator import Simulator
-from itsim.machine.process_management import _Process, _Thread
+from .__init__ import _Process, _Thread
 
-from typing import Callable, Set
+from itsim.simulator import Simulator
+from itsim.utils import assert_list
+
+from typing import Any, Callable, Set, Tuple
 
 
 class Thread(_Thread):
@@ -20,7 +22,11 @@ class Thread(_Thread):
         self._n: int = n
         self._scheduled: Set[Callable[[], None]] = set()
 
-    def clone_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> None:
+    def clone_in(self,
+                 time: float,
+                 f: Callable[[_Thread], None],
+                 *args,
+                 **kwargs) -> Tuple[Callable[[], None], Callable[[], None]]:
         # Convenient object for putting in the tracking set
         def func() -> None:
             f(self, *args, **kwargs)  # type: ignore
@@ -32,17 +38,40 @@ class Thread(_Thread):
 
         self._sim.add_in(time, call_and_callback)
         self._scheduled |= set([func])
+        # Not generally useful. For unit tests
+        return (func, call_and_callback)
 
-    def clone(self, f: Callable[[_Thread], None], *args, **kwargs) -> None:
-        self.clone_in(0, f, *args, **kwargs)
+    def clone(self, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable[[], None], Callable[[], None]]:
+        return self.clone_in(0, f, *args, **kwargs)
 
     def exit_f(self, f: Callable[[], None]) -> None:
         """
         Callback for functions that have completed. This drops them from the tracking set and,
         if the set is empty, calls back to the owning Process that this Thread is exiting
         """
-        print("Exiting %s" % f.__hash__())
         self._scheduled -= set([f])
-        print("Remaining Functions: %s" % ", ".join([str(fun.__hash__()) for fun in self._scheduled]))
         if self._scheduled == set():
             self._process.thread_complete(self)
+
+    def __eq__(self, other: Any) -> bool:
+        # NB: MagicMock overrides the type definition and makes this check fail if _Thread is replaced with Thread
+        if not isinstance(other, _Thread):
+            return False
+        elif self is other:
+            return True
+
+        return assert_list([
+            self._sim == other._sim,
+            self._process == other._process,
+            self._n == other._n])
+
+    def __str__(self):
+        return "(%s)" % ", ".join([str(y) for y in [
+            self._sim,
+            self._process,
+            self._n,
+            self._scheduled
+        ]])
+
+    def __hash__(self):
+        return hash((self._sim, self._process, self._n))
