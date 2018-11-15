@@ -1,6 +1,7 @@
 from typing import Callable
 
-from itsim import _Node, ITObject
+from itsim.__init__ import ITObject
+from itsim.machine.__init__ import _Node
 from itsim.machine.process_management import _Service, _Thread
 from itsim.simulator import Simulator
 

@@ -1,9 +1,8 @@
-from abc import ABC, abstractproperty
-from typing import Iterable, Callable
+from abc import ABC
+from typing import Callable
 
 from greensim import tagged
 from greensim.tags import Tags, TaggedObject
-from itsim.types import Address
 
 
 class Tag(Tags):
@@ -42,11 +41,3 @@ def malware(event: Callable) -> Callable:
 
 class _Packet(ITObject):
     pass
-
-
-class _Node(ABC, ITObject):
-
-    @abstractproperty
-    def addresses(self) -> Iterable[Address]:
-        raise NotImplementedError("Meant to be implemented by class itsim.machine.Node.")
-        return []

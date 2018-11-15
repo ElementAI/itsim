@@ -5,18 +5,16 @@ from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast
 import greensim
 from greensim.random import project_int, uniform
 
-from itsim import _Node
-from itsim import ITObject
-from itsim.network.forwarding import Forwarding
-from itsim.network.interface import Interface
-from itsim.network.link import Link, Loopback
-from itsim.network.location import Location, LocationRepr
-from itsim.network.packet import Payload, Packet
+from itsim.machine.__init__ import _Node
 from itsim.machine.file_system import File
 from itsim.machine.process_management import _Daemon
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
 from itsim.machine.user_management import UserAccount
+from itsim.network.forwarding import Forwarding
+from itsim.network.interface import Interface
+from itsim.network.link import Link, Loopback
+from itsim.network.packet import Packet
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol
 
