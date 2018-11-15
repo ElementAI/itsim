@@ -4,7 +4,6 @@ from greensim.random import expo, normal, bounded, linear, uniform
 
 from itsim.network.internet import Internet
 from itsim.network.location import Location
-from itsim.network.packet import Payload, PayloadDictionaryType
 from itsim.machine.node import Socket
 from itsim.machine.process_management.daemon import Daemon
 from itsim.random import num_bytes
@@ -106,7 +105,7 @@ for hostname in ["mother.ru", "77.88.55.66"]:
         socket.send(
             peer,
             next(len_response),
-            Payload({PayloadDictionaryType.CONTENT: ("exploit" if next(decision_exploit) < 0.05 else "pong")})
+            {"content": ("exploit" if next(decision_exploit) < 0.05 else "pong")}
         )
 
 
@@ -125,9 +124,9 @@ class C2(Daemon):
         self._num_beacons.setdefault(client_uuid, 0)
         self._num_beacons[client_uuid] += 1
         if self._num_beacons[client_uuid] == 10:
-            socket.send(peer, next(self._len_response) + 1 * KB, Payload({PayloadDictionaryType.CONTENT: "exploit"}))
+            socket.send(peer, next(self._len_response) + 1 * KB, {"content": "exploit"})
         else:
-            socket.send(peer, next(self._len_response), Payload({PayloadDictionaryType.CONTENT: "pong"}))
+            socket.send(peer, next(self._len_response), {"content": "pong"})
 
     def trigger(self, *args, **kwargs) -> None:
         self.handle_tcp_connection(*args, **kwargs)

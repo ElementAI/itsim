@@ -4,7 +4,7 @@ from itsim.machine.process_management import _Thread
 from itsim.machine.process_management.daemon import Daemon
 from itsim.network.internet import Host
 from itsim.network.location import Location
-from itsim.network.packet import Packet, Payload
+from itsim.network.packet import Packet
 from itsim.simulator import Simulator
 from itsim.types import as_port, Protocol
 
@@ -38,7 +38,7 @@ def pack_send():
     for _ in range(n):
         for port in port_list:
             bound_sock = host._sockets[as_port(port)]
-            bound_sock._enqueue(Packet(Location(), Location(None, bound_sock.port), 0, Payload()))
+            bound_sock._enqueue(Packet(Location(), Location(None, bound_sock.port), 0))
 
 
 sim.add_in(1, pack_send)

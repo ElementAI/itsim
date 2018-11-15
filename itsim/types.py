@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum, IntFlag, unique
 from ipaddress import ip_address, _BaseAddress, ip_network, _BaseNetwork
-from typing import Optional, Union, Iterable, Tuple, cast
+from typing import Optional, Union, Iterable, Tuple, cast, Mapping
 
 
 Address = _BaseAddress
@@ -12,6 +12,7 @@ HostnameRepr = AddressRepr
 Hostname = Union[Address, str]
 Cidr = _BaseNetwork
 CidrRepr = Union[str, Cidr]
+Payload = Mapping[str, object]
 
 
 def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
