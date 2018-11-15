@@ -21,6 +21,10 @@ class Thread(_Thread):
         self._n: int = n
         self._scheduled: Set[Callable[[], None]] = set()
 
+    @property
+    def process(self) -> _Process:
+        return self._process
+
     def clone_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
         # Convenient object for putting in the tracking set
         def func() -> None:
