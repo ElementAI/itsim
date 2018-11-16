@@ -2,7 +2,7 @@ from abc import abstractmethod
 import sqlite3
 import json
 from collections import namedtuple
-from typing import Any, List, Dict
+from typing import Any
 
 
 class Database:
@@ -13,7 +13,7 @@ class Database:
         pass
 
     @abstractmethod
-    def create_table(self, table_name, column_list) -> None:
+    def create_tables(self) -> None:
         pass
 
     @abstractmethod
@@ -54,7 +54,7 @@ class DatabaseSQLite(Database):
         try:
             with self._conn:
                 cursor = self._conn.cursor()
-                cursor.execute("DROP TABLE [IF EXISTS] ?",table_name)
+                cursor.execute("DROP TABLE [IF EXISTS] ?", (table_name,))
         except sqlite3.IntegrityError:
             print("SQLite delete table failed.")
 
@@ -75,7 +75,7 @@ class DatabaseSQLite(Database):
 
     def select_items(self,
                      table_name: str,
-                     conditions: List[Dict[str, str]] = None,
+                     uuid: str,
                      str_output: bool = False,
                      from_time: str = None,
                      to_time: str = None) -> Any:
@@ -94,20 +94,35 @@ class DatabaseSQLite(Database):
             with self._conn:
                 cursor = self._conn.cursor()
 
-                q = ''
+                # TODO: support all tables here
+                # Review consistency accross tables (from_time types... etc)
+                if table_name == "node":
+                    if uuid is not None:
+                        if from_time is not None and to_time is not None:
+                            cursor.execute('SELECT * FROM node WHERE uuid=? AND timestamp BETWEEN ? AND ?',
+                                           (uuid, from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM node WHERE uuid=?', (uuid,))
+                    else:
+                        if from_time is not None and to_time is not None:
+                            cursor.execute('SELECT * FROM node WHERE timestamp BETWEEN ? AND ?', (from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM node')
+                elif table_name == "log":
+                    if uuid != 'None':
+                        if from_time != 'None' and to_time != 'None':
+                            cursor.execute('SELECT * FROM log WHERE uuid=? AND timestamp BETWEEN ? AND ?',
+                                           (uuid, from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM log WHERE uuid=?', (uuid,))
+                    else:
+                        if from_time != 'None' and to_time != 'None':
+                            cursor.execute('SELECT * FROM log WHERE timestamp BETWEEN ? AND ?', (from_time, to_time))
+                            print("FROMTIME: {0} TOTIME {1}".format(from_time, to_time))
 
-                if conditions is not None:
-                    q = q + 'WHERE'
-                    for c in conditions:
-                        q = q + (' ' + c['column'] + ' ' + c['operator'] + " '" + c['value'] + "' " + 'AND')
-                        q = ' '.join(q.split(' ')[:-1])
-                elif from_time is not None and to_time is not None:
-                    q = q + "WHERE timestamp BETWEEN '{0}' AND '{1}'".format(from_time, to_time)
-                else:
-                    return None
+                        else:
+                            cursor.execute('SELECT * FROM log')
 
-                execute_str = 'SELECT * FROM {tn} {qs}'.format(tn=table_name, qs=q)
-                cursor.execute(execute_str)
                 all_rows = cursor.fetchall()
 
                 json_results = []
@@ -121,16 +136,7 @@ class DatabaseSQLite(Database):
         except sqlite3.IntegrityError:
             print("SQLite select failed.")
 
-
     def insert_items(self, timestamp: str, sim_uuid: str, items: Any) -> None:
-        """
-            Assumes for now that all tables have "uuid", "timestamp", "sim_uuid" and "json" columns
-
-        :param timestamp:
-        :param sim_uuid:
-        :param items:
-        :return:
-        """
         try:
             with self._conn:
                 cursor = self._conn.cursor()
@@ -153,10 +159,10 @@ class DatabaseSQLite(Database):
                     uuid = item['uuid']
                     if table_name == "node":
                         cursor.execute("INSERT INTO node (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
-                                        (uuid, timestamp, sim_uuid, json.dumps(item)))
+                                       (uuid, timestamp, sim_uuid, json.dumps(item)))
                     elif table_name == "log":
                         cursor.execute("INSERT INTO log (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
-                                        (uuid, timestamp, sim_uuid, json.dumps(item)))
+                                       (uuid, timestamp, sim_uuid, json.dumps(item)))
                     # TODO: add cases for all tables explicitely here
 
         except sqlite3.IntegrityError:

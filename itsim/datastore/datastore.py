@@ -42,7 +42,6 @@ class DatastoreLocalClient(DatastoreClient):
     def __init__(self, **kwargs) -> None:
         if kwargs['type'] == 'sqlite':
             self._database = DatabaseSQLite(kwargs['sqlite_file'])
-            self._database.open_connection()
 
         elif kwargs['type'] == 'postgresql':
             # host = kwargs['host']
@@ -63,18 +62,13 @@ class DatastoreLocalClient(DatastoreClient):
         """
         assert item_type in self._table_names, "Invalid item_type: {0} not in self._table_names".format(item_type)
 
-        if uuid is not None:
-            query_conditions = [{'column': 'uuid', 'operator': '=', 'value': uuid}]
-            items = self._database.select_items(item_type, query_conditions)
-        elif from_time is not None and to_time is not None:
-            items = self._database.select_items(item_type, conditions=None, from_time=from_time, to_time=to_time)
-        else:
-            return None, 404
-
-        if len(items) == 0:
-            return "Node not found", 404
-        else:
-            return items[0], 201
+        # TODO: clean this up!
+        # items = self._database.select_items(item_type, uuid, from_time=from_time, to_time=to_time)
+        # if len(items) == 0:
+        #     return "Node not found", 404
+        # else:
+        #     return items[0], 201
+        return 0
 
     def store_item(self, sim_uuid: str, data: Any, overwrite: bool = True) -> int:
         """
@@ -99,8 +93,8 @@ class DatastoreLocalClient(DatastoreClient):
     def delete(self, item_type: str, uuid: str) -> None:
         pass
 
-    def create_table(self, table_name: str, column_list: List[str]) -> None:
-        self._database.create_table(table_name, column_list)
+    def create_tables(self) -> None:
+        self._database.create_tables()
 
 
 # TODO: fix store_item(): inconsistent with base class...

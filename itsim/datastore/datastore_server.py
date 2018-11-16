@@ -2,7 +2,6 @@ import click
 from flask import Flask
 from flask_restful import Api, Resource, request
 from typing import Any
-from database import DatabaseSQLite
 
 
 class _Item(Resource):
@@ -15,16 +14,12 @@ class _Item(Resource):
             return "Invalid format", 400
 
         request_time_range = request.get_json()
-        if uuid == 'None':
-            query_conditions = None
-        else:
-            query_conditions = [{'column': 'uuid', 'operator': '=', 'value': uuid}]
 
         items = DatabaseSQLite(self._db_file).select_items(item_type,
-                                                  query_conditions,
-                                                  str_output=True,
-                                                  from_time=request_time_range['from_time'],
-                                                  to_time=request_time_range['to_time'])
+                                                           uuid,
+                                                           str_output=True,
+                                                           from_time=request_time_range['from_time'],
+                                                           to_time=request_time_range['to_time'])
         if items is None:
             return "Node not found", 404
         elif len(items) == 0:
@@ -83,4 +78,7 @@ def launch_server(storage_mode: str, sqlite_file: str) -> None:
 
 
 if __name__ == "__main__":
+    # This import is here to allow running the server from the command line without itsim
+    # Documentation generation fails if at the top of the file.
+    from database import DatabaseSQLite
     launch_server()

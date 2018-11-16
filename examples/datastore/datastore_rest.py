@@ -30,12 +30,14 @@ def example_datastore_rest_store_load_node():
     # Connect to a datastore
     datastore = DatastoreRestClient(sim_uuid=sim_uuid, base_url='http://localhost:5000')
 
+    print("About to store: {0}".format(node.uuid))
     # Posting a node to the datastore
     datastore.store_item(node)
 
     # Retrieving the node from the datastore
     item_type = 'node'
     node, response_code = datastore.load_item(item_type, node_uuid)
+    print("Loaded back: {0}".format(node.uuid))
     assert response_code == 201
     assert node.uuid == node_uuid
     print("Rest example completed successfully")
