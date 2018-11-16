@@ -6,8 +6,19 @@ from itsim.machine.__init__ import _Node
 from itsim.network import _Connection, _Link
 from itsim.network.packet import Packet
 from itsim.random import VarRandomTime, VarRandomBandwidth
+from itsim.simulator import add_in
 from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr, Address
 from itsim.units import GbPS
+
+
+BANDWIDTH_MIN = 1.0 / 10.0  # 1 bit every 10 seconds
+
+
+class NoSuchAddress(Exception):
+
+    def __init__(self, address: Address) -> None:
+        super().__init__()
+        self.address = address
 
 
 class Link(_Link):
@@ -51,13 +62,24 @@ class Link(_Link):
         """
         Iteration over the nodes connected to a link.
         """
-        raise NotImplementedError()
+        return iter(self._nodes)
 
     def _connect(self, node: _Node) -> None:
         self._nodes.add(node)
 
     def _transfer_packet(self, packet: Packet, hop: Address) -> None:
-        pass
+        # TODO -- Replace this inefficient loop with a sort of ARP
+        for node, interface in [(node, interface) for node in self.iter_nodes() for interface in node.interfaces()]:
+            if interface.address == hop:
+                break
+        else:
+            raise NoSuchAddress(hop)
+
+        packet_latency = next(self._latency)
+        packet_bandwidth = next(self._bandwidth)  # Modeler's responsibility never to provide 0 bandwidth.
+        duration = packet_latency + 8 * packet.byte_size / packet_bandwidth
+        add_in(duration, node._receive_packet, packet)
+
 
 
 class Loopback(Link):

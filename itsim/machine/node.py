@@ -251,10 +251,7 @@ class Node(_Node):
             self.fork_exec(sim, forward_recv, new_sock)
 
     def __str__(self):
-        return "(%s)" % ", ".join([str(i) for i in [
-            self._interfaces,
-            self._sockets,
-            self._proc_set,
-            self._process_counter,
-            self._default_process_parent,
-        ]])
+        return f"{type(self).__name__}({', '.join(str(address) for address in self.addresses())})"
+
+    def __repr__(self):
+        return str(self)
