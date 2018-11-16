@@ -172,20 +172,21 @@ def test_send_packet_hostname(endpoint):
 
 @contextmanager
 def run_simulation_receiving(socket, delay_recv, expected_end_time):
-    packet = Packet(
+    packet_sent = Packet(
         Location("192.168.2.89", 9887),
         Location("172.99.0.2", 443),
         12345,
         Payload({PayloadDictionaryType.CONTENT: "Hello recv!"})
     )
+    packet_received = None
 
     def receiving_on_endpoint():
-        pkt_received = socket.recv()
-        assert pkt_received == packet
+        nonlocal packet_received
+        packet_received = socket.recv()
 
     def enqueue_packet():
         advance(delay_recv)
-        socket._enqueue(packet)
+        socket._enqueue(packet_sent)
 
     sim = Simulator()
     sim.add(receiving_on_endpoint)
@@ -194,6 +195,7 @@ def run_simulation_receiving(socket, delay_recv, expected_end_time):
 
     try:
         sim.run()
+        assert packet_received == packet_sent
     finally:
         assert sim.now() == pytest.approx(expected_end_time)
 
