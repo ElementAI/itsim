@@ -13,14 +13,6 @@ class Database:
         pass
 
     @abstractmethod
-    def open_connection(self, **kwargs) -> None:
-        pass
-
-    @abstractmethod
-    def close_connection(self, **kwargs) -> None:
-        pass
-
-    @abstractmethod
     def create_table(self, table_name, column_list) -> None:
         pass
 
@@ -36,10 +28,6 @@ class Database:
     def insert_items(self, time, sim_uuid, item_list) -> None:
         pass
 
-    @abstractmethod
-    def run_query(self, **kwargs) -> Any:
-        pass
-
 
 class DatabaseSQLite(Database):
     """
@@ -51,62 +39,11 @@ class DatabaseSQLite(Database):
     :param sqlite_file:
     :param create_tables_if_absent:
     """
-
-    def __init__(self, sqlite_file: str = '', create_tables_if_absent: bool = True) -> None:
+    def __init__(self, sqlite_file: str, create_tables_if_absent: bool = True) -> None:
         self._sqlite_file = sqlite_file
-
-        # For initial implementation, all tables use the same columns as follows:
-        self._table_columns = [{'name': 'timestamp', 'type': 'TEXT'},
-                               {'name': 'sim_uuid', 'type': 'TEXT'},
-                               {'name': 'json', 'type': 'TEXT'}]
-        self._itsim_object_types = [
-            "node",
-            "link",
-            "log"
-        ]
-        if create_tables_if_absent:
-            self.open_connection()
-
-            for itsim_object_type in self._itsim_object_types:
-                self.create_table(itsim_object_type, self._table_columns)
-
-            self.close_connection()
-
-    def open_connection(self, **kwargs) -> None:
-        """
-        Opens the database connection and gets a cursor.
-
-        :param kwargs:
-        :return:
-        """
-        del kwargs
         self._conn = sqlite3.connect(self._sqlite_file)
-        self._c = self._conn.cursor()
-
-    def close_connection(self, **kwargs) -> None:
-        """
-        Closes the database connection.
-
-        :param kwargs:
-        :return:
-        """
-        self._conn.close()
-
-    def create_table(self, table_name: str, column_list: List[Any]) -> None:
-        """
-
-        :param table_name:
-        :param column_list:
-        :return:
-        """
-        table_count = self.check_if_table_exists(table_name)
-
-        if table_count == 0:
-            self._c.execute("CREATE TABLE {tn} ({nf} {ft} PRIMARY KEY)".format(tn=table_name, nf='uuid', ft='TEXT'))
-            for col in column_list:
-                self._c.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"
-                                .format(tn=table_name, cn=col['name'], ct=col['type']))
-            self._conn.commit()
+        if create_tables_if_absent:
+            self.create_tables()
 
     def delete_table(self, table_name: str) -> None:
         """
@@ -114,19 +51,27 @@ class DatabaseSQLite(Database):
         :param table_name: Name of table to delete
         :return:
         """
-        self._c.execute("DROP TABLE [IF EXISTS] {tn}".format(tn=table_name))
-        self._conn.commit()
+        try:
+            with self._conn:
+                cursor = self._conn.cursor()
+                cursor.execute("DROP TABLE [IF EXISTS] ?",table_name)
+        except sqlite3.IntegrityError:
+            print("SQLite delete table failed.")
 
-    def check_if_table_exists(self, table_name: str) -> Any:
+    def create_tables(self) -> Any:
         """
 
         :param table_name:
         :return:
         """
-        self._c.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{tn}'".format(tn=table_name))
-        table_count = self._c.fetchall()
-        table_count = table_count[0][0]
-        return table_count
+        try:
+            with self._conn:
+                cursor = self._conn.cursor()
+                cursor.execute("CREATE TABLE IF NOT EXISTS node(uuid TEXT, timestamp TEXT, sim_uuid TEXT, json TEXT)")
+                cursor.execute("CREATE TABLE IF NOT EXISTS log(uuid TEXT, timestamp TEXT, sim_uuid TEXT, json TEXT)")
+                # TODO add all other tables here!
+        except sqlite3.IntegrityError:
+            print("SQLite create tables failedfailed.")
 
     def select_items(self,
                      table_name: str,
@@ -134,7 +79,6 @@ class DatabaseSQLite(Database):
                      str_output: bool = False,
                      from_time: str = None,
                      to_time: str = None) -> Any:
-
         """
         # conditions: List of query conditions (ex: query_list = [{'column':'timestamp', 'operator'= '=',
         #         'value':'xyz'}, {'column_name':'simulation_uuid', 'value':'1234'}])
@@ -146,29 +90,37 @@ class DatabaseSQLite(Database):
         :param to_time:
         :return:
         """
-        q = ''
+        try:
+            with self._conn:
+                cursor = self._conn.cursor()
 
-        if conditions is not None:
-            q = q + 'WHERE'
-            for c in conditions:
-                q = q + (' ' + c['column'] + ' ' + c['operator'] + " '" + c['value'] + "' " + 'AND')
-                q = ' '.join(q.split(' ')[:-1])
-        elif from_time is not None and to_time is not None:
-            q = q + "WHERE timestamp BETWEEN '{0}' AND '{1}'".format(from_time, to_time)
-        else:
-            return None
+                q = ''
 
-        execute_str = 'SELECT * FROM {tn} {qs}'.format(tn=table_name, qs=q)
-        self._c.execute(execute_str)
-        all_rows = self._c.fetchall()
+                if conditions is not None:
+                    q = q + 'WHERE'
+                    for c in conditions:
+                        q = q + (' ' + c['column'] + ' ' + c['operator'] + " '" + c['value'] + "' " + 'AND')
+                        q = ' '.join(q.split(' ')[:-1])
+                elif from_time is not None and to_time is not None:
+                    q = q + "WHERE timestamp BETWEEN '{0}' AND '{1}'".format(from_time, to_time)
+                else:
+                    return None
 
-        json_results = []
-        for row in all_rows:
-            if str_output:
-                json_results.append(row[3])
-            else:
-                json_results.append(json.loads(row[3], object_hook=lambda d: namedtuple('X', d.keys())(*d.values())))
-        return json_results
+                execute_str = 'SELECT * FROM {tn} {qs}'.format(tn=table_name, qs=q)
+                cursor.execute(execute_str)
+                all_rows = cursor.fetchall()
+
+                json_results = []
+                for row in all_rows:
+                    if str_output:
+                        json_results.append(row[3])
+                    else:
+                        json_results.append(
+                            json.loads(row[3], object_hook=lambda d: namedtuple('X', d.keys())(*d.values())))
+                return json_results
+        except sqlite3.IntegrityError:
+            print("SQLite select failed.")
+
 
     def insert_items(self, timestamp: str, sim_uuid: str, items: Any) -> None:
         """
@@ -179,41 +131,33 @@ class DatabaseSQLite(Database):
         :param items:
         :return:
         """
-        def insert_item(table_name, uuid, timestamp, sim_uuid, item):
-            try:
-                self._c.execute(
-                    "INSERT INTO {tn} (uuid, timestamp, sim_uuid, json) VALUES ('{id}', '{ts}', '{sm}', '{js}')".
-                    format(tn=table_name, id=uuid, ts=timestamp, sm=sim_uuid, js=item))
-                self._conn.commit()
-
-            except sqlite3.IntegrityError:
-                print('ERROR: ID already exists in PRIMARY KEY column {}'.format(uuid))
-
-        # TODO: REFORMAT THIS
-        # items are str
-        if isinstance(items, list):
-            for item in items:
-                table_name = item.type
-                uuid = item.uuid
-                item = json.dumps(item)
-
-                insert_item(table_name, uuid, timestamp, sim_uuid, item)
-        else:
-            item = items
-            table_name = item['type']
-            uuid = item['uuid']
-            item = json.dumps(item)
-            insert_item(table_name, uuid, timestamp, sim_uuid, item)
-
-    def run_query(self, **kwargs) -> Any:
-        result = None
         try:
-            self._c.execute(kwargs['query'])
-            result = self._c.fetchall()
-        except sqlite3.IntegrityError:
-            print('ERROR: Bad query')
-        return result
+            with self._conn:
+                cursor = self._conn.cursor()
 
-    def commit(self) -> None:
-        self._conn.commit()
-        self._conn.close()
+                if isinstance(items, list):
+                    data = []
+                    for item in items:
+                        table_name = item.type
+                        uuid = item.uuid
+                        entry = (uuid, timestamp, sim_uuid, json.dumps(item))
+                        data.append(entry)
+                    if table_name == "node":
+                        cursor.executemany("INSERT INTO node VALUES (?, ?, ?, ?)", data)
+                    elif table_name == "log":
+                        cursor.executemany("INSERT INTO log VALUES (?, ?, ?, ?)", data)
+                    # TODO: add cases for all tables explicitely here
+                else:
+                    item = items
+                    table_name = item['type']
+                    uuid = item['uuid']
+                    if table_name == "node":
+                        cursor.execute("INSERT INTO node (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
+                                        (uuid, timestamp, sim_uuid, json.dumps(item)))
+                    elif table_name == "log":
+                        cursor.execute("INSERT INTO log (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
+                                        (uuid, timestamp, sim_uuid, json.dumps(item)))
+                    # TODO: add cases for all tables explicitely here
+
+        except sqlite3.IntegrityError:
+            print("SQLite insert_items failed.")

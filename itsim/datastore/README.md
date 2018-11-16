@@ -7,7 +7,6 @@ can either be used through its local api or remotely using a rest api. Data can 
 database or a local SQLite database (eventually support local folders?). 
 
 
-
 ```
 Simulator       Datastore                       Database
 Instance
@@ -23,10 +22,3 @@ itsim   -----> datastore local api         /
 - PostgreSQL: requires a database server to be running (setup inside a docker?). Supports JSON, UUIDs natively.
 - SQLite: Easier to setup and work with, datastore needs a single db file (no server). JSON, UUIDs aren't natively 
 supported.
-
-
-### Note:
-This datastore implementation shares similarities with the [ElementAI](https://github.com/ElementAI)/**eai-dataset-store**
-project, which has a primary focus on "freezing" dataset versions in local folders. At maturity, those projects could be 
-merged into a single datastore implementation. This would require a generalized approach to define dataset entries and 
-structure... 

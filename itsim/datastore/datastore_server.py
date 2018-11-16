@@ -2,19 +2,17 @@ import click
 from flask import Flask
 from flask_restful import Api, Resource, request
 from typing import Any
-
-# Create the database object
-database: Any
+from database import DatabaseSQLite
 
 
 class _Item(Resource):
 
+    def __init__(self, db_file):
+        self._db_file = db_file
+
     def get(self, item_type: str, uuid: str) -> Any:
         if not request.is_json:
             return "Invalid format", 400
-
-        global database
-        database.open_connection()
 
         request_time_range = request.get_json()
         if uuid == 'None':
@@ -22,13 +20,11 @@ class _Item(Resource):
         else:
             query_conditions = [{'column': 'uuid', 'operator': '=', 'value': uuid}]
 
-        items = database.select_items(item_type,
-                                      query_conditions,
-                                      str_output=True,
-                                      from_time=request_time_range['from_time'],
-                                      to_time=request_time_range['to_time'])
-        database.close_connection()
-
+        items = DatabaseSQLite(self._db_file).select_items(item_type,
+                                                  query_conditions,
+                                                  str_output=True,
+                                                  from_time=request_time_range['from_time'],
+                                                  to_time=request_time_range['to_time'])
         if items is None:
             return "Node not found", 404
         elif len(items) == 0:
@@ -44,10 +40,7 @@ class _Item(Resource):
         sim_uuid = content['sim_uuid']
         timestamp = content['timestamp']
 
-        global database
-        database.open_connection()
-        database.insert_items(timestamp, sim_uuid, content)
-        database.close_connection()
+        DatabaseSQLite(self._db_file).insert_items(timestamp, sim_uuid, content)
         return "ok", 201
 
     def delete(self, item_type: str, uuid: str) -> Any:
@@ -63,14 +56,9 @@ class _Item(Resource):
 class DatastoreRestServer:
 
     def __init__(self, **kwargs) -> None:
-        global database
-        type = kwargs['type']
+        assert kwargs['type'] == 'sqlite', 'Datastore server only support sqlite databases.'
 
-        if type == 'sqlite':
-            database = DatabaseSQLite(kwargs['sqlite_file'])
-            database.open_connection()
-        elif type == 'postgresql':
-            raise NotImplementedError
+        self._db_file = kwargs['sqlite_file']
 
         # Init. the server (Http Rest API)
         self._app = Flask(__name__)
@@ -80,7 +68,7 @@ class DatastoreRestServer:
             Note: all itsim_objects use the same rest functions (from _Item class).
             This could eventually be split for object specific implementation
         """
-        self._api.add_resource(_Item, "/<string:item_type>/<string:uuid>")
+        self._api.add_resource(_Item, "/<string:item_type>/<string:uuid>", resource_class_args=(self._db_file,))
 
     def run(self) -> None:
         self._app.run(debug=True)
@@ -95,5 +83,4 @@ def launch_server(storage_mode: str, sqlite_file: str) -> None:
 
 
 if __name__ == "__main__":
-    from database import DatabaseSQLite
     launch_server()
