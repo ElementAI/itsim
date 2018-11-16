@@ -153,7 +153,7 @@ class Node(_Node):
     def _close_socket(self, port: Port) -> None:
         del self._sockets[port]
 
-    def _solve_transfer(self, address_dest: Address) -> Tuple[Interface, Forwarding]:
+    def _solve_transfer(self, address_dest: Address) -> Tuple[Interface, Address]:
         interface_best = None
         forwarding_best = None
         for interface in self.interfaces():
@@ -166,7 +166,7 @@ class Node(_Node):
         if forwarding_best is None:
             raise NoRouteToHost(address_dest)
 
-        return interface_best, forwarding_best.get_hop(address_dest)
+        return cast(Interface, interface_best), cast(Forwarding, forwarding_best).get_hop(address_dest)
 
     def _send_packet(self, packet: Packet) -> None:
         interface, address_hop = self._solve_transfer(packet.dest.hostname_as_address())
