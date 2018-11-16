@@ -22,8 +22,12 @@ class Interface:
     def __init__(self, link: Link, address: Address, forwardings: List[Forwarding]) -> None:
         super().__init__()
         self._link = link
-        self._address = address  # Bypass the usual logic for initially null or invalid address.
         self.forwardings = forwardings
+        # Normally, only valid addresses with respect to the associated link's CIDR are acceptable for an interface.
+        # However, the initial address can alternatively be 0.0.0.0 (or any value really), especially if the address
+        # is meant to be set by some later process, such as a DHCP client running on the owning host. Thus, the setter
+        # of this property is bypassed here in particular.
+        self._address = address
 
     @property
     def link(self) -> Link:
