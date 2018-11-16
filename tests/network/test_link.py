@@ -41,8 +41,6 @@ def packet(hardy):
     return Packet(Location("192.168.1.6", 9887), Location(next(hardy.addresses()), 25001), SIZE_PACKET)
 
 
-
-
 def run_simulation(link, packet, address_dest):
     def transmit():
         link._transfer_packet(packet, address_dest)

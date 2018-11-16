@@ -81,7 +81,6 @@ class Link(_Link):
         add_in(duration, node._receive_packet, packet)
 
 
-
 class Loopback(Link):
 
     def __init__(self):
