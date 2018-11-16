@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast
+from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast, Tuple
 
 from greensim.random import project_int, uniform
 
@@ -37,6 +37,16 @@ class PortAlreadyInUse(Exception):
     def __init__(self, port: Port) -> None:
         super().__init__()
         self.port = port
+
+
+class NoRouteToHost(Exception):
+    """
+    Raised when attempting to send a packet to a destination address for which the node knows no route.
+    """
+
+    def __init__(self, address: Address) -> None:
+        super().__init__()
+        self.address = address
 
 
 class Node(_Node):
@@ -143,8 +153,24 @@ class Node(_Node):
     def _close_socket(self, port: Port) -> None:
         del self._sockets[port]
 
+    def _solve_transfer(self, address_dest: Address) -> Tuple[Interface, Forwarding]:
+        interface_best = None
+        forwarding_best = None
+        for interface in self.interfaces():
+            for forwarding in interface.forwardings:
+                if address_dest in forwarding.cidr:
+                    if forwarding_best is None or forwarding.cidr.prefixlen > forwarding_best.cidr.prefixlen:
+                        forwarding_best = forwarding
+                        interface_best = interface
+
+        if forwarding_best is None:
+            raise NoRouteToHost(address_dest)
+
+        return interface_best, forwarding_best.get_hop(address_dest)
+
     def _send_packet(self, packet: Packet) -> None:
-        raise NotImplementedError()
+        interface, address_hop = self._solve_transfer(packet.dest.hostname_as_address())
+        interface.link._transfer_packet(packet.with_address_source(interface.address), address_hop)
 
     def _receive_packet(self, packet: Packet) -> None:
         raise NotImplementedError()

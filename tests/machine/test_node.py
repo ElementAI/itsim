@@ -9,7 +9,7 @@ from greensim import advance
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import PortAlreadyInUse, NameNotFound
+from itsim.machine.node import PortAlreadyInUse, NameNotFound, NoRouteToHost
 from itsim.machine.socket import Timeout, Socket
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
@@ -294,8 +294,10 @@ def test_send_packet(endpoint_2links, link_small, link_large):
     ]:
         packet = Packet(Location(None, 9887), Location(dest, 443), 1234)
 
-        for interface in endpoint_2links.interfaces():
-            if as_address(dest) in interface.cidr:
+        for interface, route in (
+            (interface, route) for interface in endpoint_2links.interfaces() for route in interface.forwardings
+        ):
+            if as_address(dest) in route.cidr:
                 source = interface.address
                 break
         else:
@@ -303,4 +305,24 @@ def test_send_packet(endpoint_2links, link_small, link_large):
 
         with patch.object(link, "_transfer_packet") as mock:
             endpoint_2links._send_packet(packet)
-            mock.assert_called_with(Packet(Location(source, 9887), Location(dest, 443), 1234), as_address(relay))
+            mock.assert_called_with(packet.with_address_source(source), as_address(relay))
+
+
+def test_solve_transfer_local(endpoint_2links):
+    for address_r, cidr_r in [("192.168.1.23", CIDR_SMALL), ("10.10.192.78", CIDR_LARGE)]:
+        address = as_address(address_r)
+        interface, hop = endpoint_2links._solve_transfer(address)
+        assert interface.cidr == as_cidr(cidr_r)
+        assert hop == address
+
+
+def test_solve_transfer_beyond(endpoint_2links):
+    interface, hop = endpoint_2links._solve_transfer(as_address("172.99.0.2"))
+    assert interface.cidr == as_cidr("10.10.128.0/17")
+    assert hop == as_address("10.10.128.1")
+
+
+def test_solve_transfer_no_route(endpoint, link_small):
+    endpoint.connected_to(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")])
+    with pytest.raises(NoRouteToHost):
+        endpoint._solve_transfer(as_address("172.99.0.2"))
