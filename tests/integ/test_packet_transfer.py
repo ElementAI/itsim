@@ -13,7 +13,10 @@ from itsim.units import S, MS, MbPS
 def client(thread: Thread) -> None:
     with thread.process.node.bind() as socket:
         socket.send(("10.11.12.20", 9887), 4, {"content": "ping"})
-        packet = socket.recv(1 * S)
+        try:
+            packet = socket.recv(1 * S)
+        except Timeout:
+            pytest.fail("Supposed to receive the packet before timeout.")
         assert packet.num_bytes == 8
         assert packet.payload["content"] == "pong"
 
