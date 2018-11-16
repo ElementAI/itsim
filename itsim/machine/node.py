@@ -21,6 +21,8 @@ from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol
 
 
+PORT_NULL = 0
+PORT_MAX = 2 ** 16 - 1
 PORT_EPHEMERAL_MIN = 32768
 PORT_EPHEMERAL_UPPER = 61000
 NUM_PORTS_EPHEMERAL = PORT_EPHEMERAL_UPPER - PORT_EPHEMERAL_MIN
@@ -253,7 +255,7 @@ class Node(_Node):
         """
         Tells whether the given port number is free, and thus can be used with :py:meth:`bind`.
         """
-        return port not in [0, 65535] and port not in self._sockets
+        return port not in [PORT_NULL, PORT_MAX] and port not in self._sockets
 
     def _deallocate_socket(self, port: Port) -> None:
         del self._sockets[port]
