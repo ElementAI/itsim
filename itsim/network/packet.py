@@ -2,7 +2,7 @@ from typing import Optional
 
 from itsim.__init__ import ITObject
 from itsim.network.location import Location
-from itsim.types import Payload
+from itsim.types import Payload, AddressRepr
 
 
 class Packet(ITObject):
@@ -81,3 +81,6 @@ class Packet(ITObject):
 
     def __repr__(self):
         return repr(str(self))
+
+    def with_address_source(self, address_src_new: AddressRepr) -> "Packet":
+        return Packet(Location(address_src_new, self.source.port), self.dest, self.byte_size, self.payload)
