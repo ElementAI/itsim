@@ -108,7 +108,7 @@ class Socket(ITObject):
         packet will be determined depending on its destination.
 
         :param dr:
-            Destination of the packet, either provided as a :py:class:`Location` instance or as a (hostname, port)
+            Destination of the packet, provided as a :py:class:`LocationRepr`
         :param size:
             Number of bytes to send.
         :param payload:
