@@ -42,6 +42,15 @@ def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
         machine = ip_address(ar)
     else:
         machine = cast(Address, ar)
+
+    # IP address = <Network|Host>
+    #
+    # Here, the network address of the given ar is replaced by that provided as rr. Thus, the bitwise AND with rr's
+    # hostmask (the complement to its netmask) takes out the network number of ``machine`` and preserves the host
+    # number; the addition with ``network.network_address`` completes the re-rooting of ar.
+    #
+    # Therefore, if rr is 0, its hostmask is 2**(32 for IPv4, or 128 for IPv6)-1. This effectively makes the AND and
+    # addition a no-op, and the given machine address is returned unaltered.
     return network.network_address + (int(machine) & int(network.hostmask))
 
 
