@@ -187,7 +187,7 @@ class Node(_Node):
         forwardings: Optional[List[Forwarding]] = None
     ) -> "Node":
         """
-        Configures a budding node to be connected to a given :py:class:`Link`. This thereby adds an
+        Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
         :py:class:`Interface` to the node.
 
         :param link:
