@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 import enum
-import random
 from unittest.mock import patch, call
 
 import pytest
@@ -9,7 +8,7 @@ from greensim import advance
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import PortAlreadyInUse, Timeout, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER
+from itsim.machine.node import PortAlreadyInUse, Timeout, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
@@ -64,8 +63,8 @@ def test_is_port_free_limits(endpoint):
 
 
 def test_is_port_free(endpoint):
-    for n in range(2000):
-        assert endpoint.is_port_free(random.randint(1, 65534))
+    for port in range(2, PORT_MAX):
+        assert endpoint.is_port_free(port)
 
 
 def test_get_port_ephemeral(endpoint):
