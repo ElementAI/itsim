@@ -51,8 +51,8 @@ class Timeout(Exception):
 class Socket(ITObject):
     """
     Resource reserved for a :py:class:`Process` running on a :py:class:`Node` to send and receive packets on the
-    networks the node is connected to. This class is not instantiated directly, but rather obtained as result of the method
-    :py:meth:`Node.bind`.
+    networks the node is connected to. This class is not instantiated directly, but rather obtained as result of the
+    method :py:meth:`Node.bind`.
 
     The preferred way to handle a socket is to use it as a context manager (``with`` statement). Exiting the context
     will trigger the :py:meth:`close`'ing of the socket. Otherwise, the user must take care to invoke this method,

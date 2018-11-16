@@ -53,9 +53,9 @@ class Interface:
 
     @address.setter
     def address(self, ar: AddressRepr) -> None:
-    """
-    The new address must be inside the :py:class:`Link`'s CIDR.
-    """
+        """
+        The new address must be inside the :py:class:`Link`'s CIDR.
+        """
         address = as_address(ar)
         if address not in self.link.cidr:
             raise ValueError("Address not usable on this link.")
