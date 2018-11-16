@@ -166,6 +166,13 @@ class PortAlreadyInUse(Exception):
         self.port = port
 
 
+class EphemeralPortsAllInUse(Exception):
+    """
+    Raised when trying to allocate an ephemeral port while all of them are in use on the endpoint.
+    """
+    pass
+
+
 class Node(_Node):
     """
     Machine taking part to a network.
@@ -229,7 +236,7 @@ class Node(_Node):
             num_ports_visited += 1
             if num_ports_visited >= NUM_PORTS_EPHEMERAL:
                 break
-        raise RuntimeError("No ephemeral port left to allocate.")
+        raise EphemeralPortsAllInUse()
 
     def bind(self, pr: PortRepr = 0) -> Socket:
         """

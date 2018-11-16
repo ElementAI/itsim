@@ -8,7 +8,8 @@ from greensim import advance
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import PortAlreadyInUse, Timeout, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX
+from itsim.machine.node import PortAlreadyInUse, Timeout, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX, \
+    EphemeralPortsAllInUse
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
@@ -72,6 +73,17 @@ def test_get_port_ephemeral(endpoint):
         port = endpoint._get_port_ephemeral()
         assert expected == port
     assert PORT_EPHEMERAL_MIN == endpoint._get_port_ephemeral()  # Cycle when reaching last.
+
+
+def test_raise_once_no_more_port_ephemeral(endpoint):
+    sockets = [endpoint.bind(port) for port in range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER)]
+    try:
+        with pytest.raises(EphemeralPortsAllInUse):
+            with endpoint.bind():
+                pass
+    finally:
+        for sock in sockets:
+            sock.close()
 
 
 @pytest.fixture
