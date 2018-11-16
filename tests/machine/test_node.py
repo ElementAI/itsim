@@ -125,23 +125,6 @@ def test_bind_port_used(endpoint, socket80):
                 sock.close()
 
 
-@pytest.fixture
-def endpoint_fakesend():
-    class FakeSendPacket(Endpoint):
-        packets_sent = []
-
-        def _send_packet(self, packet: Packet) -> None:
-            self.packets_sent.append(packet)
-
-        def check_packets_sent(self, *packets_expected: Packet) -> None:
-            assert list(
-                Packet(Location(hn_src, port_src), Location(hn_dest, port_dest), num_bytes, Payload(entries))
-                for (hn_src, port_src), (hn_dest, port_dest), num_bytes, entries in packets_expected
-            ) == self.packets_sent
-
-    return FakeSendPacket()
-
-
 def test_send_packet_address(endpoint):
     with patch.object(endpoint, "_send_packet") as mock:
         with endpoint.bind(9887) as socket:
