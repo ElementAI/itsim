@@ -111,7 +111,7 @@ def test_socket_context_manager(socket80):
 
 
 def test_ephemeral_port_after_reservations(endpoint):
-    PORTS_RESERVED = [9887, 80, 65000, 45454, PORT_EPHEMERAL_MIN, 12345]
+    PORTS_RESERVED = [9887, 80, 65000, 45454, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER - 1, 12345]
     sockets = []
     try:
         sockets = [endpoint.bind(port) for port in PORTS_RESERVED]
