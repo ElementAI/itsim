@@ -7,4 +7,5 @@ class Simulator(greensim.Simulator):
 
 add = greensim.add
 add_in = greensim.add_in
+advance = greensim.advance
 now = greensim.now
