@@ -41,7 +41,7 @@ class Link(_Link):
 
         :param ar: Address the node should take on this link.  If an integer is given, it is considered as the host
             number of the machine on this network. In other words, this number is added to the link's network number to
-            form the node's full address.  The use of None as address gives the node address 0.0.0.0 (which is fine if
+            form the node's full address.
             it uses DHCP to receive an address from a router node).
         """
         raise NotImplementedError()
