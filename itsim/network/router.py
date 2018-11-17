@@ -1,11 +1,11 @@
-from itsim.machine import _Node
-from itsim.network.link import Link
-from itsim.network.service.dhcp import DHCPDaemon
+from .__init__ import _Link
+from itsim.machine.node import Node
+from itsim.machine.process_management import _Daemon
 from itsim.simulator import Simulator
-from itsim.types import Protocol
+from itsim.types import PortRepr, Protocol
 
 
-class Router(_Node):
+class Router(Node):
     """
     Node tasked with forwarding messages between LANs connected to it, and over to a WAN interface. The router is
     configured through links it forwards between, and thus is made to implement certain network services over the
@@ -15,9 +15,16 @@ class Router(_Node):
     :param lan: LAN links connected to this router.
     """
 
-    def __init__(self, wan: Link, *lan: Link) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        raise NotImplementedError()
 
-    def install_dhcp(self, sim: Simulator):
-        self.networking_daemon(sim, Protocol.UDP, 67)(DHCPDaemon)
+    def with_daemon_on(self,
+                       sim: Simulator,
+                       link: _Link,
+                       daemon: _Daemon,
+                       protocol: Protocol,
+                       *ports: PortRepr) -> "Router":
+        self.connected_to(link)
+        self.networking_daemon(sim, protocol, *ports)(daemon)
+        return self
+        

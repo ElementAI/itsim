@@ -273,7 +273,10 @@ class Node(_Node):
         def _decorator(server_behaviour: Union[Callable, Daemon]) -> Union[Callable, Daemon]:
             daemon = None
             if hasattr(server_behaviour, "trigger"):
-                daemon = cast(Daemon, server_behaviour())
+                if isinstance(server_behaviour, Daemon):
+                    daemon = cast(Daemon, server_behaviour)
+                else:
+                    daemon = cast(Daemon, server_behaviour())
             elif hasattr(server_behaviour, "__call__"):
                 daemon = Daemon(cast(Callable, server_behaviour))
             else:
