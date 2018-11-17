@@ -64,7 +64,7 @@ def test_is_port_free_limits(endpoint):
 
 
 def test_is_port_free(endpoint):
-    for port in range(2, PORT_MAX):
+    for port in range(PORT_NULL + 1, PORT_MAX):
         assert endpoint.is_port_free(port)
 
 
