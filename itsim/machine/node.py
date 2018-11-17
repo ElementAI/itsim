@@ -173,7 +173,27 @@ class Node(_Node):
         interface.link._transfer_packet(packet.with_address_source(interface.address), address_hop)
 
     def _receive_packet(self, packet: Packet) -> None:
-        raise NotImplementedError()
+        address_dest = packet.dest.hostname_as_address()
+        if any(address == address_dest for address in self.addresses()):
+            if packet.dest.port in self._sockets:
+                self._sockets[packet.dest.port]._enqueue(packet)
+            else:
+                self.drop_packet(packet)
+        else:
+            self.handle_packet_transit(packet)
+
+    def handle_packet_transit(self, packet: Packet) -> None:
+        """
+        invoked when a packet is delivered to this node that is not addressed to it. The default behaviour is to drop
+        the packet.
+        """
+        self.drop_packet(packet)
+
+    def drop_packet(self, packet: Packet) -> None:
+        """
+        Invoked when a packet delivered to this node cannot be handled. The default is just to ignore it.
+        """
+        pass
 
     def resolve_name(self, hostname: Hostname) -> Address:
         """

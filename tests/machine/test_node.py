@@ -326,3 +326,33 @@ def test_solve_transfer_no_route(endpoint, link_small):
     endpoint.connected_to(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")])
     with pytest.raises(NoRouteToHost):
         endpoint._solve_transfer(as_address("172.99.0.2"))
+
+
+@pytest.fixture
+def socket9887(endpoint_2links):
+    return endpoint_2links.bind(9887)
+
+
+def do_test_receive_packet(endpoint, socket, loc_dest):
+    packet = Packet(Location(None, 42345), Location.from_repr(loc_dest), 123456)
+    with socket:
+        endpoint._receive_packet(packet)
+    return packet
+
+
+def test_receive_packet_port_bound(endpoint_2links, socket9887):
+    with patch.object(socket9887, "_enqueue") as mock:
+        packet = do_test_receive_packet(endpoint_2links, socket9887, (ADDRESS_LARGE, 9887))
+        mock.assert_called_with(packet)
+
+
+def test_receive_packet_port_unbound(endpoint_2links, socket9887):
+    with patch.object(endpoint_2links, "drop_packet") as mock:
+        packet = do_test_receive_packet(endpoint_2links, socket9887, (ADDRESS_LARGE, 80))
+        mock.assert_called_with(packet)
+
+
+def test_receive_packet_in_transit(endpoint_2links, socket9887):
+    with patch.object(endpoint_2links, "handle_packet_transit") as mock:
+        packet = do_test_receive_packet(endpoint_2links, socket9887, (ADDRESS_LARGE + 1, 9887))
+        mock.assert_called_with(packet)
