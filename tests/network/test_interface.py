@@ -23,7 +23,7 @@ def interface_wo_address(link: Link) -> Interface:
 
 
 def test_address_default(interface_wo_address):
-    assert interface_wo_address.address == as_address(None)
+    assert interface_wo_address.address == as_address(None, interface_wo_address.cidr)
 
 
 def test_set_address(interface_wo_address):
@@ -31,9 +31,9 @@ def test_set_address(interface_wo_address):
     assert interface_wo_address.address == as_address("192.168.1.3")
 
 
-def test_set_address_fail(interface_wo_address):
-    with pytest.raises(ValueError):
-        interface_wo_address.address = as_address("192.168.0.4")
+def test_set_address_reroot(interface_wo_address):
+    interface_wo_address.address = as_address("192.168.0.4")
+    assert interface_wo_address.address == as_address("192.168.1.4")
 
 
 def test_list_forwardings_unconnected(interface_wo_address):

@@ -23,11 +23,7 @@ class Interface:
         super().__init__()
         self._link = link
         self.forwardings = forwardings
-        # Normally, only valid addresses with respect to the associated link's CIDR are acceptable for an interface.
-        # However, the initial address can alternatively be 0.0.0.0 (or any value really), especially if the address
-        # is meant to be set by some later process, such as a DHCP client running on the owning host. Thus, the setter
-        # of this property is bypassed here in particular.
-        self._address = address
+        self.address = address
 
     @property
     def link(self) -> Link:
@@ -54,12 +50,10 @@ class Interface:
     @address.setter
     def address(self, ar: AddressRepr) -> None:
         """
-        The new address must be inside the :py:class:`Link`'s CIDR.
+        The new address is re-rooted so that the final address for this interface lies within the CIDR of the associated
+        link.
         """
-        address = as_address(ar)
-        if address not in self.link.cidr:
-            raise ValueError("Address not usable on this link.")
-        self._address = address
+        self._address = as_address(ar, self.cidr)
 
     @property
     def forwardings(self):
