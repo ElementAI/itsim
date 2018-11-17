@@ -129,11 +129,13 @@ def test_ephemeral_port_after_reservations(endpoint):
 def test_bind_port_used(endpoint, socket80):
     with socket80:
         with pytest.raises(PortAlreadyInUse):
+            # The last next expression must raise the exception, otherwise the test is failed. In the latter case, since
+            # the fixtures are abandoned after the execution of the test, it's ok not to leave on the test failure
+            # exception without having closed the unduly-instantiated socket instance. However, in practice, sockets
+            # must always be closed, lest ports are leaked.
             sock = endpoint.bind(80)
-            try:
-                pytest.fail()
-            finally:
-                sock.close()
+            pytest.fail()
+            sock.close()  # Do something with the socket to avoid being called out for PEP-8 non-conformance.
 
 
 def test_send_packet_address(endpoint):
