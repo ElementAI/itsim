@@ -18,6 +18,5 @@ sphinx = "*"
 twine = "*"
 wheel = "*"
 
-
 [requires]
 python_version = "3.6"

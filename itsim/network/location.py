@@ -1,9 +1,12 @@
 from functools import total_ordering
 from ipaddress import _BaseAddress
-from typing import Any, cast
+from typing import Any, cast, Union, Tuple
 
 from itsim import ITObject
 from itsim.types import Address, HostnameRepr, PortRepr, as_hostname, as_port, Hostname, Port
+
+
+LocationRepr = Union["Location", Tuple[HostnameRepr, PortRepr]]
 
 
 class AddressError(Exception):
@@ -45,6 +48,14 @@ class Location(ITObject):
         super().__init__()
         self._hostname = as_hostname(host)
         self._port = as_port(port)
+
+    @staticmethod
+    def from_repr(lr: LocationRepr) -> "Location":
+        if isinstance(lr, Location):
+            return cast(Location, lr)
+        else:
+            hr, pr = cast(Tuple[HostnameRepr, PortRepr], lr)
+            return Location(hr, pr)
 
     @property
     def hostname(self) -> Hostname:
