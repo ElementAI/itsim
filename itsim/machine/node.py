@@ -85,7 +85,6 @@ class Node(_Node):
 
         :return: The node instance, so it can be further built.
         """
-        raise NotImplementedError()
         return self
 
     def add_physical_link(self, link: _Link, ar: AddressRepr) -> None:
