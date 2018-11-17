@@ -17,23 +17,23 @@ def client(thread: Thread) -> None:
             packet = socket.recv(1 * S)
         except Timeout:
             pytest.fail("Supposed to receive the packet before timeout.")
-        assert packet.num_bytes == 8
+        assert packet.byte_size == 8
         assert packet.payload["content"] == "pong"
 
-    try:
-        socket.recv(5 * S)
-        pytest.fail()
-    except Timeout:
-        pass
+        try:
+            socket.recv(5 * S)
+            pytest.fail()
+        except Timeout:
+            pass
 
 
 def server(thread: Thread) -> None:
     with thread.process.node.bind(9887) as socket:
         while True:
             packet = socket.recv()
-            assert packet.num_bytes == 4
+            assert packet.byte_size == 4
             assert packet.payload["content"] == "ping"
-            socket.send(packet.src, 8, {"content": "pong"})
+            socket.send(packet.source, 8, {"content": "pong"})
 
 
 def test_packet_transfer():
