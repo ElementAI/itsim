@@ -60,7 +60,7 @@ class Socket(_Socket):
         """
         Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
         """
-        self._node._close_socket(self.port)
+        self._node._deallocate_socket(self)
         self._is_closed = True
         self._packet_signal.turn_on()
 

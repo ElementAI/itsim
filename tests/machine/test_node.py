@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 import enum
-import random
 from unittest.mock import patch, call
 
 import pytest
@@ -9,33 +8,19 @@ from greensim import advance
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import PortAlreadyInUse, NameNotFound
-from itsim.machine.socket import Timeout, Socket
+from itsim.machine.node import PortAlreadyInUse, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX, PORT_NULL, \
+    EphemeralPortsAllInUse
+from itsim.machine.socket import Timeout
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet
 from itsim.simulator import Simulator
-from itsim.types import as_cidr, as_address, AddressRepr, as_hostname, Address
+from itsim.types import as_cidr, as_address, AddressRepr, as_hostname
 
 
 def addr(*ar: AddressRepr):
     return [as_address(a) for a in ar]
-
-
-def test_socket_resolve_destination_address():
-    socket = Socket(9887, None)
-    assert socket._resolve_destination_final(as_hostname("192.168.3.8")) == as_address("192.168.3.8")
-
-
-def test_socket_resolve_destination_hostsname():
-    class NodeFakingResolution:
-        def resolve_name(self, name: str) -> Address:
-            if name == "hoho.com":
-                return as_address("45.67.89.12")
-            raise ValueError()
-    socket = Socket(9887, NodeFakingResolution())
-    assert socket._resolve_destination_final(as_hostname("hoho.com")) == as_address("45.67.89.12")
 
 
 @pytest.fixture
@@ -80,19 +65,26 @@ def test_is_port_free_limits(endpoint):
 
 
 def test_is_port_free(endpoint):
-    for n in range(2000):
-        assert endpoint.is_port_free(random.randint(1, 65534))
-
-
-def exercise_free_port_sampling(endpoint):
-    for n in range(2000):
-        port = endpoint._sample_port_unprivileged_free()
-        assert port >= 1024
+    for port in range(PORT_NULL + 1, PORT_MAX):
         assert endpoint.is_port_free(port)
 
 
-def test_sample_free_port_no_socket(endpoint):
-    exercise_free_port_sampling(endpoint)
+def test_get_port_ephemeral(endpoint):
+    for expected in range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER):
+        port = endpoint._get_port_ephemeral()
+        assert expected == port
+    assert PORT_EPHEMERAL_MIN == endpoint._get_port_ephemeral()  # Cycle when reaching last.
+
+
+def test_raise_once_no_more_port_ephemeral(endpoint):
+    sockets = [endpoint.bind(port) for port in range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER)]
+    try:
+        with pytest.raises(EphemeralPortsAllInUse):
+            with endpoint.bind():
+                pass
+    finally:
+        for sock in sockets:
+            sock.close()
 
 
 @pytest.fixture
@@ -119,14 +111,17 @@ def test_socket_context_manager(socket80):
     assert socket80.is_closed
 
 
-def test_sample_free_port_after_reservations(endpoint):
-    PORTS_RESERVED = [9887, 80, 65000, 45454, 12345]
+def test_ephemeral_port_after_reservations(endpoint):
+    PORTS_RESERVED = [9887, 80, 65000, 45454, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER - 1, 12345]
     sockets = []
     try:
         sockets = [endpoint.bind(port) for port in PORTS_RESERVED]
         for port in PORTS_RESERVED:
             assert not endpoint.is_port_free(port)
-        exercise_free_port_sampling(endpoint)
+        for expected in range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER):
+            if expected not in PORTS_RESERVED:
+                port = endpoint._get_port_ephemeral()
+                assert endpoint.is_port_free(port)
     finally:
         for socket in sockets:
             socket.close()
@@ -135,28 +130,13 @@ def test_sample_free_port_after_reservations(endpoint):
 def test_bind_port_used(endpoint, socket80):
     with socket80:
         with pytest.raises(PortAlreadyInUse):
+            # The last next expression must raise the exception, otherwise the test is failed. In the latter case, since
+            # the fixtures are abandoned after the execution of the test, it's ok not to leave on the test failure
+            # exception without having closed the unduly-instantiated socket instance. However, in practice, sockets
+            # must always be closed, lest ports are leaked.
             sock = endpoint.bind(80)
-            try:
-                pytest.fail()
-            finally:
-                sock.close()
-
-
-@pytest.fixture
-def endpoint_fakesend():
-    class FakeSendPacket(Endpoint):
-        packets_sent = []
-
-        def _send_packet(self, packet: Packet) -> None:
-            self.packets_sent.append(packet)
-
-        def check_packets_sent(self, *packets_expected: Packet) -> None:
-            assert list(
-                Packet(Location(hn_src, port_src), Location(hn_dest, port_dest), num_bytes, entries)
-                for (hn_src, port_src), (hn_dest, port_dest), num_bytes, entries in packets_expected
-            ) == self.packets_sent
-
-    return FakeSendPacket()
+            pytest.fail()
+            sock.close()  # Do something with the socket to avoid being called out for PEP-8 non-conformance.
 
 
 def test_send_packet_address(endpoint):
@@ -173,20 +153,9 @@ def test_send_packet_address(endpoint):
         )
 
 
-def test_resolve_destination_final_address(socket80):
+def test_resolve_destination_address(endpoint):
     for s in ["8.8.8.8", "192.168.1.8"]:
-        assert socket80._resolve_destination_final(as_hostname(s)) == as_address(s)
-
-
-def test_resolve_destination_final_hostname(endpoint, socket80):
-    with socket80:
-        with patch.object(endpoint, "resolve_name", return_value=as_address("172.99.0.2")) as mock:
-            assert isinstance(socket80._resolve_destination_final(as_hostname("google.ca")), Address)
-            mock.assert_called_once_with("google.ca")
-        with patch.object(endpoint, "resolve_name", side_effect=NameNotFound("asdf")) as mock:
-            with pytest.raises(NameNotFound):
-                socket80._resolve_destination_final(as_hostname("asdf"))
-            mock.assert_called_once_with("asdf")
+        assert endpoint.resolve_name(as_hostname(s)) == as_address(s)
 
 
 def test_send_packet_hostname(endpoint):
@@ -199,20 +168,21 @@ def test_send_packet_hostname(endpoint):
 
 @contextmanager
 def run_simulation_receiving(socket, delay_recv, expected_end_time):
-    packet = Packet(
+    packet_sent = Packet(
         Location("192.168.2.89", 9887),
         Location("172.99.0.2", 443),
         12345,
         {"content": "Hello recv!"}
     )
+    packet_received = None
 
     def receiving_on_endpoint():
-        pkt_received = socket.recv()
-        assert pkt_received == packet
+        nonlocal packet_received
+        packet_received = socket.recv()
 
     def enqueue_packet():
         advance(delay_recv)
-        socket._enqueue(packet)
+        socket._enqueue(packet_sent)
 
     sim = Simulator()
     sim.add(receiving_on_endpoint)
@@ -221,6 +191,7 @@ def run_simulation_receiving(socket, delay_recv, expected_end_time):
 
     try:
         sim.run()
+        assert packet_received == packet_sent
     finally:
         assert sim.now() == pytest.approx(expected_end_time)
 

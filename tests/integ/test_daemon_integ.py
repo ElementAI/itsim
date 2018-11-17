@@ -41,9 +41,10 @@ def pack_send():
             bound_sock._enqueue(Packet(Location(), Location(None, bound_sock.port), 0))
 
 
-sim.add_in(1, pack_send)
+def test_integ():
+    sim.add_in(1, pack_send)
 
-sim.run()
+    sim.run()
 
-for p in port_list:
-    assert packet_count[p] == n
+    for p in port_list:
+        assert packet_count[p] == n

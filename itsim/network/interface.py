@@ -22,8 +22,8 @@ class Interface:
     def __init__(self, link: Link, address: Address, forwardings: List[Forwarding]) -> None:
         super().__init__()
         self._link = link
-        self._address = address  # Bypass the usual logic for initially null or invalid address.
         self.forwardings = forwardings
+        self.address = address
 
     @property
     def link(self) -> Link:
@@ -49,10 +49,11 @@ class Interface:
 
     @address.setter
     def address(self, ar: AddressRepr) -> None:
-        address = as_address(ar)
-        if address not in self.link.cidr:
-            raise ValueError("Address not usable on this link.")
-        self._address = address
+        """
+        The new address is re-rooted so that the final address for this interface lies within the CIDR of the associated
+        link.
+        """
+        self._address = as_address(ar, self.cidr)
 
     @property
     def forwardings(self):

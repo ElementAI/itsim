@@ -1,7 +1,6 @@
 from collections import OrderedDict
-from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast
-
-from greensim.random import project_int, uniform
+from itertools import cycle
+from typing import Callable, MutableMapping, Optional, Set, Iterator, List
 
 from itsim.machine.__init__ import _Node
 from itsim.machine.file_system import File
@@ -16,6 +15,13 @@ from itsim.network.link import Link, Loopback
 from itsim.network.packet import Packet
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol
+
+
+PORT_NULL = 0
+PORT_MAX = 2 ** 16 - 1
+PORT_EPHEMERAL_MIN = 32768
+PORT_EPHEMERAL_UPPER = 61000
+NUM_PORTS_EPHEMERAL = PORT_EPHEMERAL_UPPER - PORT_EPHEMERAL_MIN
 
 
 class NameNotFound(Exception):
@@ -39,6 +45,13 @@ class PortAlreadyInUse(Exception):
         self.port = port
 
 
+class EphemeralPortsAllInUse(Exception):
+    """
+    Raised when trying to allocate an ephemeral port while all of them are in use on the endpoint.
+    """
+    pass
+
+
 class Node(_Node):
     """
     Machine taking part to a network.
@@ -49,7 +62,7 @@ class Node(_Node):
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
         self.connected_to(Loopback(), "127.0.0.1")
         self._sockets: MutableMapping[Port, Socket] = OrderedDict()
-        self._unprivileged_port = project_int(uniform(1024, 65536))
+        self._cycle_ports_ephemeral = cycle(range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER))
 
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
@@ -62,7 +75,7 @@ class Node(_Node):
         forwardings: Optional[List[Forwarding]] = None
     ) -> "Node":
         """
-        Configures a budding node to be connected to a given :py:class:`Link`. This thereby adds an
+        Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
         :py:class:`Interface` to the node.
 
         :param link:
@@ -94,25 +107,15 @@ class Node(_Node):
         """
         yield from self._interfaces.values()
 
-    # def get_address_neighbour(self, neighbour: Address) -> Address:
-    #     """
-    #     Gives the first address this node bears that is part of the same network as the given address.
-    #     """
-    #     for interface in self.interfaces():
-    #         if neighbour in interface.cidr:
-    #             return interface.address
-    #     raise NotNeighbouring(neighbour)
-
-    # def iter_addresses_with_gateway(self, address_dest: Address) -> Generator[Address, None, None]:
-    #     for interface in self.interfaces():
-    #         if interface.has_gateway:
-    #             yield interface.address
-
-    def _sample_port_unprivileged_free(self) -> Port:
-        while True:
-            port = cast(Port, next(self._unprivileged_port))
+    def _get_port_ephemeral(self) -> Port:
+        num_ports_visited = 0
+        for port in self._cycle_ports_ephemeral:
             if self.is_port_free(port):
                 return port
+            num_ports_visited += 1
+            if num_ports_visited >= NUM_PORTS_EPHEMERAL:
+                break
+        raise EphemeralPortsAllInUse()
 
     def bind(self, pr: PortRepr = 0) -> Socket:
         """
@@ -127,8 +130,8 @@ class Node(_Node):
             The :py:class:`Socket` instance suitable for sending packets (using the bound port as source) and receiving
             packets (against the bound port).
         """
-        port = as_port(pr) or self._sample_port_unprivileged_free()
-        if port in self._sockets:
+        port = as_port(pr) or self._get_port_ephemeral()
+        if not self.is_port_free(port):
             raise PortAlreadyInUse(port)
         socket = Socket(port, self)
         self._sockets[port] = socket
@@ -138,10 +141,10 @@ class Node(_Node):
         """
         Tells whether the given port number is free, and thus can be used with :py:meth:`bind`.
         """
-        return port not in [0, 65535] and port not in self._sockets
+        return port not in [PORT_NULL, PORT_MAX] and port not in self._sockets
 
-    def _close_socket(self, port: Port) -> None:
-        del self._sockets[port]
+    def _deallocate_socket(self, socket: Socket) -> None:
+        del self._sockets[socket.port]
 
     def _send_packet(self, packet: Packet) -> None:
         raise NotImplementedError()
@@ -159,20 +162,24 @@ class Node(_Node):
 
         :return:
             IP address the name resolves to for this host. If resolution fails, the :py:class:`NameNotFound` exception
-            is raised.
+            is raised. If the given hostname is actually an IP address, then it is returned as is.
         """
-        raise NotImplementedError()
+        try:
+            return as_address(hostname)
+        except ValueError:
+            # TODO -- Implement name resolution.
+            raise NotImplementedError()
 
     def procs(self) -> Set[Process]:
         return self._proc_set
 
-    def fork_exec_in(self, sim: Simulator, time: float, f: Callable, *args, **kwargs) -> Process:
+    def fork_exec_in(self, sim: Simulator, time: float, f: Callable[..., None], *args, **kwargs) -> Process:
         proc = Process(self.next_proc_number(), self, self._default_process_parent)
         self._proc_set |= set([proc])
         proc.exc_in(sim, time, f, *args, **kwargs)
         return proc
 
-    def fork_exec(self, sim: Simulator, f: Callable, *args, **kwargs) -> Process:
+    def fork_exec(self, sim: Simulator, f: Callable[..., None], *args, **kwargs) -> Process:
         return self.fork_exec_in(sim, 0, f, *args, **kwargs)
 
     def run_file(self, sim: Simulator, file: File, user: UserAccount) -> None:
