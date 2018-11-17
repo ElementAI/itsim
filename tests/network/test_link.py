@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 from unittest.mock import patch
 
 import pytest
@@ -54,7 +55,6 @@ def run_simulation(link, packet, address_dest):
 
 def test_link_transfer_packet(link, laurel, hardy, packet):
     for endpoint in [laurel, hardy]:
-        # import pdb; pdb.set_trace()
         with patch.object(endpoint, "_receive_packet") as mock:
             address = next(address for address in endpoint.addresses() if address in link.cidr)
             assert run_simulation(link, packet, address) == pytest.approx(DURATION_TRANSFER_TOTAL)
@@ -64,3 +64,22 @@ def test_link_transfer_packet(link, laurel, hardy, packet):
 def test_link_transfer_packet_bad_address(link, packet):
     with pytest.raises(NoSuchAddress):
         run_simulation(link, packet, as_address("192.168.1.99"))
+
+
+@patch("itsim.simulator.add_in")
+def test_link_transfer_broadcast_no_one(mock, link):
+    link._transfer_packet(
+        Packet(Location("192.168.1.34", 56788), Location("192.168.1.255", 10987), 1234),
+        as_address("192.168.1.255")
+    )
+    mock.assert_not_called()
+
+
+def test_link_transfer_broadcast(link, laurel, hardy):
+    with ExitStack() as exit_stack:
+        sockets = [exit_stack.enter_context(endpoint.bind(9887)) for endpoint in [laurel, hardy]]
+        mocks = [exit_stack.enter_context(patch.object(socket, "_enqueue")) for socket in sockets]
+        packet = Packet(Location("192.168.1.34", 56788), Location("192.168.1.255", 9887), 1234)
+        link._transfer_packet(packet, as_address("192.168.1.255"))
+        for mock in mocks:
+            mock.assert_called_with(packet)
