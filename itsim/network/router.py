@@ -27,4 +27,3 @@ class Router(Node):
         self.connected_to(link)
         self.networking_daemon(sim, protocol, *ports)(daemon)
         return self
-        

@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 def test_init():
     Router()
 
+
 @patch("itsim.simulator.Simulator")
 @patch("itsim.network.link.Link")
 def test_with_daemon_on(sim, link):
@@ -25,4 +26,4 @@ def test_with_daemon_on(sim, link):
     # tests/integ/test_dhcp_integ.py
     router.connected_to.assert_called_with(link)
     assert 1 in router._port_table
-    
+    assert router == ret

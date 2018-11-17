@@ -1,8 +1,7 @@
 from greensim.random import normal, constant
 
-from itsim.machine.node import Node, Socket
+from itsim.machine.node import Socket
 from itsim.machine.process_management import _Thread
-from itsim.machine.process_management.daemon import Daemon
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet, Payload, PayloadDictionaryType
@@ -40,7 +39,7 @@ class AdHocError(Exception):
 class MockDHCP(DHCPDaemon):
     def __init__(self):
         pass
-    
+
     def _trigger_event(self, thread: _Thread, packet: Packet, socket: Socket) -> None:
         type_msg = packet.payload.entries[PayloadDictionaryType.CONTENT]
         assert type_msg in self.responses
@@ -57,7 +56,7 @@ class MockDHCP(DHCPDaemon):
         assert expected_pay == pay
         raise AdHocError()
 
-        
+
 @patch("itsim.network.link.Link")
 def test_integ(wan):
     global router

@@ -24,9 +24,9 @@ def apply_trigger(thread, socket, req, res):
     assert int == type(size)
     assert expected_pay == pay
 
+
 @patch("itsim.machine.process_management.thread.Thread")
 @patch("itsim.machine.node.Socket")
 def test_trigger_inputs(thread, socket):
     apply_trigger(thread, socket, "DHCPDISCOVER", "DHCPOFFER")
     apply_trigger(thread, socket, "DHCPREQUEST", "DHCPACK")
-    
