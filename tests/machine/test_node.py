@@ -356,3 +356,14 @@ def test_receive_packet_in_transit(endpoint_2links, socket9887):
     with patch.object(endpoint_2links, "handle_packet_transit") as mock:
         packet = do_test_receive_packet(endpoint_2links, socket9887, (ADDRESS_LARGE + 1, 9887))
         mock.assert_called_with(packet)
+
+
+def test_packet_broadcast_alone_on_link(endpoint, link_small):
+    endpoint.connected_to(link_small, "192.168.1.100")
+    with patch.object(link_small, "_transfer_packet") as mock:
+        with endpoint.bind() as socket:
+            socket.send(("192.168.1.255", 9887), 1234)
+            mock.assert_called_with(
+                Packet(Location("192.168.1.100", socket.port), Location("192.168.1.255", 9887), 1234),
+                as_address("192.168.1.255")
+            )
