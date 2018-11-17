@@ -23,7 +23,7 @@ def interface_wo_address(link: Link) -> Interface:
 
 
 def test_address_default(interface_wo_address):
-    assert interface_wo_address.address == as_address(None, interface_wo_address.cidr)
+    assert interface_wo_address.address == as_address("192.168.1.0")
 
 
 def test_set_address(interface_wo_address):
