@@ -6,7 +6,7 @@ from itsim.machine.endpoint import Endpoint
 from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Timeout
 from itsim.network.link import Link
-from itsim.simulator import Simulator
+from itsim.simulator import Simulator, now
 from itsim.units import S, MS, MbPS
 
 
@@ -24,7 +24,7 @@ def client(thread: Thread) -> None:
             socket.recv(5 * S)
             pytest.fail()
         except Timeout:
-            pass
+            assert now() > 5.0
 
 
 def server(thread: Thread) -> None:
