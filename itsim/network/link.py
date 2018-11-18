@@ -1,9 +1,12 @@
-from typing import Iterator
+from typing import Iterator, Set
+
+from greensim.random import constant
 
 from itsim.machine import _Node
 from itsim.network import _Connection, _Link
 from itsim.random import VarRandomTime, VarRandomBandwidth
 from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr
+from itsim.units import GbPS
 
 
 class Link(_Link):
@@ -23,12 +26,12 @@ class Link(_Link):
         self._cidr = as_cidr(c)
         self._latency = latency
         self._bandwidth = bandwidth
+        self._nodes: Set[_Node] = set()
 
     @property
     def cidr(self) -> Cidr:
         """Returns the CIDR descriptor of the network."""
         return self._cidr
-        return
 
     def connected_as(self, ar: AddressRepr = None) -> _Connection:
         """
@@ -38,11 +41,8 @@ class Link(_Link):
 
         :param ar: Address the node should take on this link.  If an integer is given, it is considered as the host
             number of the machine on this network. In other words, this number is added to the link's network number to
-            form the node's full address.  The use of None as address gives the node address 0.0.0.0 (which is fine if
-            it uses DHCP to receive an address from a router node).
+            form the node's full address.
         """
-        if ar is None:
-            ar = "0.0.0.0"
         raise NotImplementedError()
 
     def iter_nodes(self) -> Iterator[_Node]:
@@ -50,3 +50,12 @@ class Link(_Link):
         Iteration over the nodes connected to a link.
         """
         raise NotImplementedError()
+
+    def _connect(self, node: _Node) -> None:
+        self._nodes.add(node)
+
+
+class Loopback(Link):
+
+    def __init__(self):
+        super().__init__("127.0.0.0/8", constant(0), constant(100 * GbPS))

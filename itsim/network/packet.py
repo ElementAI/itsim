@@ -1,7 +1,7 @@
 from .__init__ import _Packet
 
 from enum import Enum, unique
-from typing import Dict
+from typing import Dict, Optional
 
 from itsim import ITObject
 from itsim.network.location import Location
@@ -53,12 +53,12 @@ class Packet(_Packet):
                  source: Location,
                  dest: Location,
                  byte_size: int,
-                 payload: Payload = Payload()) -> None:
+                 payload: Optional[Payload] = None) -> None:
         super().__init__()
         self._source = source
         self._dest = dest
         self._byte_size = byte_size
-        self._payload = payload
+        self._payload = payload or Payload()
 
     @property
     def source(self) -> Location:
@@ -112,3 +112,6 @@ class Packet(_Packet):
 
     def __str__(self):
         return "<Src: %s, Dest: %s, Size: %s, Payload: %s>" % (self.source, self.dest, self.byte_size, self.payload)
+
+    def __repr__(self):
+        return repr(str(self))
