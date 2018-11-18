@@ -1,10 +1,9 @@
 from .__init__ import _Node
 
 from collections import OrderedDict
-from ipaddress import ip_address
 from itertools import cycle
 from queue import Queue
-from typing import Any, Callable, cast, Generator, Iterable, MutableMapping, Optional, Set, Tuple, TypeVar, Union
+from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union
 
 from itsim import ITObject
 from itsim.network.forwarding import Forwarding
@@ -18,7 +17,7 @@ from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
 from itsim.machine.user_management.__init__ import UserAccount
 from itsim.simulator import Simulator
-from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol
+from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol
 
 import greensim
 
@@ -391,15 +390,6 @@ class Node(_Node):
             return server_behaviour
 
         return _decorator
-
-    def __eq__(self, other: Any) -> bool:
-        # NB: MagicMock overrides the type definition and makes this check fail if _Node is replaced with Node
-        if not isinstance(other, _Node):
-            return False
-        elif self is other:
-            return True
-
-        return self._address_default == other._address_default
 
     def __str__(self):
         return "(%s)" % ", ".join([str(i) for i in [

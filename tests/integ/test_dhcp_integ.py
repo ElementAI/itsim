@@ -20,13 +20,13 @@ router = Router()
 
 def pack_send():
     global router
-    bound_sock = router._port_table[as_port(67)]
+    bound_sock = router._sockets[as_port(67)]
 
     for req, res in DHCPDaemon.responses.items():
         bound_sock._enqueue(
             Packet(
                 Location(),
-                bound_sock._src,
+                Location(),
                 0,
                 Payload({PayloadDictionaryType.CONTENT: req})))
 

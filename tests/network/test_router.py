@@ -25,5 +25,5 @@ def test_with_daemon_on(sim, link):
     # The others involve simulation events and are handled in
     # tests/integ/test_dhcp_integ.py
     router.connected_to.assert_called_with(link)
-    assert 1 in router._port_table
+    assert 1 in router._sockets
     assert router == ret

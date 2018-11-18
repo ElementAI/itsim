@@ -33,9 +33,11 @@ class Net_B(Daemon):
 
 
 def pack_send():
+    global end
+
     for _ in range(n):
         for port in port_list:
-            bound_sock = host._sockets[as_port(port)]
+            bound_sock = end._sockets[as_port(port)]
             bound_sock._enqueue(Packet(Location(), Location(None, bound_sock.port), 0, Payload()))
 
 
