@@ -69,16 +69,21 @@ class Link(_Link):
 
     def _transfer_packet(self, packet: Packet, hop: Address) -> None:
         # TODO -- Replace this inefficient loop with a sort of ARP
-        for node, interface in [(node, interface) for node in self.iter_nodes() for interface in node.interfaces()]:
-            if interface.address == hop:
-                break
+        if hop == self.cidr.broadcast_address:
+            recipients = self.iter_nodes()
         else:
-            raise NoSuchAddress(hop)
+            for node, interface in [(node, interface) for node in self.iter_nodes() for interface in node.interfaces()]:
+                if interface.address == hop:
+                    recipients = iter([node])
+                    break
+            else:
+                raise NoSuchAddress(hop)
 
         packet_latency = next(self._latency)
         packet_bandwidth = next(self._bandwidth)  # Modeler's responsibility never to provide 0 bandwidth.
         duration = packet_latency + 8 * packet.byte_size / packet_bandwidth
-        add_in(duration, node._receive_packet, packet)
+        for node in recipients:
+            add_in(duration, node._receive_packet, packet)
 
 
 class Loopback(Link):

@@ -77,9 +77,16 @@ def test_link_transfer_broadcast_no_one(mock, link):
 
 def test_link_transfer_broadcast(link, laurel, hardy):
     with ExitStack() as exit_stack:
-        sockets = [exit_stack.enter_context(endpoint.bind(9887)) for endpoint in [laurel, hardy]]
-        mocks = [exit_stack.enter_context(patch.object(socket, "_enqueue")) for socket in sockets]
-        packet = Packet(Location("192.168.1.34", 56788), Location("192.168.1.255", 9887), 1234)
-        link._transfer_packet(packet, as_address("192.168.1.255"))
+        mocks = [exit_stack.enter_context(patch.object(node, "_receive_packet")) for node in [laurel, hardy]]
+
+        sim = Simulator()
+        packet = Packet(Location("192.168.1.34", 56788), Location("192.168.1.255", 9887), SIZE_PACKET)
+
+        def do_transfer():
+            link._transfer_packet(packet, as_address("192.168.1.255"))
+
+        sim.add(do_transfer)
+        sim.run()
+
         for mock in mocks:
             mock.assert_called_with(packet)
