@@ -346,6 +346,12 @@ def test_receive_packet_port_bound(endpoint_2links, socket9887):
         mock.assert_called_with(packet)
 
 
+def test_packet_receive_broadcast_port_bound(endpoint_2links, socket9887):
+    with patch.object(socket9887, "_enqueue") as mock:
+        packet = do_test_receive_packet(endpoint_2links, socket9887, (CIDR_LARGE.broadcast_address, 9887))
+        mock.assert_called_with(packet)
+
+
 def test_receive_packet_port_unbound(endpoint_2links, socket9887):
     with patch.object(endpoint_2links, "drop_packet") as mock:
         packet = do_test_receive_packet(endpoint_2links, socket9887, (ADDRESS_LARGE, 80))

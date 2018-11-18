@@ -174,7 +174,10 @@ class Node(_Node):
 
     def _receive_packet(self, packet: Packet) -> None:
         address_dest = packet.dest.hostname_as_address()
-        if any(address == address_dest for address in self.addresses()):
+        if any(
+            interface.address == address_dest or interface.cidr.broadcast_address == address_dest
+            for interface in self.interfaces()
+        ):
             if packet.dest.port in self._sockets:
                 self._sockets[packet.dest.port]._enqueue(packet)
             else:
