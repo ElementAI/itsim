@@ -147,8 +147,8 @@ def test_send_packet_address(endpoint):
             socket.send(("8.8.8.8", 53), 652, {"content": "google.ca"})
         mock.assert_has_calls(
             [
-                call(Packet(Location(None, 9887), Location("172.99.80.23", 80), 45666, {})),
-                call(Packet(Location(None, 53), Location("8.8.8.8", 53), 652, {"content": "google.ca"}))
+                call(9887, Location("172.99.80.23", 80), 45666, {}),
+                call(53, Location("8.8.8.8", 53), 652, {"content": "google.ca"})
             ]
         )
 
@@ -163,7 +163,7 @@ def test_send_packet_hostname(endpoint):
             patch.object(endpoint, "_send_packet") as mock:
         with endpoint.bind(9887) as socket:
             socket.send(("google.ca", 443), 3398)
-        mock.assert_called_once_with(Packet(Location(None, 9887), Location("172.99.0.2", 443), 3398, {}))
+        mock.assert_called_once_with(9887, Location("172.99.0.2", 443), 3398, {})
 
 
 @contextmanager

@@ -12,9 +12,10 @@ from itsim.machine.user_management import UserAccount
 from itsim.network.forwarding import Forwarding
 from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
+from itsim.network.location import Location
 from itsim.network.packet import Packet
 from itsim.simulator import Simulator
-from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol
+from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol, Payload
 
 
 PORT_NULL = 0
@@ -146,7 +147,7 @@ class Node(_Node):
     def _deallocate_socket(self, socket: Socket) -> None:
         del self._sockets[socket.port]
 
-    def _send_packet(self, packet: Packet) -> None:
+    def _send_packet(self, port_source: int, dest: Location, num_bytes: int, payload: Payload) -> None:
         raise NotImplementedError()
 
     def _receive_packet(self, packet: Packet) -> None:

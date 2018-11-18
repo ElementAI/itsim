@@ -89,9 +89,7 @@ class Socket(_Socket):
             raise ValueError("Socket is closed")
         dest = Location.from_repr(dr)
         address_dest = self._resolve_destination_final(dest.hostname)
-        self._node._send_packet(
-            Packet(Location(None, self.port), Location(address_dest, dest.port), size, payload)
-        )
+        self._node._send_packet(self.port, Location(address_dest, dest.port), size, payload or {})
 
     def _resolve_destination_final(self, hostname_dest: Hostname) -> Address:
         try:
