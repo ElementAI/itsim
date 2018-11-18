@@ -5,7 +5,7 @@ from greensim.random import uniform, constant
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.process_management.thread import Thread
 from itsim.network.link import Link
-from itsim.simulator import Simulator, advance, now
+from itsim.simulator import Simulator, advance
 from itsim.types import Address, as_address
 from itsim.units import MS, S, MbPS
 
