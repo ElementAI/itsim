@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Optional, cast
 
 from itsim import AbstractITObject
-from itsim.network.packet import Packet
 from itsim.types import Address, as_cidr, Cidr, CidrRepr, AddressRepr, as_address
 
 

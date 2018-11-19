@@ -1,15 +1,13 @@
 from collections import OrderedDict
-from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast, Tuple
-
-from collections import OrderedDict
 from itertools import cycle
-from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union
+from typing import Callable, MutableMapping, Optional, Set, Iterator, List, cast, Tuple, Union
 
 from itsim.network.forwarding import Forwarding
 from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
 from itsim.network.location import Location
-from itsim.network.packet import Payload, Packet
+from itsim.network.packet import Packet
+from itsim.machine import _Node
 from itsim.machine.file_system import File
 from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.process_management.process import Process
@@ -17,7 +15,7 @@ from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Socket
 from itsim.machine.user_management.__init__ import UserAccount
 from itsim.simulator import Simulator
-from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol
+from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol, Payload
 
 PORT_NULL = 0
 PORT_MAX = 2 ** 16 - 1
@@ -54,6 +52,16 @@ class EphemeralPortsAllInUse(Exception):
     pass
 
 
+class NoRouteToHost(Exception):
+    """
+    Raised when attempting to send a packet to a destination address for which the node knows no route.
+    """
+
+    def __init__(self, address: Address) -> None:
+        super().__init__()
+        self.address = address
+
+
 class Node(_Node):
     """
     Machine taking part to a network.
@@ -84,7 +92,7 @@ class Node(_Node):
             Link instance to connect this node to.
         :param ar:
             Optional address to assume as participant to the network embodied by the given link. If this is not
-            provided, the address assumed is 0.0.0.0.
+            provided, the address assumed is host number 0 within the CIDR associated to the link.
         :param forwardings:
             List of forwarding rules known by this node in order to exchange packets with other internetworking nodes.
 
@@ -163,9 +171,10 @@ class Node(_Node):
 
         return cast(Interface, interface_best), cast(Forwarding, forwarding_best).get_hop(address_dest)
 
-    def _send_packet(self, packet: Packet) -> None:
-        interface, address_hop = self._solve_transfer(packet.dest.hostname_as_address())
-        interface.link._transfer_packet(packet.with_address_source(interface.address), address_hop)
+    def _send_packet(self, port_source: int, dest: Location, num_bytes: int, payload: Payload) -> None:
+        interface, address_hop = self._solve_transfer(dest.hostname_as_address())
+        packet = Packet(Location(interface.address, port_source), dest, num_bytes, payload)
+        interface.link._transfer_packet(packet, address_hop)
 
     def _receive_packet(self, packet: Packet) -> None:
         address_dest = packet.dest.hostname_as_address()

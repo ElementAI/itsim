@@ -9,7 +9,7 @@ from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.node import PortAlreadyInUse, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX, PORT_NULL, \
-    EphemeralPortsAllInUse
+    EphemeralPortsAllInUse, NoRouteToHost
 from itsim.machine.socket import Timeout
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
@@ -263,8 +263,6 @@ def test_send_packet(endpoint_2links, link_small, link_large):
         ("10.10.192.245", link_large, "10.10.192.245"),
         ("172.92.0.2", link_large, "10.10.128.1")
     ]:
-        packet = Packet(Location(None, 9887), Location(dest, 443), 1234)
-
         for interface, route in (
             (interface, route) for interface in endpoint_2links.interfaces() for route in interface.forwardings
         ):
@@ -275,8 +273,9 @@ def test_send_packet(endpoint_2links, link_small, link_large):
             pytest.fail()
 
         with patch.object(link, "_transfer_packet") as mock:
-            endpoint_2links._send_packet(packet)
-            mock.assert_called_with(packet.with_address_source(source), as_address(relay))
+            loc_dest = Location(dest, 443)
+            endpoint_2links._send_packet(9887, loc_dest, 1234, {})
+            mock.assert_called_with(Packet(Location(source, 9887), loc_dest, 1234, {}), as_address(relay))
 
 
 def test_solve_transfer_local(endpoint_2links):
