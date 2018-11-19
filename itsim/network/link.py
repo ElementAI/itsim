@@ -2,7 +2,7 @@ from typing import Iterator, Set
 
 from greensim.random import constant
 
-from itsim.machine.__init__ import _Node
+from itsim.machine import _Node
 from itsim.network import _Connection, _Link
 from itsim.random import VarRandomTime, VarRandomBandwidth
 from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr

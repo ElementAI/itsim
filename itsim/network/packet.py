@@ -1,6 +1,6 @@
 from typing import Optional
 
-from itsim.__init__ import ITObject
+from itsim import ITObject
 from itsim.network.location import Location
 from itsim.types import Payload
 

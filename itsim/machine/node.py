@@ -1,22 +1,22 @@
+from .__init__ import _Node
+
 from collections import OrderedDict
 from itertools import cycle
-from typing import Callable, MutableMapping, Optional, Set, Iterator, List
+from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union
 
-from itsim.machine.__init__ import _Node
-from itsim.machine.file_system import File
-from itsim.machine.process_management import _Daemon
-from itsim.machine.process_management.process import Process
-from itsim.machine.process_management.thread import Thread
-from itsim.machine.socket import Socket
-from itsim.machine.user_management import UserAccount
 from itsim.network.forwarding import Forwarding
 from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
 from itsim.network.location import Location
-from itsim.network.packet import Packet
+from itsim.network.packet import Payload, Packet
+from itsim.machine.file_system import File
+from itsim.machine.process_management.daemon import Daemon
+from itsim.machine.process_management.process import Process
+from itsim.machine.process_management.thread import Thread
+from itsim.machine.socket import Socket
+from itsim.machine.user_management.__init__ import UserAccount
 from itsim.simulator import Simulator
-from itsim.types import Address, AddressRepr, Port, PortRepr, Hostname, as_address, Cidr, as_port, Protocol, Payload
-
+from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol
 
 PORT_NULL = 0
 PORT_MAX = 2 ** 16 - 1
@@ -202,7 +202,7 @@ class Node(_Node):
 
     def subscribe_networking_daemon(self,
                                     sim: Simulator,
-                                    daemon: _Daemon,
+                                    daemon: Daemon,
                                     protocol: Protocol,
                                     *ports: PortRepr) -> None:
         """
@@ -231,6 +231,45 @@ class Node(_Node):
                 daemon.trigger(thread, pack, socket)
 
             self.fork_exec(sim, forward_recv, new_sock)
+
+    def networking_daemon(self, sim: Simulator, protocol: Protocol, *ports: PortRepr) -> Callable:
+        """
+        Makes the node run a daemon with custom request handling behaviour.
+
+        :param sim: Simulator instance.
+        :param protocol: Member of the :py:class:`~itsim.types.Protocol` enum indicating the protocol of the
+            transmissions
+        :param ports: Variable number of :py:class:`~itsim.types.PortRepr` objects indicating the ports on which
+            to listen
+
+        This routine is meant to be used as a decorator over either a class, or some other callable. In the case of a
+        class, it must subclass the `Daemon` class, have a constructor which takes no arguemnts,
+        and implement the service's discrete event logic by overriding the
+        methods of this class. This grants the most control over connection acceptance behaviour and client handling.
+        In the case of some other callable, such as a function, it is expected to handle this invocation prototype::
+
+            def handle_request(thread: :py:class:`~itsim.machine.process_management.thread.Thread`,
+                packet: :py:class:`~itsim.network.packet.Packet`,
+                socket: :py:class:`~itsim.machine.node.Socket`) -> None
+
+        The daemon instance will run client connections acceptance. The resulting socket will be forwarded to the
+        callable input to the decorator.
+        """
+        def _decorator(server_behaviour: Union[Callable, Daemon]) -> Union[Callable, Daemon]:
+            daemon = None
+            if hasattr(server_behaviour, "trigger"):
+                if isinstance(server_behaviour, Daemon):
+                    daemon = cast(Daemon, server_behaviour)
+                else:
+                    daemon = cast(Daemon, server_behaviour())
+            elif hasattr(server_behaviour, "__call__"):
+                daemon = Daemon(cast(Callable, server_behaviour))
+            else:
+                raise TypeError("Daemon must have trigger() or be of type Callable")
+            self.subscribe_networking_daemon(sim, daemon, protocol, *ports)
+            return server_behaviour
+
+        return _decorator
 
     def __str__(self):
         return "(%s)" % ", ".join([str(i) for i in [
