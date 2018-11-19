@@ -1,8 +1,8 @@
-from .__init__ import _Service, _Thread
-
 from typing import Callable
 
-from itsim import _Node, ITObject
+from itsim import ITObject
+from itsim.machine import _Node
+from itsim.machine.process_management import _Service, _Thread
 from itsim.simulator import Simulator
 
 

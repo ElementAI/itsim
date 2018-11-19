@@ -32,6 +32,20 @@ def test_address_as_address():
     assert as_address(ip_address("192.168.4.56")) == ip_address("192.168.4.56")
 
 
+def test_as_address_relative_combined():
+    assert as_address(4, "192.168.1.0/24") == as_address("192.168.1.4")
+    assert as_address("0.0.127.45", "10.10.128.0/17") == as_address("10.10.255.45")
+
+
+def test_as_address_relative_squash():
+    for a, r, expected in [
+        ("192.168.1.4", "192.168.1.0/24", "192.168.1.4"),
+        (257, "192.168.1.0/24", "192.168.1.1"),
+        ("0.1.128.1", "10.10.128.0/17", "10.10.128.1")
+    ]:
+        assert as_address(a, r) == as_address(expected)
+
+
 def test_none_as_port():
     assert as_port(None) == 0
 
