@@ -12,10 +12,11 @@ class DHCPDaemon(Daemon):
     responses = {"DHCPDISCOVER": "DHCPOFFER", "DHCPREQUEST": "DHCPACK"}
     size_packet_dhcp = num_bytes(normal(100.0 * B, 30.0 * B), header=240 * B)
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, num_host_first: int = 1) -> None:
+        super().__init__(self._on_packet)
+        self._num_host_first = num_host_first
 
-    def _trigger_event(self, thread: _Thread, packet: _Packet, socket: Socket) -> None:
+    def _on_packet(self, thread: _Thread, packet: _Packet, socket: Socket) -> None:
         type_msg = packet.payload["content"]
         if type_msg in self.responses:
             socket.send(packet.source,
