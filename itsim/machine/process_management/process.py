@@ -1,6 +1,6 @@
 from .__init__ import _Process
 
-from itsim.__init__ import _Node
+from itsim.machine import _Node
 from itsim.simulator import Simulator
 from itsim.machine.process_management.thread import Thread
 from itsim.types import Interrupt
