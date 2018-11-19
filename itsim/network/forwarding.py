@@ -1,10 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Optional, cast
 
+from itsim import AbstractITObject
+from itsim.network.packet import Packet
 from itsim.types import Address, as_cidr, Cidr, CidrRepr, AddressRepr, as_address
 
 
-class Forwarding(ABC):
+class Forwarding(AbstractITObject):
     """
     Rule indicating where a packet is to be transferred when its destination belongs to the CIDR associated to this
     object.

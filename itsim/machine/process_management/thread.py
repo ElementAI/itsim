@@ -1,5 +1,6 @@
+from .__init__ import _Process, _Thread
+
 from itsim.simulator import Simulator
-from itsim.machine.process_management import _Process, _Thread
 from itsim.utils import assert_list
 
 from typing import Any, Callable, Set, Tuple
@@ -40,7 +41,7 @@ class Thread(_Thread):
         # Not generally useful. For unit tests
         return (func, call_and_callback)
 
-    def clone(self, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
+    def clone(self, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable[[], None], Callable[[], None]]:
         return self.clone_in(0, f, *args, **kwargs)
 
     def exit_f(self, f: Callable[[], None]) -> None:

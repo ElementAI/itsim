@@ -60,7 +60,7 @@ class Socket(_Socket):
         """
         Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
         """
-        self._node._close_socket(self.port)
+        self._node._deallocate_socket(self)
         self._is_closed = True
         self._packet_signal.turn_on()
 
@@ -89,9 +89,7 @@ class Socket(_Socket):
             raise ValueError("Socket is closed")
         dest = Location.from_repr(dr)
         address_dest = self._resolve_destination_final(dest.hostname)
-        self._node._send_packet(
-            Packet(Location(None, self.port), Location(address_dest, dest.port), size, payload)
-        )
+        self._node._send_packet(self.port, Location(address_dest, dest.port), size, payload or {})
 
     def _resolve_destination_final(self, hostname_dest: Hostname) -> Address:
         try:

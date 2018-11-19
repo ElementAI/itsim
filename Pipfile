@@ -5,6 +5,10 @@ name = "pypi"
 
 [packages]
 greensim = "*"
+warlock = "*"
+flask="*"
+flask-restful="*"
+jsonschema="*"
 
 [dev-packages]
 flake8 = "*"
@@ -13,6 +17,7 @@ mypy = "*"
 pudb = "*"
 pytest = {version = ">=3.8.2", index = "pypi"}
 pytest-cov = {version = ">=2.5.1", index = "pypi"}
+pytest-xprocess = "*"
 setuptools = "*"
 sphinx = "*"
 twine = "*"

@@ -37,7 +37,3 @@ def malware(event: Callable) -> Callable:
     Through the methods in greensim this label is cascaded through the actions of the Process
     """
     return tagged(Tag.MALWARE)(event)
-
-
-class _Packet(ITObject):
-    pass

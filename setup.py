@@ -5,7 +5,7 @@ from subprocess import check_call
 with open("README.md", "r") as file_long_description:
     long_description = file_long_description.read()
 
-sphinx_cmd_list = ["sphinx-apidoc itsim -METf -o sphinx/source/modules",
+sphinx_cmd_list = ["sphinx-apidoc itsim -METf -o sphinx/source/modules --implicit-namespaces",
                    "make -C sphinx html"]
 
 
