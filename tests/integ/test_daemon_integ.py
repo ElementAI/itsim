@@ -1,4 +1,5 @@
-from itsim.machine.node import Node, Socket
+from itsim.machine.endpoint import Endpoint
+from itsim.machine.node import Socket
 from itsim.machine.process_management import _Thread
 from itsim.machine.process_management.daemon import Daemon
 from itsim.network.location import Location
@@ -6,7 +7,7 @@ from itsim.network.packet import Packet, Payload
 from itsim.simulator import Simulator
 from itsim.types import as_port, Protocol
 
-end = Node()
+end = Endpoint()
 sim = Simulator()
 packet_count = {}
 n = 3
