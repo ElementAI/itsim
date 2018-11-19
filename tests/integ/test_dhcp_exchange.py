@@ -14,62 +14,16 @@ from itsim.simulator import Simulator
 from itsim.types import as_port, Protocol, AddressRepr
 from itsim.units import S, MS, MbPS
 
-from pytest import raises
-
-
-# router = Router()
-
-
-# def pack_send():
-#     global router
-#     bound_sock = router._sockets[as_port(67)]
-
-#     for req, res in DHCPDaemon.responses.items():
-#         bound_sock._enqueue(
-#             Packet(
-#                 Location(),
-#                 Location(),
-#                 0,
-#                 {"content": req}))
-
-
-# class AdHocError(Exception):
-#     pass
-
-
-# # Since send behavior is not defined as of this moment, this mocks it out and checks that it runs
-# class MockDHCP(DHCPDaemon):
-#     def __init__(self):
-#         pass
-
-#     def _trigger_event(self, thread: _Thread, packet: Packet, socket: Socket) -> None:
-#         type_msg = packet.payload["content"]
-#         assert type_msg in self.responses
-
-#         socket.send = MagicMock()
-#         super()._trigger_event(thread, packet, socket)
-
-#         # This is of the form (args, kwargs) = socket.send.call_args
-#         ((source, size, pay), _) = socket.send.call_args
-#         expected_pay = {"content": self.responses[type_msg]}
-#         assert packet.source == source
-#         # This value is random
-#         assert int == type(size)
-#         assert expected_pay == pay
-#         raise AdHocError()
-
 
 def set_addresses(*ars: AddressRepr):
     return {as_address(ar) for ar in ars}
 
 
-# @patch("itsim.network.link.Link")
 def test_dhcp_exchange():
     sim = Simulator()
     link = Link("10.1.128.0/18", uniform(100 * MS, 200 * MS), constant(100 * MbPS))
     router = Router().connected_to(link, "10.1.128.1") \
-                     .with_daemon_on(sim, link, DHCPDaemon(100), Protocol.UDP, 67, 68)
-    # router = router.with_daemon_on(sim, link, MockDHCP(), Protocol.UDP, 67)
+                     .with_daemon_on(sim, link, DHCPDaemon(100, link.cidr), Protocol.UDP, 67)
     endpoints = []
 
     def add_endpoint(delay: float):

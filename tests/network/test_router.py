@@ -9,21 +9,21 @@ def test_init():
     Router()
 
 
-@patch("itsim.simulator.Simulator")
-@patch("itsim.network.link.Link")
-def test_with_daemon_on(sim, link):
-    router = Router()
-    router.connected_to = MagicMock()
+# @patch("itsim.simulator.Simulator")
+# @patch("itsim.network.link.Link")
+# def test_with_daemon_on(sim, link):
+#     router = Router()
+#     router.connected_to = MagicMock()
 
-    ret = router.with_daemon_on(sim,
-                                link,
-                                Daemon(lambda: 0),
-                                Protocol.UDP,
-                                1)
+#     ret = router.with_daemon_on(sim,
+#                                 link,
+#                                 Daemon(lambda: 0),
+#                                 Protocol.UDP,
+#                                 1)
 
-    # These are the two effects which can be tested directly
-    # The others involve simulation events and are handled in
-    # tests/integ/test_dhcp_integ.py
-    router.connected_to.assert_called_with(link)
-    assert 1 in router._sockets
-    assert router == ret
+#     # These are the two effects which can be tested directly
+#     # The others involve simulation events and are handled in
+#     # tests/integ/test_dhcp_integ.py
+#     router.connected_to.assert_called_with(link)
+#     assert 1 in router._sockets
+#     assert router == ret

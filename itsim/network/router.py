@@ -25,5 +25,6 @@ class Router(Node):
                        protocol: Protocol,
                        *ports: PortRepr) -> "Router":
         self.connected_to(link)
+        daemon.for_link(link)
         self.networking_daemon(sim, protocol, *ports)(daemon)
         return self

@@ -3,6 +3,8 @@ from typing import Callable
 from itsim import ITObject
 from itsim.machine import _Node
 from itsim.machine.process_management import _Service, _Thread
+from itsim.machine.process_management.thread import Thread
+from itsim.network.link import Link
 from itsim.simulator import Simulator
 
 
@@ -18,6 +20,12 @@ class Daemon(ITObject):
 
     def __init__(self, trigger_event: Callable[..., None]):
         self._trigger_event = trigger_event
+
+    def for_link(self, link: Link) -> None:
+        pass
+
+    def running_as(self, thread: Thread) -> None:
+        pass
 
     def trigger(self, *args, **kwargs) -> None:
         self._trigger_event(*args, **kwargs)

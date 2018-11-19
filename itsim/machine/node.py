@@ -271,15 +271,18 @@ class Node(_Node):
             `trigger` method on `daemon`. After the packet receipt and before `trigger` is executed a new
             :py:class:`~itsim.machine.process_management.thread.Thread` is opened to wait for another packet in parallel
         """
-        for port in ports:
-            new_sock = self.bind(port)
+        def serve_on_port(thread: Thread, port: int):
+            with self.bind(port) as socket:
+                while True:
+                    packet = socket.recv()
+                    thread.process.exc(sim, daemon.trigger, packet, socket)
 
-            def forward_recv(thread: Thread, socket: Socket):
-                pack = socket.recv()
-                thread._process.exc(sim, forward_recv, socket)
-                daemon.trigger(thread, pack, socket)
+        def run_daemon(thread: Thread):
+            daemon.init(thread)
+            for port in ports:
+                thread.process.exc(sim, serve_on_port, port)
 
-            self.fork_exec(sim, forward_recv, new_sock)
+        self.fork_exec(sim, run_daemon)
 
     def networking_daemon(self, sim: Simulator, protocol: Protocol, *ports: PortRepr) -> Callable:
         """
