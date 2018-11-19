@@ -8,12 +8,13 @@ from greensim import advance
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.node import PortAlreadyInUse, Timeout, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX, \
-    PORT_NULL, EphemeralPortsAllInUse
+from itsim.machine.node import PortAlreadyInUse, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX, PORT_NULL, \
+    EphemeralPortsAllInUse
+from itsim.machine.socket import Timeout
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
-from itsim.network.packet import Packet, Payload, PayloadDictionaryType
+from itsim.network.packet import Packet
 from itsim.simulator import Simulator
 from itsim.types import as_cidr, as_address, AddressRepr, as_hostname
 
@@ -143,18 +144,11 @@ def test_send_packet_address(endpoint):
         with endpoint.bind(9887) as socket:
             socket.send(("172.99.80.23", 80), 45666)
         with endpoint.bind(53) as socket:
-            socket.send(("8.8.8.8", 53), 652, Payload({PayloadDictionaryType.CONTENT: "google.ca"}))
+            socket.send(("8.8.8.8", 53), 652, {"content": "google.ca"})
         mock.assert_has_calls(
             [
-                call(Packet(Location(None, 9887), Location("172.99.80.23", 80), 45666, Payload({}))),
-                call(
-                    Packet(
-                        Location(None, 53),
-                        Location("8.8.8.8", 53),
-                        652,
-                        Payload({PayloadDictionaryType.CONTENT: "google.ca"})
-                    )
-                )
+                call(9887, Location("172.99.80.23", 80), 45666, {}),
+                call(53, Location("8.8.8.8", 53), 652, {"content": "google.ca"})
             ]
         )
 
@@ -169,7 +163,7 @@ def test_send_packet_hostname(endpoint):
             patch.object(endpoint, "_send_packet") as mock:
         with endpoint.bind(9887) as socket:
             socket.send(("google.ca", 443), 3398)
-        mock.assert_called_once_with(Packet(Location(None, 9887), Location("172.99.0.2", 443), 3398, Payload({})))
+        mock.assert_called_once_with(9887, Location("172.99.0.2", 443), 3398, {})
 
 
 @contextmanager
@@ -178,7 +172,7 @@ def run_simulation_receiving(socket, delay_recv, expected_end_time):
         Location("192.168.2.89", 9887),
         Location("172.99.0.2", 443),
         12345,
-        Payload({PayloadDictionaryType.CONTENT: "Hello recv!"})
+        {"content": "Hello recv!"}
     )
     packet_received = None
 

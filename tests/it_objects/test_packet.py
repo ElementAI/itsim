@@ -1,11 +1,11 @@
 from itsim.network.location import Location
-from itsim.network.packet import Packet, Payload, PayloadDictionaryType
+from itsim.network.packet import Packet
 
 
 src = Location("54.88.73.99", 443)
 dest = Location("132.204.8.144", 80)
 bigliness = 1e9
-payload = Payload({PayloadDictionaryType.CONTENT: "Good stuff"})
+payload = {"content": "Good stuff"}
 
 
 def test_init():
@@ -26,5 +26,5 @@ def test_byte_size():
 
 
 def test_payload():
-    assert Packet(src, dest, bigliness, payload).payload == Payload({PayloadDictionaryType.CONTENT: "Good stuff"})
-    assert Packet(src, dest, bigliness).payload == Payload()
+    assert Packet(src, dest, bigliness, payload).payload == payload
+    assert Packet(src, dest, bigliness).payload == {}

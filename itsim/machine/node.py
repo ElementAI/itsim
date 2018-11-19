@@ -2,33 +2,27 @@ from .__init__ import _Node
 
 from collections import OrderedDict
 from itertools import cycle
-from queue import Queue
 from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union
 
-from itsim import ITObject
 from itsim.network.forwarding import Forwarding
 from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
-from itsim.network.location import Location, LocationRepr
+from itsim.network.location import Location
 from itsim.network.packet import Payload, Packet
-from itsim.machine.file_system.__init__ import File
+from itsim.machine.file_system import File
 from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
+from itsim.machine.socket import Socket
 from itsim.machine.user_management.__init__ import UserAccount
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol
-
-import greensim
 
 PORT_NULL = 0
 PORT_MAX = 2 ** 16 - 1
 PORT_EPHEMERAL_MIN = 32768
 PORT_EPHEMERAL_UPPER = 61000
 NUM_PORTS_EPHEMERAL = PORT_EPHEMERAL_UPPER - PORT_EPHEMERAL_MIN
-
-
-MapPorts = MutableMapping[Port, Process]
 
 
 class NameNotFound(Exception):
@@ -39,120 +33,6 @@ class NameNotFound(Exception):
     def __init__(self, name: Hostname) -> None:
         super().__init__()
         self.name = name
-
-
-class Timeout(Exception):
-    """
-    Raised when the reception of a :py:class:`Packet` through a :py:class:`Socket` times out.
-    """
-    pass
-
-
-class Socket(ITObject):
-    """
-    Resource reserved for a :py:class:`Process` running on a :py:class:`Node` to send and receive packets on the
-    networks the node is connected to. This class is not instantiated directly, but rather obtained as result of the
-    method :py:meth:`Node.bind`.
-
-    The preferred way to handle a socket is to use it as a context manager (``with`` statement). Exiting the context
-    will trigger the :py:meth:`close`'ing of the socket. Otherwise, the user must take care to invoke this method,
-    otherwise the resources on the associated :py:class:`Node` will stay associated to the socket even once it goes out
-    of scope.
-
-    :param port:
-        Port reserved on the host for running network transactions.
-    :param node:
-        Node that instantiated this object.
-    """
-
-    def __init__(self, port: Port, node: _Node) -> None:
-        super().__init__()
-        self._is_closed = False
-        self._port = port
-        self._node = node
-        self._packet_queue: Queue[Packet] = Queue()
-        self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
-
-    @property
-    def port(self):
-        """
-        Port reserved by this socket on the :py:class:`Node`.
-        """
-        if self.is_closed:
-            raise ValueError("Socket is closed")
-        return self._port
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> bool:
-        self.close()
-        return False
-
-    def close(self) -> None:
-        """
-        Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
-        """
-        self._node._deallocate_socket(self.port)
-        self._is_closed = True
-        self._packet_signal.turn_on()
-
-    @property
-    def is_closed(self) -> bool:
-        """
-        Tells whether the socket has been closed.
-        """
-        return self._is_closed
-
-    def send(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
-        """
-        Sends information to a certain destination, in the form of a :py:class:`Packet`. The source address of the
-        packet will be determined depending on its destination.
-
-        :param dr:
-            Destination of the packet, provided as a :py:class:`LocationRepr`
-        :param size:
-            Number of bytes to send.
-        :param payload:
-            Optional information payload added to the :py:class:`Packet` instance, which may be useful for simulating
-            the server-side part of the transaction or session.
-        """
-        if self.is_closed:
-            raise ValueError("Socket is closed")
-        dest = Location.from_repr(dr)
-        address_dest = self._node.resolve_name(dest.hostname)
-        self._node._send_packet(
-            Packet(Location(None, self.port), Location(address_dest, dest.port), size, payload)
-        )
-
-    def _enqueue(self, packet: Packet) -> None:
-        self._packet_queue.put(packet)
-        self._packet_signal.turn_on()
-
-    def recv(self, timeout: Optional[float] = None) -> Packet:
-        """
-        Blocks until a packet is received on the socket's :py:meth:`port`.
-
-        :param timeout:
-            If this parameter is set to a numerical value, the process invoking this method only blocks this much time.
-            If no packet is received when the timeout fires, the :py:class:`Timeout` exception is raised on the calling
-            process.
-        """
-        if self.is_closed:
-            raise ValueError("Socket is closed")
-
-        try:
-            self._packet_signal.wait(timeout)
-        except greensim.Timeout:
-            raise Timeout()
-
-        if self.is_closed:
-            raise ValueError("Socket is closed")
-        output = self._packet_queue.get()
-        if self._packet_queue.empty():
-            self._packet_signal.turn_off()
-
-        return output
 
 
 class PortAlreadyInUse(Exception):
@@ -264,10 +144,10 @@ class Node(_Node):
         """
         return port not in [PORT_NULL, PORT_MAX] and port not in self._sockets
 
-    def _deallocate_socket(self, port: Port) -> None:
-        del self._sockets[port]
+    def _deallocate_socket(self, socket: Socket) -> None:
+        del self._sockets[socket.port]
 
-    def _send_packet(self, packet: Packet) -> None:
+    def _send_packet(self, port_source: int, dest: Location, num_bytes: int, payload: Payload) -> None:
         raise NotImplementedError()
 
     def _receive_packet(self, packet: Packet) -> None:

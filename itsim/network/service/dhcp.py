@@ -4,7 +4,6 @@ from itsim.network import _Packet
 from itsim.machine.node import Socket
 from itsim.machine.process_management import _Thread
 from itsim.machine.process_management.daemon import Daemon
-from itsim.network.packet import Payload, PayloadDictionaryType
 from itsim.random import num_bytes
 from itsim.units import B
 
@@ -17,8 +16,8 @@ class DHCPDaemon(Daemon):
         pass
 
     def _trigger_event(self, thread: _Thread, packet: _Packet, socket: Socket) -> None:
-        type_msg = packet.payload.entries[PayloadDictionaryType.CONTENT]
+        type_msg = packet.payload["content"]
         if type_msg in self.responses:
             socket.send(packet.source,
                         next(self.size_packet_dhcp),
-                        Payload({PayloadDictionaryType.CONTENT: self.responses[type_msg]}))
+                        {"content": self.responses[type_msg]})

@@ -1,4 +1,4 @@
-from itsim.network.packet import Packet, Payload, PayloadDictionaryType
+from itsim.network.packet import Packet
 from itsim.network.service.dhcp import DHCPDaemon
 from itsim.types import as_address
 
@@ -13,12 +13,12 @@ def apply_trigger(thread, socket, req, res):
     packet = Packet(as_address(None),
                     as_address(None),
                     0,
-                    Payload({PayloadDictionaryType.CONTENT: req}))
+                    {"content": req})
     print(packet.payload)
     DHCPDaemon()._trigger_event(thread, packet, socket)
     # This is of the form (args, kwargs) = socket.send.call_args
     ((source, size, pay), _) = socket.send.call_args
-    expected_pay = Payload({PayloadDictionaryType.CONTENT: res})
+    expected_pay = {"content": res}
     assert packet.source == source
     # This value is random
     assert int == type(size)
