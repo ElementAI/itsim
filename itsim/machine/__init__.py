@@ -1,7 +1,7 @@
 from abc import abstractproperty, abstractmethod
 from typing import Optional, Iterator
 
-from itsim.__init__ import AbstractITObject
+from itsim import AbstractITObject
 from itsim.network.location import LocationRepr
 from itsim.network.packet import Packet
 from itsim.types import Payload, Address, PortRepr
@@ -25,6 +25,10 @@ class _Socket(AbstractITObject):
     def is_closed(self) -> bool:
         pass
 
+    @abstractproperty
+    def pid(self) -> int:
+        pass
+
     def send(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
         pass
 
@@ -39,5 +43,5 @@ class _Node(AbstractITObject):
         pass
 
     @abstractmethod
-    def bind(self, pr: PortRepr = None) -> _Socket:
+    def bind(self, pr: PortRepr = None, as_pid: int = -1) -> _Socket:
         pass
