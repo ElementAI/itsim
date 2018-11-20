@@ -10,9 +10,9 @@ from itsim.network.location import Location
 from itsim.network.packet import Packet
 from itsim.network.router import Router
 from itsim.network.service.dhcp import DHCPDaemon
-from itsim.simulator import Simulator
-from itsim.types import as_port, Protocol, AddressRepr
-from itsim.units import S, MS, MbPS
+from itsim.simulator import Simulator, advance
+from itsim.types import as_port, Protocol, AddressRepr, as_address
+from itsim.units import MIN, S, MS, MbPS
 
 
 def set_addresses(*ars: AddressRepr):
@@ -21,19 +21,22 @@ def set_addresses(*ars: AddressRepr):
 
 def test_dhcp_exchange():
     sim = Simulator()
+
     link = Link("10.1.128.0/18", uniform(100 * MS, 200 * MS), constant(100 * MbPS))
     router = Router().connected_to(link, "10.1.128.1") \
-                     .with_daemon_on(sim, link, DHCPDaemon(100, link.cidr), Protocol.UDP, 67)
-    endpoints = []
+                     .with_daemon_on(sim, link, DHCPDaemon(100), Protocol.UDP, 67)
 
-    def add_endpoint(delay: float):
-        endpoint = Endpoint().connected_to(link, dhcp_with=sim)
-        assert set(endpoint.addresses()) == set_addresses("127.0.0.1", "10.1.128.0")
-        endpoints.append(endpoint)
+    endpoints = [Endpoint().connected_to(link, dhcp_with=sim) for n in range(3)]
+    for endpoint in endpoints:
+        assert set(endpoint.addresses()) == set_addresses("127.0.0.1", link.cidr.network_address)
 
-    for delay in [1.0, 2.0]:
-        sim.add(add_endpoint, delay * S)
-    sim.run(5.0 * S)
+    sim.run(10.0 * S)
 
-    for n, endpoint in enumerate(endpoints):
-        assert set(endpoint.addresses()) == set_addresses("127.0.0.1", as_address(n + 100, link.cidr))
+    all_addresses = set()
+    for endpoint in endpoints:
+        addresses = set(endpoint.addresses())
+        assert len(addresses) == 2
+        assert link.cidr.network_address not in addresses
+        all_addresses.update(addresses)
+
+    assert all_addresses == set_addresses("127.0.0.1", *[as_address(n + 100, link.cidr) for n in range(len(endpoints))])
