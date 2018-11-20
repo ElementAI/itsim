@@ -31,7 +31,7 @@ ITSIM_OBJECT_TYPE_SCHEMA = {
 }
 
 NODE_SCHEMA = {
-    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$schema": "http://json-schema.org/draft-06/schema#",
     "description": "A node object",
     "type": "object",
     "properties": {
@@ -51,7 +51,7 @@ NODE_SCHEMA = {
 
 
 LOG_SCHEMA = {
-    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$schema": "http://json-schema.org/draft-06/schema#",
     "description": "A Log object",
     "type": "object",
     "properties": {
@@ -91,6 +91,7 @@ NETWORK_EVENT_SCHEMA = {
         },
         "type": ITSIM_OBJECT_TYPE_SCHEMA,
         "uuid": UUID_SCHEMA,
+        "uuid_node": UUID_SCHEMA,
         "network_event_type": {
             "description": "Network event type",
             "enum": network_event_types
