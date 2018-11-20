@@ -154,7 +154,8 @@ class Node(_Node):
     Machine taking part to a network.
     """
 
-    def __init__(self, sim: Simulator):
+    # def __init__(self, sim: Simulator):
+    def __init__(self):
         super().__init__()
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
         self.connected_to(Loopback(), "127.0.0.1")
@@ -165,46 +166,46 @@ class Node(_Node):
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
 
-        self._sim = sim
-        self._sim.graph.add_node(str(self._uuid))
-        self._subscriptions = [
-            "file.open",
-            "file.close",
-        ]
-        self._type = 'node'
-        self._files: List[File_DBG] = []  # Debug only
-        self._pubsub_agent = CommunicationAgent(channel=str(self._uuid),
-                                                subscriptions=self._subscriptions,
-                                                sim=self._sim,
-                                                subscription_callback=self.pubsub_subscription_callback,
-                                                parent=self)
+        # self._sim = sim
+        # self._sim.graph.add_node(str(self._uuid))
+        # self._subscriptions = [
+        #     "file.open",
+        #     "file.close",
+        # ]
+        # self._type = 'node'
+        # self._files: List[File_DBG] = []  # Debug only
+        # self._pubsub_agent = CommunicationAgent(channel=str(self._uuid),
+        #                                         subscriptions=self._subscriptions,
+        #                                         sim=self._sim,
+        #                                         subscription_callback=self.pubsub_subscription_callback,
+        #                                         parent=self)
 
-    def pubsub_subscription_callback(self, topic, data):
-        if topic.endswith("file.open"):
-            self._sim.logger.info("Node has just been notified a file has been opened: File UUID: {0}".format(data._id))
+    # def pubsub_subscription_callback(self, topic, data):
+        # if topic.endswith("file.open"):
+        #     self._sim.logger.info("Node has just been notified a file has been opened: File UUID: {0}".format(data._id))
 
-    # TODO: replace this by simply putting "_agent.publish" wherever required
-    def generate_activity(self, activity):
-        self._pubsub_agent.publish(activity, msg=self)
+    # # TODO: replace this by simply putting "_agent.publish" wherever required
+    # def generate_activity(self, activity):
+        # self._pubsub_agent.publish(activity, msg=self)
 
-    # Review how to handle the logger (and logger level)
-    def log(self, msg):
-        self._sim.logger.info(msg)
+    # # Review how to handle the logger (and logger level)
+    # def log(self, msg):
+        # self._sim.logger.info(msg)
 
-    # test function to test the pubsub... (all itobjects belonging to the node should have a CommunicationAgent to
-    # handle pubsub to/from the node.
-    def create_file_DBG(self):
-        new_file = File_DBG(self._sim, str(self._uuid))
-        self._files.append(new_file)
-        return new_file
+    # # test function to test the pubsub... (all itobjects belonging to the node should have a CommunicationAgent to
+    # # handle pubsub to/from the node.
+    # def create_file_DBG(self):
+        # new_file = File_DBG(self._sim, str(self._uuid))
+        # self._files.append(new_file)
+        # return new_file
 
-    def json(self):
-        # TODO: add all usefull node properties to JSON object (and schema)
-        return create_json_item(sim_uuid=str(self._sim.uuid),
-                                timestamp=now_iso8601(),
-                                item_type=self._type,
-                                uuid=str(self._uuid),
-                                node_label='')
+    # def json(self):
+        # # TODO: add all usefull node properties to JSON object (and schema)
+        # return create_json_item(sim_uuid=str(self._sim.uuid),
+        #                         timestamp=now_iso8601(),
+        #                         item_type=self._type,
+        #                         uuid=str(self._uuid),
+        #                         node_label='')
 
 
 
