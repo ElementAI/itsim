@@ -68,7 +68,7 @@ class DatastoreRestServer:
         self._api.add_resource(_Item, "/<string:item_type>/<string:uuid>", resource_class_args=(self._db_file,))
 
     def run(self) -> None:
-        self._app.run(debug=True)
+        self._app.run(host='0.0.0.0', debug=True)
 
 
 @click.command()
