@@ -47,14 +47,15 @@ class Socket(_Socket):
         self._last_dest = Location()
         self._record("open")
 
-    def _record(self, network_item_type: str) -> None:
+    def _record(self, network_event_type: str) -> None:
         record(
             item_type="network_event",
-            network_item_type=network_item_type,
-            uuid_node=self._node.uuid,
+            network_event_type=network_event_type,
+            uuid_node=str(self._node.uuid),
+            pid=self.pid,
             protocol=self.protocol.name,
             src=["", self.port],
-            dest=[self._last_dest.hostname_as_address(), self._last_dest.port]
+            dst=[str(self._last_dest.hostname_as_address()), self._last_dest.port]
         )
 
     @property

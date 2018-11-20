@@ -11,9 +11,9 @@ from itsim.schemas.itsim_items import create_json_item
 
 class DatastoreRestClientStub(DatastoreRestClient):
 
-    def __init__(self):
+    def __init__(self, sim_uuid):
         # Drop any actual initialization -- this is a do-nothing stub.
-        pass
+        self._sim_uuid = sim_uuid
 
     def url(self, type: str, uuid: str) -> str:
         return ""
@@ -56,15 +56,24 @@ def record(**fields: Any) -> None:
         _base_timestamp = datetime.now()
         try:
             _the_datastore = DatastoreRestClient(base_url="http://localhost:5000/", sim_uuid=sim.name)
-            _the_datastore.store_item(create_json_item(item_type="NONE", sim_uuid=sim.name, uuid="", timestamp=""))
+            _the_datastore.store_item(
+                create_json_item(
+                    item_type="log",
+                    sim_uuid=_the_datastore._sim_uuid,
+                    timestamp=_base_timestamp.isoformat(),
+                    uuid=str(uuid4()),
+                    content="Checking datastore connectivity",
+                    level="DEBUG"
+                )
+            )
         except ConnectionError:
             # Datastore unavailable -- use stub.
-            _the_datastore = DatastoreRestClientStub()
+            _the_datastore = DatastoreRestClientStub(sim.name)
 
     record_fields = dict(
         sim_uuid=_the_datastore._sim_uuid,
         timestamp=(_base_timestamp + timedelta(0, sim.now())).isoformat(),
-        uuid=uuid4()
+        uuid=str(uuid4())
     )
     record_fields.update(fields)
     _the_datastore.store_item(create_json_item(**record_fields))
