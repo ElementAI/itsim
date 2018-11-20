@@ -151,6 +151,7 @@ def create_json_item(sim_uuid: str, timestamp: str, item_type: str, **kwargs) ->
         json_item = creator(sim_uuid=sim_uuid, timestamp=timestamp, type=item_type.lower(),
                             uuid=kwargs['uuid'],
                             network_event_type=kwargs['network_event_type'],
+                            uuid_node=kwargs['uuid_node'],
                             protocol=kwargs['protocol'],
                             pid=kwargs['pid'],
                             src=kwargs['src'],

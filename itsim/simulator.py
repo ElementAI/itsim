@@ -55,7 +55,7 @@ def record(**fields: Any) -> None:
     if _the_datastore is None:
         _base_timestamp = datetime.now()
         try:
-            _the_datastore = DatastoreRestClient(base_url="http://localhost:5000/", sim_uuid=sim.name)
+            _the_datastore = DatastoreRestClient(base_url="http://localhost:5000", sim_uuid=sim.name)
             _the_datastore.store_item(
                 create_json_item(
                     item_type="log",
