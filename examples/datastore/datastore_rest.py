@@ -43,5 +43,28 @@ def example_datastore_rest_store_load_node():
     print("Rest example completed successfully")
 
 
+def example_datastore_rest_store_load_network_event():
+    sim_uuid = str(uuid.uuid4())   # should be in simulation object
+    event_uuid = str(uuid.uuid4())
+
+    network_event = create_json_item(sim_uuid=sim_uuid,
+                                     timestamp=now_iso8601(),
+                                     item_type="network_event",
+                                     uuid = event_uuid,
+                                     network_event_type = 'open',
+                                     protocol = 'UDP',
+                                     pid = 32145,
+                                     src = ['192.168.1.1', 64],
+                                     dst = ['192.168.11.200', 72])
+
+    # Connect to a datastore
+    datastore = DatastoreRestClient(sim_uuid=sim_uuid, base_url='http://localhost:5000')
+
+    print("About to store: {0}".format(network_event.uuid))
+    # Posting a node to the datastore
+    datastore.store_item(network_event)
+
+
 if __name__ == '__main__':
     example_datastore_rest_store_load_node()
+    example_datastore_rest_store_load_network_event()

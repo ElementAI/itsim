@@ -13,7 +13,8 @@ UUID_SCHEMA = {
 itsim_object_types = [
     "node",
     "link",
-    "log"
+    "log",
+    "network_event"
 ]
 
 log_levels = [
@@ -48,6 +49,7 @@ NODE_SCHEMA = {
     }
 }
 
+
 LOG_SCHEMA = {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "description": "A Log object",
@@ -72,6 +74,61 @@ LOG_SCHEMA = {
 }
 
 
+network_event_types = [
+    "open",
+    "close"
+]
+
+NETWORK_EVENT_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "description": "A network event object",
+    "type": "object",
+    "properties": {
+        "sim_uuid": UUID_SCHEMA,
+        "timestamp": {
+            "description": "timestamp when last updated",
+            "type": "string"
+        },
+        "type": ITSIM_OBJECT_TYPE_SCHEMA,
+        "uuid": UUID_SCHEMA,
+        "network_event_type": {
+            "description": "Network event type",
+            "enum": network_event_types
+        },
+        "pid": {
+            "description": "PID",
+            "type": "number"
+        },
+        "protocol": {
+            "description": "Protocol",
+            "enum": ["TCP", "UDP", "NONE"]
+        },
+        "src":{
+          "type": "array",
+          "items": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "dst": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "number"
+                }
+            ]
+        }
+    }
+}
+
+
 def get_itsim_object_types() -> List[str]:
     return itsim_object_types
 
@@ -88,7 +145,16 @@ def create_json_item(sim_uuid: str, timestamp: str, item_type: str, **kwargs) ->
     # TODO: assert required kwargs for each type
     json_item = None
 
-    if item_type.lower() == 'node':
+    if item_type.lower() == 'network_event':
+        creator = warlock.model_factory(NETWORK_EVENT_SCHEMA)
+        json_item = creator(sim_uuid=sim_uuid, timestamp=timestamp, type=item_type.lower(),
+                            uuid=kwargs['uuid'],
+                            network_event_type=kwargs['network_event_type'],
+                            protocol=kwargs['protocol'],
+                            pid=kwargs['pid'],
+                            src=kwargs['src'],
+                            dst=kwargs['dst'])
+    elif item_type.lower() == 'node':
         creator = warlock.model_factory(NODE_SCHEMA)
         json_item = creator(sim_uuid=sim_uuid, timestamp=timestamp, type=item_type.lower(),
                             uuid=kwargs['uuid'], node_label=kwargs['node_label'])

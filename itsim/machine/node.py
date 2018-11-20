@@ -18,6 +18,10 @@ from itsim.machine.user_management import UserAccount
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol, Payload
 
+from itsim.schemas.itsim_items import create_json_item
+from itsim.time import now_iso8601
+from collections import defaultdict
+from itsim import ITObject
 
 PORT_NULL = 0
 PORT_MAX = 2 ** 16 - 1
@@ -64,12 +68,93 @@ class NoRouteToHost(Exception):
         self.address = address
 
 
+
+# ------------------------------------------------
+#   Communication Agent (to be used by Nodes and Node Objects
+# ------------------------------------------------
+class CommunicationAgent():
+
+    class _PubSub():
+        def __init__(self):
+            self.topics = defaultdict(set)
+
+        def subscribe(self, topic, f):
+            """
+            Subscribe the function/method ``f`` to ``topic``.
+            """
+            self.topics[topic].add(f)
+
+        def publish(self, topic, **kwargs):
+            """
+            Publish ``**kwargs`` to ``topic``, calling all functions/methods
+            subscribed to ``topic`` with the arguments specified in ``**kwargs``.
+            """
+            for f in self.topics[topic]:
+                f(**kwargs)
+
+    def __init__(self, channel, subscriptions, sim, subscription_callback, parent) -> None:
+        self._subscriptions = subscriptions
+        self._parent = parent
+        self._channel = channel
+        self._subscription_callback = subscription_callback
+        self._pubsub = self._PubSub()
+
+        for sub_topic in subscriptions:
+            topic = channel + "." + sub_topic
+            sim.add(self.wait_for_msg, topic)
+
+    def get_subscriptions(self):
+        return self._subscription_list
+
+    def publish(self, sub_topic, msg):
+        topic = self._channel + "." + sub_topic
+        self._pubsub.publish(topic, arg1=msg)
+
+    def wait_for_msg(self, topic):
+        current_process = Process.current()
+
+        def receive_msg(arg1, arg2=None):
+            print("{0} {1}: Received topic {2} ".format(self._parent._type, self._parent._id, topic))
+            current_process.local.msg_data = arg1
+            self._subscription_callback(topic, arg1)
+            current_process.resume()
+
+        self._pubsub.subscribe(topic, receive_msg)
+
+        while True:
+            print("{0} {1}: Waiting for topic {2}".format(self._parent._type, self._parent._id, topic))
+            greensim.pause()
+            print("{0} {1}: Resuming".format(self._parent._type, self._parent._id, topic))
+        # return local.msg_data
+
+class File_DBG(ITObject):
+
+    def __init__(self, sim, parent_node_id) -> None:
+        super().__init__()
+        self._type = "file"
+        self._agent = CommunicationAgent(channel=parent_node_id,
+                                         subscriptions=["node.shutdown"],
+                                         sim=sim,
+                                         subscription_callback=self.subscription_callback,
+                                         parent=self)  # replace "FILE" by obj type
+
+    def subscription_callback(self, topic, data):
+        if topic.endswith("node.shutdown"):
+            print("File has just been notified the parent node shut down: Node UUID: {0}".format(data._id))
+
+    def get_subcriptions(self):
+        return self._agent.get_subscriptions()
+
+    def generate_activity(self, activity):
+        self._agent.publish(activity, msg=self)
+
+
 class Node(_Node):
     """
     Machine taking part to a network.
     """
 
-    def __init__(self):
+    def __init__(self, sim: Simulator):
         super().__init__()
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
         self.connected_to(Loopback(), "127.0.0.1")
@@ -79,6 +164,49 @@ class Node(_Node):
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
+
+        self._sim = sim
+        self._sim.graph.add_node(str(self._uuid))
+        self._subscriptions = [
+            "file.open",
+            "file.close",
+        ]
+        self._type = 'node'
+        self._files: List[File_DBG] = []  # Debug only
+        self._pubsub_agent = CommunicationAgent(channel=str(self._uuid),
+                                                subscriptions=self._subscriptions,
+                                                sim=self._sim,
+                                                subscription_callback=self.pubsub_subscription_callback,
+                                                parent=self)
+
+    def pubsub_subscription_callback(self, topic, data):
+        if topic.endswith("file.open"):
+            self._sim.logger.info("Node has just been notified a file has been opened: File UUID: {0}".format(data._id))
+
+    # TODO: replace this by simply putting "_agent.publish" wherever required
+    def generate_activity(self, activity):
+        self._pubsub_agent.publish(activity, msg=self)
+
+    # Review how to handle the logger (and logger level)
+    def log(self, msg):
+        self._sim.logger.info(msg)
+
+    # test function to test the pubsub... (all itobjects belonging to the node should have a CommunicationAgent to
+    # handle pubsub to/from the node.
+    def create_file_DBG(self):
+        new_file = File_DBG(self._sim, str(self._uuid))
+        self._files.append(new_file)
+        return new_file
+
+    def json(self):
+        # TODO: add all usefull node properties to JSON object (and schema)
+        return create_json_item(sim_uuid=str(self._sim.uuid),
+                                timestamp=now_iso8601(),
+                                item_type=self._type,
+                                uuid=str(self._uuid),
+                                node_label='')
+
+
 
     def connected_to(
         self,
