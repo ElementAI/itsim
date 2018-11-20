@@ -4,7 +4,7 @@ from typing import Optional, Iterator
 from itsim import AbstractITObject
 from itsim.network.location import LocationRepr
 from itsim.network.packet import Packet
-from itsim.types import Payload, Address, PortRepr
+from itsim.types import Payload, Address, PortRepr, Port, Protocol
 
 
 class _Socket(AbstractITObject):
@@ -26,6 +26,14 @@ class _Socket(AbstractITObject):
         pass
 
     @abstractproperty
+    def port(self) -> Port:
+        pass
+
+    @abstractproperty
+    def protocol(self) -> Protocol:
+        pass
+
+    @abstractproperty
     def pid(self) -> int:
         pass
 
@@ -43,5 +51,5 @@ class _Node(AbstractITObject):
         pass
 
     @abstractmethod
-    def bind(self, pr: PortRepr = None, as_pid: int = -1) -> _Socket:
+    def bind(self, protocol: Protocol = Protocol.NONE, pr: PortRepr = None, as_pid: int = -1) -> _Socket:
         pass

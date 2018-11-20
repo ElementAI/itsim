@@ -138,7 +138,7 @@ class Node(_Node):
                 break
         raise EphemeralPortsAllInUse()
 
-    def bind(self, pr: PortRepr = 0, as_pid: int = -1) -> Socket:
+    def bind(self, protocol: Protocol = Protocol.NONE, pr: PortRepr = 0, as_pid: int = -1) -> Socket:
         """
         Reserves networking resources, in particular a port, for a calling process. If no port is provided, or port 0,
         then a random free port is thus bound. The binding is embedded in a :py:class:`Socket` instance which may be
@@ -156,7 +156,7 @@ class Node(_Node):
         port = as_port(pr) or self._get_port_ephemeral()
         if not self.is_port_free(port):
             raise PortAlreadyInUse(port)
-        socket = Socket(port, self, as_pid)
+        socket = Socket(protocol, port, self, as_pid)
         self._sockets[port] = socket
         return socket
 
@@ -285,7 +285,7 @@ class Node(_Node):
             :py:class:`~itsim.machine.process_management.thread.Thread` is opened to wait for another packet in parallel
         """
         def serve_on_port(thread: Thread, port: int):
-            with self.bind(port, thread.process.pid) as socket:
+            with self.bind(protocol, port, thread.process.pid) as socket:
                 while True:
                     packet = socket.recv()
                     thread.process.exc(sim, daemon.trigger, packet, socket)

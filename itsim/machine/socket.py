@@ -5,7 +5,7 @@ import greensim
 from itsim.machine.__init__ import _Socket, _Node
 from itsim.network.location import LocationRepr, Location
 from itsim.network.packet import Packet
-from itsim.types import Port, Address, as_address, Payload, Hostname
+from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol
 
 
 class Timeout(Exception):
@@ -32,14 +32,23 @@ class Socket(_Socket):
         Node that instantiated this object.
     """
 
-    def __init__(self, port: Port, node: _Node, pid: int = -1) -> None:
+    def __init__(self, protocol: Protocol, port: Port, node: _Node, pid: int = -1) -> None:
         super().__init__()
         self._is_closed = False
         self._port = port
+        self._protocol = protocol
         self._node: _Node = node
         self._pid: int = pid
         self._packet_queue: Queue[Packet] = Queue()
         self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
+        self._num_bytes_sent = 0
+        self._num_bytes_received = 0
+
+    @property
+    def protocol(self) -> Protocol:
+        if self.is_closed:
+            raise ValueError("Socket is closed")
+        return self._protocol
 
     @property
     def port(self) -> Port:
@@ -52,6 +61,8 @@ class Socket(_Socket):
 
     @property
     def pid(self) -> int:
+        if self.is_closed:
+            raise ValueError("Socket is closed")
         return self._pid
 
     def __enter__(self):

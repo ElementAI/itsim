@@ -16,7 +16,7 @@ from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet
 from itsim.simulator import Simulator
-from itsim.types import as_cidr, as_address, AddressRepr, as_hostname
+from itsim.types import as_cidr, as_address, AddressRepr, as_hostname, Protocol
 
 
 def addr(*ar: AddressRepr):
@@ -77,7 +77,7 @@ def test_get_port_ephemeral(endpoint):
 
 
 def test_raise_once_no_more_port_ephemeral(endpoint):
-    sockets = [endpoint.bind(port) for port in range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER)]
+    sockets = [endpoint.bind(Protocol.NONE, port) for port in range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER)]
     try:
         with pytest.raises(EphemeralPortsAllInUse):
             with endpoint.bind():
@@ -90,7 +90,7 @@ def test_raise_once_no_more_port_ephemeral(endpoint):
 @pytest.fixture
 def socket80(endpoint):
     assert endpoint.is_port_free(80)
-    return endpoint.bind(80)
+    return endpoint.bind(Protocol.TCP, 80)
 
 
 def test_socket_state(endpoint, socket80):
@@ -115,7 +115,7 @@ def test_ephemeral_port_after_reservations(endpoint):
     PORTS_RESERVED = [9887, 80, 65000, 45454, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER - 1, 12345]
     sockets = []
     try:
-        sockets = [endpoint.bind(port) for port in PORTS_RESERVED]
+        sockets = [endpoint.bind(Protocol.NONE, port) for port in PORTS_RESERVED]
         for port in PORTS_RESERVED:
             assert not endpoint.is_port_free(port)
         for expected in range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER):
@@ -134,16 +134,16 @@ def test_bind_port_used(endpoint, socket80):
             # the fixtures are abandoned after the execution of the test, it's ok not to leave on the test failure
             # exception without having closed the unduly-instantiated socket instance. However, in practice, sockets
             # must always be closed, lest ports are leaked.
-            sock = endpoint.bind(80)
+            sock = endpoint.bind(Protocol.TCP, 80)
             pytest.fail()
             sock.close()  # Do something with the socket to avoid being called out for PEP-8 non-conformance.
 
 
 def test_send_packet_address(endpoint):
     with patch.object(endpoint, "_send_packet") as mock:
-        with endpoint.bind(9887) as socket:
+        with endpoint.bind(Protocol.TCP, 9887) as socket:
             socket.send(("172.99.80.23", 80), 45666)
-        with endpoint.bind(53) as socket:
+        with endpoint.bind(Protocol.UDP, 53) as socket:
             socket.send(("8.8.8.8", 53), 652, {"content": "google.ca"})
         mock.assert_has_calls(
             [
@@ -161,7 +161,7 @@ def test_resolve_destination_address(endpoint):
 def test_send_packet_hostname(endpoint):
     with patch.object(endpoint, "resolve_name", return_value="172.99.0.2"), \
             patch.object(endpoint, "_send_packet") as mock:
-        with endpoint.bind(9887) as socket:
+        with endpoint.bind(Protocol.TCP, 9887) as socket:
             socket.send(("google.ca", 443), 3398)
         mock.assert_called_once_with(9887, Location("172.99.0.2", 443), 3398, {})
 
@@ -300,7 +300,7 @@ def test_solve_transfer_no_route(endpoint, link_small):
 
 @pytest.fixture
 def socket9887(endpoint_2links):
-    return endpoint_2links.bind(9887)
+    return endpoint_2links.bind(Protocol.TCP, 9887)
 
 
 def do_test_receive_packet(endpoint, socket, loc_dest):

@@ -7,6 +7,7 @@ from itsim.machine.process_management.thread import Thread
 from itsim.network.link import Link
 from itsim.simulator import Simulator, advance
 from itsim.types import Address, as_address
+from itsim.types import Protocol
 from itsim.units import MS, S, MbPS
 
 
@@ -23,13 +24,13 @@ class EndpointChattering(Endpoint):
         self.fork_exec(sim, self.client)
 
     def server(self, thread: Thread):
-        with thread.process.node.bind(10000) as socket:
+        with thread.process.node.bind(Protocol.UDP, 10000) as socket:
             while True:
                 packet = socket.recv()
                 self._peers.add(packet.source.hostname_as_address())
 
     def client(self, thread: Thread):
-        with thread.process.node.bind() as socket:
+        with thread.process.node.bind(Protocol.UDP) as socket:
             while True:
                 advance(next(self._interval_broadcast))
                 for interface in self.interfaces():

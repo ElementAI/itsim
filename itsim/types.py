@@ -95,6 +95,7 @@ class Protocol(IntFlag):
     """
     Combinable indicators of network protocols, at the transport and application levels.
     """
+    NONE = 0x0
     # Transport
     UDP = 0x1
     TCP = 0x2
