@@ -72,7 +72,7 @@ def record(**fields: Any) -> None:
 
     record_fields = dict(
         sim_uuid=_the_datastore._sim_uuid,
-        timestamp=(_base_timestamp + timedelta(0, sim.now())).isoformat(),
+        timestamp=((_base_timestamp or datetime.now()) + timedelta(0, sim.now())).isoformat(),
         uuid=str(uuid4())
     )
     record_fields.update(fields)
