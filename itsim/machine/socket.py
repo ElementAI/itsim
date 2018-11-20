@@ -5,6 +5,7 @@ import greensim
 from itsim.machine.__init__ import _Socket, _Node
 from itsim.network.location import LocationRepr, Location
 from itsim.network.packet import Packet
+from itsim.simulator import record
 from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol
 
 
@@ -43,6 +44,18 @@ class Socket(_Socket):
         self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
         self._num_bytes_sent = 0
         self._num_bytes_received = 0
+        self._last_dest = Location()
+        self._record("open")
+
+    def _record(self, network_item_type: str) -> None:
+        record(
+            item_type="network_event",
+            network_item_type=network_item_type,
+            uuid_node=self._node.uuid,
+            protocol=self.protocol.name,
+            src=["", self.port],
+            dest=[self._last_dest.hostname_as_address(), self._last_dest.port]
+        )
 
     @property
     def protocol(self) -> Protocol:
@@ -76,6 +89,7 @@ class Socket(_Socket):
         """
         Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
         """
+        self._record("close")
         self._node._deallocate_socket(self)
         self._is_closed = True
         self._packet_signal.turn_on()
@@ -105,7 +119,8 @@ class Socket(_Socket):
             raise ValueError("Socket is closed")
         dest = Location.from_repr(dr)
         address_dest = self._resolve_destination_final(dest.hostname)
-        self._node._send_packet(self.port, Location(address_dest, dest.port), size, payload or {})
+        self._last_dest = Location(address_dest, dest.port)
+        self._node._send_packet(self.port, self._last_dest, size, payload or {})
 
     def _resolve_destination_final(self, hostname_dest: Hostname) -> Address:
         try:
