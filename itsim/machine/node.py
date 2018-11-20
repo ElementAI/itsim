@@ -7,15 +7,17 @@ from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
 from itsim.network.location import Location
 from itsim.network.packet import Packet
+from itsim.network.service.dhcp import dhcp_client
 from itsim.machine import _Node
 from itsim.machine.file_system import File
 from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Socket
-from itsim.machine.user_management.__init__ import UserAccount
+from itsim.machine.user_management import UserAccount
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol, Payload
+
 
 PORT_NULL = 0
 PORT_MAX = 2 ** 16 - 1
@@ -82,7 +84,9 @@ class Node(_Node):
         self,
         link: Link,
         ar: AddressRepr = None,
-        forwardings: Optional[List[Forwarding]] = None
+        forwardings: Optional[List[Forwarding]] = None,
+        dhcp_with: Optional[Simulator] = None,
+        dhcp_delay: float = 0.0
     ) -> "Node":
         """
         Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
@@ -95,6 +99,12 @@ class Node(_Node):
             provided, the address assumed is host number 0 within the CIDR associated to the link.
         :param forwardings:
             List of forwarding rules known by this node in order to exchange packets with other internetworking nodes.
+        :param dhcp_with:
+            Simulator with which to launch a DHCP client to gather networking information for the link connected to.
+        :param dhcp_delay:
+            Delay advanced before DHCP client is started. This is mostly useful when instantiating an infra from
+            scratch, whereby the server starts at the same time as the client, so as to avoid undue unresponded DISCOVER
+            requests at the beginning.
 
         :return: The node instance, so it can be further built.
         """
@@ -102,7 +112,8 @@ class Node(_Node):
         interface = Interface(link, as_address(ar, link.cidr), forwardings or [])
         self._interfaces[link.cidr] = interface
 
-        # TODO -- Decide whether to set up DHCP client for this interface
+        if dhcp_with is not None:
+            self.fork_exec_in(dhcp_with, dhcp_delay, dhcp_client, interface)
         return self
 
     def addresses(self) -> Iterator[Address]:
@@ -271,15 +282,18 @@ class Node(_Node):
             `trigger` method on `daemon`. After the packet receipt and before `trigger` is executed a new
             :py:class:`~itsim.machine.process_management.thread.Thread` is opened to wait for another packet in parallel
         """
-        for port in ports:
-            new_sock = self.bind(port)
+        def serve_on_port(thread: Thread, port: int):
+            with self.bind(port) as socket:
+                while True:
+                    packet = socket.recv()
+                    thread.process.exc(sim, daemon.trigger, packet, socket)
 
-            def forward_recv(thread: Thread, socket: Socket):
-                pack = socket.recv()
-                thread._process.exc(sim, forward_recv, socket)
-                daemon.trigger(thread, pack, socket)
+        def run_daemon(thread: Thread):
+            daemon.running_as(thread)
+            for port in ports:
+                thread.process.exc(sim, serve_on_port, port)
 
-            self.fork_exec(sim, forward_recv, new_sock)
+        self.fork_exec(sim, run_daemon)
 
     def networking_daemon(self, sim: Simulator, protocol: Protocol, *ports: PortRepr) -> Callable:
         """
