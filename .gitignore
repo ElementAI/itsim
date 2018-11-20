@@ -111,3 +111,6 @@ Pipfile.lock
 
 # Vim
 .*.sw*
+
+# sqlite
+*.sqlite
