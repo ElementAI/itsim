@@ -18,11 +18,6 @@ from itsim.machine.user_management import UserAccount
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol, Payload
 
-from itsim.schemas.itsim_items import create_json_item
-from itsim.time import now_iso8601
-from collections import defaultdict
-from itsim import ITObject
-
 PORT_NULL = 0
 PORT_MAX = 2 ** 16 - 1
 PORT_EPHEMERAL_MIN = 32768

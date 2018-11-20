@@ -55,62 +55,70 @@ def example_datastore_rest_store_load_network_event():
     network_events = []
 
     # open1
-    network_events.append(create_json_item(sim_uuid=sim_uuid,
-                                     timestamp=now_iso8601(),
-                                     item_type="network_event",
-                                     uuid=event_uuid1,
-                                     uuid_node=node_uuid1,
-                                     network_event_type='open',
-                                     protocol='UDP',
-                                     pid=32145,
-                                     src=['192.168.1.1', 64],
-                                     dst=['192.168.11.200', 72]))
+    network_events.append(
+        create_json_item(
+            sim_uuid=sim_uuid,
+            timestamp=now_iso8601(),
+            item_type="network_event",
+            uuid=event_uuid1,
+            uuid_node=node_uuid1,
+            network_event_type='open',
+            protocol='UDP',
+            pid=32145,
+            src=['192.168.1.1', 64],
+            dst=['192.168.11.200', 72]))
     sleep(random.uniform(0, 2))
 
     # open 2
-    network_events.append(create_json_item(sim_uuid=sim_uuid,
-                                     timestamp=now_iso8601(),
-                                     item_type="network_event",
-                                     uuid=event_uuid2,
-                                     uuid_node=node_uuid2,
-                                     network_event_type='open',
-                                     protocol='UDP',
-                                     pid=32145,
-                                     src=['192.168.1.111', 64],
-                                     dst=['192.168.1.20', 72]))
+    network_events.append(
+        create_json_item(
+            sim_uuid=sim_uuid,
+            timestamp=now_iso8601(),
+            item_type="network_event",
+            uuid=event_uuid2,
+            uuid_node=node_uuid2,
+            network_event_type='open',
+            protocol='UDP',
+            pid=32145,
+            src=['192.168.1.111', 64],
+            dst=['192.168.1.20', 72]))
     sleep(random.uniform(0, 10))
 
     # close 1
-    network_events.append(create_json_item(sim_uuid=sim_uuid,
-                                     timestamp=now_iso8601(),
-                                     item_type="network_event",
-                                     uuid=event_uuid1,
-                                     uuid_node=node_uuid1,
-                                     network_event_type='close',
-                                     protocol='UDP',
-                                     pid=32145,
-                                     src=['192.168.1.1', 64],
-                                     dst=['192.168.11.200', 72]))
+    network_events.append(
+        create_json_item(
+            sim_uuid=sim_uuid,
+            timestamp=now_iso8601(),
+            item_type="network_event",
+            uuid=event_uuid1,
+            uuid_node=node_uuid1,
+            network_event_type='close',
+            protocol='UDP',
+            pid=32145,
+            src=['192.168.1.1', 64],
+            dst=['192.168.11.200', 72]))
     sleep(random.uniform(0, 2))
 
     # close 2
-    network_events.append(create_json_item(sim_uuid=sim_uuid,
-                                     timestamp=now_iso8601(),
-                                     item_type="network_event",
-                                     uuid=event_uuid2,
-                                     uuid_node=node_uuid2,
-                                     network_event_type='close',
-                                     protocol='UDP',
-                                     pid=32145,
-                                     src=['192.168.1.111', 64],
-                                     dst=['192.168.1.20', 72]))
-
+    network_events.append(
+        create_json_item(
+            sim_uuid=sim_uuid,
+            timestamp=now_iso8601(),
+            item_type="network_event",
+            uuid=event_uuid2,
+            uuid_node=node_uuid2,
+            network_event_type='close',
+            protocol='UDP',
+            pid=32145,
+            src=['192.168.1.111', 64],
+            dst=['192.168.1.20', 72]))
 
     # Connect to a datastore
     datastore = DatastoreRestClient(sim_uuid=sim_uuid, base_url='http://localhost:5000')
 
     for event in network_events:
         datastore.store_item(event)
+
 
 if __name__ == '__main__':
     example_datastore_rest_store_load_node()
