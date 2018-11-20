@@ -33,6 +33,10 @@ class _Process(AbstractITObject):
     def node(self) -> _Node:
         pass
 
+    @abstractproperty
+    def pid(self) -> int:
+        pass
+
 
 class _Service(AbstractITObject):
     pass

@@ -32,11 +32,12 @@ class Socket(_Socket):
         Node that instantiated this object.
     """
 
-    def __init__(self, port: Port, node: _Node) -> None:
+    def __init__(self, port: Port, node: _Node, pid: int = -1) -> None:
         super().__init__()
         self._is_closed = False
         self._port = port
         self._node: _Node = node
+        self._pid: int = pid
         self._packet_queue: Queue[Packet] = Queue()
         self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
 
@@ -48,6 +49,10 @@ class Socket(_Socket):
         if self.is_closed:
             raise ValueError("Socket is closed")
         return self._port
+
+    @property
+    def pid(self) -> int:
+        return self._pid
 
     def __enter__(self):
         return self

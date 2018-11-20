@@ -215,7 +215,7 @@ def _dhcp_get_address(thread: Thread, interface: Interface) -> bool:
     node_id = thread.process.node.uuid
     try:
         broadcast_address = interface.cidr.broadcast_address
-        with thread.process.node.bind(68) as socket:
+        with thread.process.node.bind(68, thread.process.pid) as socket:
             address = _dhcp_discover(socket, node_id, broadcast_address)
             interface.address = address
             if not _dhcp_request(socket, node_id, broadcast_address, address):
