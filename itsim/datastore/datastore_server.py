@@ -55,6 +55,8 @@ class DatastoreRestServer:
 
         self._db_file = kwargs['sqlite_file']
 
+        DatabaseSQLite(self._db_file).create_tables()
+
         # Init. the server (Http Rest API)
         self._app = Flask(__name__)
         self._api = Api(self._app)

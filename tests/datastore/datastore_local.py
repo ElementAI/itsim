@@ -3,8 +3,8 @@
 # from itsim.schemas.itsim_items import create_json_item
 # from itsim.time import now_iso8601
 #
-
-# Todo: cleanup code to adapt for static database queries
+#
+# # Todo: cleanup code to adapt for static database queries
 # def test_datastore_local_store_load_node():
 #     """
 #         This is testing a local datastore, i.e. without any datastore server running.
