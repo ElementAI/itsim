@@ -34,7 +34,7 @@ class _Socket(AbstractITObject):
 
 class _Node(AbstractITObject):
 
-    @abstractproperty
+    @abstractmethod
     def addresses(self) -> Iterator[Address]:
         pass
 

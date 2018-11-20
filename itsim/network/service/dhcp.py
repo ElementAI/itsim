@@ -1,6 +1,6 @@
-from enum import Enum, unique, auto
+from enum import Enum, unique
 from itertools import cycle
-from typing import Optional, MutableMapping, Generator, cast
+from typing import Optional, MutableMapping, Generator, cast, Mapping, Any
 from uuid import UUID, uuid4
 
 from greensim.random import normal
@@ -14,8 +14,8 @@ from itsim.machine.socket import Socket, Timeout
 from itsim.network.link import Link
 from itsim.random import num_bytes
 from itsim.simulator import now, advance
-from itsim.types import Address, as_address
-from itsim.units import B, S, MIN
+from itsim.types import Address, as_address, Payload
+from itsim.units import B, S
 
 
 LEN_PACKET_DHCP = 348
@@ -24,22 +24,22 @@ LEASE = 86400
 
 @unique
 class DHCP(Enum):
-    DISCOVER = auto()
-    OFFER = auto()
-    REQUEST = auto()
-    ACK = auto()
+    DISCOVER = "DHCPDISCOVER"
+    OFFER = "DHCPOFFER"
+    REQUEST = "DHCPREQUEST"
+    ACK = "DHCPACK"
 
 
 @unique
 class Field(Enum):
-    MESSAGE = auto()
-    NODE_ID = auto()
-    ADDRESS = auto()
-    LEASE = auto()
-    SERVER = auto()
+    MESSAGE = "message"
+    NODE_ID = "node_id"
+    ADDRESS = "address"
+    LEASE = "lease"
+    SERVER = "server"
 
 
-class AddressAllocation:
+class _AddressAllocation:
 
     def __init__(self, address: Address) -> None:
         self._address = address
@@ -75,14 +75,14 @@ class DHCPDaemon(Daemon):
         if num_host_first <= 0:
             raise ValueError(f"num_host first >= 1 (here {num_host_first})")
         self._num_host_first = num_host_first
-        self._address_allocation: MutableMapping[UUID, Address] = {}
+        self._address_allocation: MutableMapping[UUID, _AddressAllocation] = {}
 
     def for_link(self, link: Link) -> None:
         self._cidr = link.cidr
         upper_num_host = int(self._cidr.hostmask)
         if self._num_host_first >= upper_num_host:
             raise ValueError(
-                f"First host number is too high ({num_host_first}) for this link's CIDR; use " +
+                f"First host number is too high ({self._num_host_first}) for this link's CIDR; use " +  # noqa: W504
                 f"{upper_num_host - 1} or lower."
             )
         self._num_hosts_max = upper_num_host - self._num_host_first
@@ -97,7 +97,7 @@ class DHCPDaemon(Daemon):
             raise RuntimeError("DHCP server can only run on a node with its own address on the target link.")
 
     def on_packet(self, thread: _Thread, packet: Packet, socket: Socket) -> None:
-        payload = packet.payload
+        payload = cast(Mapping[Field, Any], packet.payload)
         if Field.MESSAGE not in payload or Field.NODE_ID not in payload:
             # Don't bother processing ill-formed messages.
             return
@@ -118,7 +118,7 @@ class DHCPDaemon(Daemon):
             # Network is full! Cannot allocate any more address.
             return
 
-        if address_maybe is not None and address not in self._address_allocation:
+        if address_maybe is not None and address_maybe not in self._address_allocation:
             suggestion = cast(Address, address_maybe)
         else:
             for _ in range(self._num_hosts_max):
@@ -128,16 +128,16 @@ class DHCPDaemon(Daemon):
             else:
                 raise RuntimeError("Trying to allocate more addresses than the network can allow.")
 
-        self._address_allocation[node_id] = AddressAllocation(suggestion)
+        self._address_allocation[node_id] = _AddressAllocation(suggestion)
         socket.send(
             (self._cidr.broadcast_address, 68),
             LEN_PACKET_DHCP,
-            {
+            cast(Payload, {
                 Field.MESSAGE: DHCP.OFFER,
                 Field.ADDRESS: suggestion,
                 Field.SERVER: self._address_mine,
                 Field.NODE_ID: node_id
-            }
+            })
         )
 
         # Reserve for 30 seconds -- a REQUEST for the address must have been received by then.
@@ -158,12 +158,12 @@ class DHCPDaemon(Daemon):
             socket.send(
                 (address, 68),
                 LEN_PACKET_DHCP,
-                {
+                cast(Payload, {
                     Field.MESSAGE: DHCP.ACK,
                     Field.ADDRESS: address,
                     Field.NODE_ID: node_id,
                     Field.LEASE: LEASE
-                }
+                })
             )
         else:
             # Spurious REQUEST! Drop.
@@ -176,7 +176,8 @@ def _dhcp_iter_responses(socket: Socket, node_id: UUID, message: DHCP) -> Genera
         time_before_recv = now()
         packet = socket.recv(time_remaining)
         time_remaining -= (now() - time_before_recv)
-        if packet.payload.get(Field.MESSAGE) == message and packet.payload.get(Field.NODE_ID) == node_id:
+        if packet.payload.get(cast(str, Field.MESSAGE)) == message and \
+                packet.payload.get(cast(str, Field.NODE_ID)) == node_id:
             yield packet
 
 
@@ -184,20 +185,22 @@ def _dhcp_discover(socket: Socket, node_id: UUID, address_broadcast: Address) ->
     socket.send(
         (address_broadcast, 67),
         LEN_PACKET_DHCP,
-        { Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: node_id }
+        cast(Payload, {Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: node_id})
     )
 
     # Wait for our OFFER.
     for packet in _dhcp_iter_responses(socket, node_id, DHCP.OFFER):
         if Field.ADDRESS in packet.payload:
-            return packet.payload[Field.ADDRESS]
+            return cast(Address, packet.payload[cast(str, Field.ADDRESS)])
+    else:
+        raise RuntimeError("The wait for the response should have raised a Timeout.")
 
 
 def _dhcp_request(socket: Socket, node_id: UUID, address_broadcast: Address, address_proposed: Address) -> bool:
     socket.send(
         (address_broadcast, 67),
         LEN_PACKET_DHCP,
-        { Field.MESSAGE: DHCP.REQUEST, Field.NODE_ID: node_id, Field.ADDRESS: address_proposed }
+        cast(Payload, {Field.MESSAGE: DHCP.REQUEST, Field.NODE_ID: node_id, Field.ADDRESS: address_proposed})
     )
 
     # Wait for our ACK.
@@ -221,6 +224,7 @@ def _dhcp_get_address(thread: Thread, interface: Interface) -> bool:
             return True
     except Timeout:
         return False
+
 
 def dhcp_client(thread: Thread, interface: Interface) -> None:
     for _ in range(3):

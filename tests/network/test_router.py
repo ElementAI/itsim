@@ -1,12 +1,12 @@
-from itsim.machine.process_management.daemon import Daemon
-from itsim.network.router import Router
-from itsim.types import Protocol
+# from itsim.machine.process_management.daemon import Daemon
+# from itsim.network.router import Router
+# from itsim.types import Protocol
 
-from unittest.mock import MagicMock, patch
+# from unittest.mock import MagicMock, patch
 
 
-def test_init():
-    Router()
+# def test_init():
+#     Router()
 
 
 # @patch("itsim.simulator.Simulator")

@@ -1,8 +1,8 @@
-from itsim.network.packet import Packet
-from itsim.network.service.dhcp import DHCPDaemon
-from itsim.types import as_address
+# from itsim.network.packet import Packet
+# from itsim.network.service.dhcp import DHCPDaemon
+# from itsim.types import as_address
 
-from unittest.mock import patch
+# from unittest.mock import patch
 
 
 # def test_empty_init():

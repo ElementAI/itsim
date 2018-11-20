@@ -14,10 +14,9 @@ from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Socket
-from itsim.machine.user_management.__init__ import UserAccount
+from itsim.machine.user_management import UserAccount
 from itsim.simulator import Simulator
 from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol, Payload
-from itsim.units import MS
 
 
 PORT_NULL = 0
@@ -25,8 +24,6 @@ PORT_MAX = 2 ** 16 - 1
 PORT_EPHEMERAL_MIN = 32768
 PORT_EPHEMERAL_UPPER = 61000
 NUM_PORTS_EPHEMERAL = PORT_EPHEMERAL_UPPER - PORT_EPHEMERAL_MIN
-
-DELAY_DHCP_CLIENT = 200 * MS
 
 
 class NameNotFound(Exception):
@@ -88,7 +85,8 @@ class Node(_Node):
         link: Link,
         ar: AddressRepr = None,
         forwardings: Optional[List[Forwarding]] = None,
-        dhcp_with: Optional[Simulator] = None
+        dhcp_with: Optional[Simulator] = None,
+        dhcp_delay: float = 0.0
     ) -> "Node":
         """
         Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
@@ -103,6 +101,10 @@ class Node(_Node):
             List of forwarding rules known by this node in order to exchange packets with other internetworking nodes.
         :param dhcp_with:
             Simulator with which to launch a DHCP client to gather networking information for the link connected to.
+        :param dhcp_delay:
+            Delay advanced before DHCP client is started. This is mostly useful when instantiating an infra from
+            scratch, whereby the server starts at the same time as the client, so as to avoid undue unresponded DISCOVER
+            requests at the beginning.
 
         :return: The node instance, so it can be further built.
         """
@@ -111,7 +113,7 @@ class Node(_Node):
         self._interfaces[link.cidr] = interface
 
         if dhcp_with is not None:
-            self.fork_exec_in(dhcp_with, DELAY_DHCP_CLIENT, dhcp_client, interface)
+            self.fork_exec_in(dhcp_with, dhcp_delay, dhcp_client, interface)
         return self
 
     def addresses(self) -> Iterator[Address]:

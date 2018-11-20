@@ -1,18 +1,12 @@
-from typing import List
-# from unittest.mock import MagicMock, patch
-
 from greensim.random import uniform, constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.process_management import _Thread
 from itsim.network.link import Link
-from itsim.network.location import Location
-from itsim.network.packet import Packet
 from itsim.network.router import Router
 from itsim.network.service.dhcp import DHCPDaemon
-from itsim.simulator import Simulator, advance
-from itsim.types import as_port, Protocol, AddressRepr, as_address
-from itsim.units import MIN, S, MS, MbPS
+from itsim.simulator import Simulator
+from itsim.types import Protocol, AddressRepr, as_address
+from itsim.units import S, MS, MbPS
 
 
 def set_addresses(*ars: AddressRepr):
@@ -23,8 +17,7 @@ def test_dhcp_exchange():
     sim = Simulator()
 
     link = Link("10.1.128.0/18", uniform(100 * MS, 200 * MS), constant(100 * MbPS))
-    router = Router().connected_to(link, "10.1.128.1") \
-                     .with_daemon_on(sim, link, DHCPDaemon(100), Protocol.UDP, 67)
+    Router().connected_to(link, "10.1.128.1").with_daemon_on(sim, link, DHCPDaemon(100), Protocol.UDP, 67)
 
     endpoints = [Endpoint().connected_to(link, dhcp_with=sim) for n in range(3)]
     for endpoint in endpoints:
