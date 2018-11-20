@@ -95,6 +95,7 @@ class Protocol(IntFlag):
     """
     Combinable indicators of network protocols, at the transport and application levels.
     """
+    NONE = 0x0
     # Transport
     UDP = 0x1
     TCP = 0x2
@@ -103,6 +104,20 @@ class Protocol(IntFlag):
     CLEAR = 0x40000000
     SSL = 0x80000000
     ANY = CLEAR | SSL
+
+    @property
+    def name(self):
+        if self == Protocol.NONE:
+            return "NONE"
+
+        base_name = {Protocol.UDP: "UDP", Protocol.TCP: "TCP"}
+        bases = [[base_name[p]] if p & self else [] for p in [Protocol.UDP, Protocol.TCP]]
+        name = ",".join(sum(bases, []))
+
+        if Protocol.SSL & self:
+            name = f"SSL/{name}"
+
+        return name
 
 
 class Ports(ABC):

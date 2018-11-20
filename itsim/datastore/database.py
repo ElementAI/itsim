@@ -175,8 +175,9 @@ class DatabaseSQLite(Database):
                     table_name = item['type']
                     uuid = item['uuid']
                     if table_name == "network_event":
-                        cursor.execute("INSERT INTO network_event (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
-                                       (uuid, timestamp, sim_uuid, json.dumps(item)))
+                        cursor.execute(
+                            "INSERT INTO network_event (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
+                            (uuid, timestamp, sim_uuid, json.dumps(item)))
                     elif table_name == "node":
                         cursor.execute("INSERT INTO node (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
                                        (uuid, timestamp, sim_uuid, json.dumps(item)))

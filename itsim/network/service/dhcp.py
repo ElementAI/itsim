@@ -14,7 +14,7 @@ from itsim.machine.socket import Socket, Timeout
 from itsim.network.link import Link
 from itsim.random import num_bytes
 from itsim.simulator import now, advance
-from itsim.types import Address, as_address, Payload
+from itsim.types import Address, as_address, Payload, Protocol
 from itsim.units import B, S
 
 
@@ -215,7 +215,7 @@ def _dhcp_get_address(thread: Thread, interface: Interface) -> bool:
     node_id = thread.process.node.uuid
     try:
         broadcast_address = interface.cidr.broadcast_address
-        with thread.process.node.bind(68, thread.process.pid) as socket:
+        with thread.process.node.bind(Protocol.UDP, 68, thread.process.pid) as socket:
             address = _dhcp_discover(socket, node_id, broadcast_address)
             interface.address = address
             if not _dhcp_request(socket, node_id, broadcast_address, address):

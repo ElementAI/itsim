@@ -7,11 +7,12 @@ from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Timeout
 from itsim.network.link import Link
 from itsim.simulator import Simulator, now
+from itsim.types import Protocol
 from itsim.units import S, MS, MbPS
 
 
 def client(thread: Thread) -> None:
-    with thread.process.node.bind() as socket:
+    with thread.process.node.bind(Protocol.UDP) as socket:
         socket.send(("10.11.12.20", 9887), 4, {"content": "ping"})
         try:
             packet = socket.recv(1 * S)
@@ -28,7 +29,7 @@ def client(thread: Thread) -> None:
 
 
 def server(thread: Thread) -> None:
-    with thread.process.node.bind(9887) as socket:
+    with thread.process.node.bind(Protocol.UDP, 9887) as socket:
         while True:
             packet = socket.recv()
             assert packet.byte_size == 4

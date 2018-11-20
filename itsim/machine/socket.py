@@ -5,7 +5,8 @@ import greensim
 from itsim.machine.__init__ import _Socket, _Node
 from itsim.network.location import LocationRepr, Location
 from itsim.network.packet import Packet
-from itsim.types import Port, Address, as_address, Payload, Hostname
+from itsim.simulator import record
+from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol
 
 
 class Timeout(Exception):
@@ -32,14 +33,36 @@ class Socket(_Socket):
         Node that instantiated this object.
     """
 
-    def __init__(self, port: Port, node: _Node, pid: int = -1) -> None:
+    def __init__(self, protocol: Protocol, port: Port, node: _Node, pid: int = -1) -> None:
         super().__init__()
         self._is_closed = False
         self._port = port
+        self._protocol = protocol
         self._node: _Node = node
         self._pid: int = pid
         self._packet_queue: Queue[Packet] = Queue()
         self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
+        self._num_bytes_sent = 0
+        self._num_bytes_received = 0
+        self._last_dest = Location()
+        self._record("open")
+
+    def _record(self, network_event_type: str) -> None:
+        record(
+            item_type="network_event",
+            network_event_type=network_event_type,
+            uuid_node=str(self._node.uuid),
+            pid=self.pid,
+            protocol=self.protocol.name,
+            src=["", self.port],
+            dst=[str(self._last_dest.hostname_as_address()), self._last_dest.port]
+        )
+
+    @property
+    def protocol(self) -> Protocol:
+        if self.is_closed:
+            raise ValueError("Socket is closed")
+        return self._protocol
 
     @property
     def port(self) -> Port:
@@ -52,6 +75,8 @@ class Socket(_Socket):
 
     @property
     def pid(self) -> int:
+        if self.is_closed:
+            raise ValueError("Socket is closed")
         return self._pid
 
     def __enter__(self):
@@ -65,6 +90,7 @@ class Socket(_Socket):
         """
         Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
         """
+        self._record("close")
         self._node._deallocate_socket(self)
         self._is_closed = True
         self._packet_signal.turn_on()
@@ -94,7 +120,8 @@ class Socket(_Socket):
             raise ValueError("Socket is closed")
         dest = Location.from_repr(dr)
         address_dest = self._resolve_destination_final(dest.hostname)
-        self._node._send_packet(self.port, Location(address_dest, dest.port), size, payload or {})
+        self._last_dest = Location(address_dest, dest.port)
+        self._node._send_packet(self.port, self._last_dest, size, payload or {})
 
     def _resolve_destination_final(self, hostname_dest: Hostname) -> Address:
         try:

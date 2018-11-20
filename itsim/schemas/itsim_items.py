@@ -104,16 +104,16 @@ NETWORK_EVENT_SCHEMA = {
             "description": "Protocol",
             "enum": ["TCP", "UDP", "NONE"]
         },
-        "src":{
-          "type": "array",
-          "items": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
-          ]
+        "src": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "number"
+                }
+            ]
         },
         "dst": {
             "type": "array",
