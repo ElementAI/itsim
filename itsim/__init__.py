@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import Callable
+from uuid import uuid4, UUID
 
 from greensim import tagged
 from greensim.tags import Tags, TaggedObject
@@ -11,12 +12,26 @@ class Tag(Tags):
 
 
 class ITObject(TaggedObject):
+
+    def __init__(self, *tags) -> None:
+        super().__init__(*tags)
+        self._uuid = uuid4()
+
+    @property
+    def uuid(self) -> UUID:
+        return self._uuid
+
+    def __str__(self) -> str:
+        return f"{type(self).__name__}{{{str(self.uuid)}}}"
+
+    def __repr__(self) -> str:
+        return str(self)
+
     def _bind_and_call_constructor(self, t: type, *args) -> None:
         """
         For a detailed description of why this is necessary and what it does see get_binding.md
         """
         t.__init__.__get__(self)(*args)  # type: ignore
-    pass
 
 
 class AbstractITObject(ABC, ITObject):
