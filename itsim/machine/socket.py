@@ -45,6 +45,8 @@ class Socket(_Socket):
         """
         Port reserved by this socket on the :py:class:`Node`.
         """
+        if self.is_closed:
+            raise ValueError("Socket is closed")
         return self._port
 
     def __del__(self):
@@ -61,9 +63,10 @@ class Socket(_Socket):
         """
         Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
         """
-        self._node._deallocate_socket(self)
-        self._is_closed = True
-        self._packet_signal.turn_on()
+        if not self.is_closed:
+            self._node._deallocate_socket(self)
+            self._is_closed = True
+            self._packet_signal.turn_on()
 
     @property
     def is_closed(self) -> bool:
