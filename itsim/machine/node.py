@@ -25,8 +25,6 @@ PORT_EPHEMERAL_MIN = 32768
 PORT_EPHEMERAL_UPPER = 61000
 NUM_PORTS_EPHEMERAL = PORT_EPHEMERAL_UPPER - PORT_EPHEMERAL_MIN
 
-SocketWeakRef = Callable[[], Optional[Socket]]
-
 
 class NameNotFound(Exception):
     """
@@ -65,7 +63,7 @@ class Node(_Node):
         super().__init__()
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
         self.connected_to(Loopback(), "127.0.0.1")
-        self._sockets: MutableMapping[Port, SocketWeakRef] = OrderedDict()
+        self._sockets: MutableMapping[Port, weakref.ReferenceType] = OrderedDict()
         self._cycle_ports_ephemeral = cycle(range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER))
 
         self._proc_set: Set[Process] = set()
