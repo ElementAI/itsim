@@ -2,7 +2,7 @@ import pytest
 
 from greensim.random import constant
 
-from itsim.network.forwarding import Local, Relay
+from itsim.network.route import Local, Relay
 from itsim.network.interface import Interface
 from itsim.network.link import Link
 from itsim.types import as_cidr, as_address
@@ -36,10 +36,10 @@ def test_set_address_reroot(interface_wo_address):
     assert interface_wo_address.address == as_address("192.168.1.4")
 
 
-def test_list_forwardings_unconnected(interface_wo_address):
-    assert list(interface_wo_address.forwardings) == [Local(CIDR_LOCAL)]
+def test_list_routes_unconnected(interface_wo_address):
+    assert list(interface_wo_address.routes) == [Local(CIDR_LOCAL)]
 
 
-def test_list_forwardings_non_trivial(interface_wo_address):
-    interface_wo_address.forwardings = [Relay("192.168.1.1", "0.0.0.0/0")]
-    assert list(interface_wo_address.forwardings) == [Local(CIDR_LOCAL), Relay("192.168.1.1")]
+def test_list_routes_non_trivial(interface_wo_address):
+    interface_wo_address.routes = [Relay("192.168.1.1", "0.0.0.0/0")]
+    assert list(interface_wo_address.routes) == [Local(CIDR_LOCAL), Relay("192.168.1.1")]
