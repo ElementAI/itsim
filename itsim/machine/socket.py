@@ -5,7 +5,7 @@ import greensim
 from itsim.machine.__init__ import _Socket, _Node
 from itsim.network.location import LocationRepr, Location
 from itsim.network.packet import Packet
-from itsim.types import Port, Address, as_address, Payload, Hostname
+from itsim.types import Port, Address, as_address, Payload, Hostname, AddressError
 
 
 class Timeout(Exception):
@@ -94,7 +94,7 @@ class Socket(_Socket):
     def _resolve_destination_final(self, hostname_dest: Hostname) -> Address:
         try:
             return as_address(hostname_dest)
-        except ValueError:
+        except AddressError:
             return self._node.resolve_name(hostname_dest)
 
     def _enqueue(self, packet: Packet) -> None:

@@ -3,7 +3,7 @@ from ipaddress import ip_address
 import pytest
 
 from itsim.network.location import Location
-from itsim.types import as_address, as_hostname, as_port
+from itsim.types import as_address, as_hostname, as_port, AddressError
 
 
 def test_none_as_address():
@@ -17,9 +17,8 @@ def test_int_as_address():
 
 def test_int_as_address_nonV4():
     for n in [-1, 2**32]:
-        with pytest.raises(ValueError):
+        with pytest.raises(AddressError):
             as_address(n)
-            pytest.fail()
 
 
 def test_str_as_address():
@@ -44,6 +43,12 @@ def test_as_address_relative_squash():
         ("0.1.128.1", "10.10.128.0/17", "10.10.128.1")
     ]:
         assert as_address(a, r) == as_address(expected)
+
+
+def test_as_address_hostname():
+    for name in ["google.ca", "localhost"]:
+        with pytest.raises(AddressError):
+            as_address(name)
 
 
 def test_none_as_port():
@@ -76,9 +81,8 @@ def test_domain_as_hostname():
 
 
 def test_empty_as_hostname():
-    with pytest.raises(ValueError):
+    with pytest.raises(AddressError):
         assert as_hostname("")
-        pytest.fail()
 
 
 def test_location_none_none():

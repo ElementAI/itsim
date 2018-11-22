@@ -16,7 +16,8 @@ from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Socket
 from itsim.machine.user_management.__init__ import UserAccount
 from itsim.simulator import Simulator
-from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol
+from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol, \
+    AddressError
 
 PORT_NULL = 0
 PORT_MAX = 2 ** 16 - 1
@@ -167,7 +168,7 @@ class Node(_Node):
         """
         try:
             return as_address(hostname)
-        except ValueError:
+        except AddressError:
             # TODO -- Implement name resolution.
             raise NotImplementedError()
 

@@ -15,6 +15,13 @@ CidrRepr = Union[str, Cidr]
 Payload = Mapping[str, object]
 
 
+class AddressError(Exception):
+
+    def __init__(self, attempt) -> None:
+        super().__init__()
+        self.attempt = attempt
+
+
 def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
     """
     Returns a strict ``Address`` object from one of its representations:
@@ -37,10 +44,13 @@ def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
         machine = ip_address(0)
     elif isinstance(ar, int):
         if ar < 0 or ar >= 2 ** 32:
-            raise ValueError(f"Given integer value {ar} does not correspond to a valid IPv4 address.")
+            raise AddressError(ar)
         machine = ip_address(ar)
     elif isinstance(ar, str):
-        machine = ip_address(ar)
+        try:
+            machine = ip_address(ar)
+        except ValueError:
+            raise AddressError(ar)
     else:
         machine = cast(Address, ar)
 
@@ -84,7 +94,7 @@ def as_hostname(hr: HostnameRepr) -> Hostname:
     """
     try:
         return as_address(hr)
-    except ValueError:
+    except AddressError:
         if isinstance(hr, str) and len(hr) > 0:
             return hr
         else:
