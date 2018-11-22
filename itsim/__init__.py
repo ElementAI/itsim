@@ -13,7 +13,7 @@ class Tag(Tags):
 
 class ITObject(TaggedObject):
 
-    def __init__(self, *tags) -> None:
+    def __init__(self, *tags: Tags) -> None:
         super().__init__(*tags)
         self._uuid = uuid4()
 
