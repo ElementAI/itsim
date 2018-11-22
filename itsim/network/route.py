@@ -6,7 +6,7 @@ from itsim.network.packet import Packet
 from itsim.types import Address, as_cidr, Cidr, CidrRepr, AddressRepr, as_address
 
 
-class Forwarding(AbstractITObject):
+class Route(AbstractITObject):
     """
     Rule indicating where a packet is to be transferred when its destination belongs to the CIDR associated to this
     object.
@@ -33,16 +33,16 @@ class Forwarding(AbstractITObject):
         return self.cidr == other.cidr
 
 
-class Local(Forwarding):
+class Local(Route):
     """
-    Local forwarding: packet is delivered directly to its destination.
+    Local route: packet is delivered directly to its destination.
     """
 
     def get_hop(self, packet: Packet) -> Address:
         return packet.dest.hostname_as_address()
 
 
-class Relay(Forwarding):
+class Relay(Route):
     """
     Packet relay through a gateway.
     """
@@ -55,6 +55,6 @@ class Relay(Forwarding):
         return self._gateway
 
     def __eq__(self, other: object) -> bool:
-        if not Forwarding.__eq__(self, other):
+        if not Route.__eq__(self, other):
             return False
         return self._gateway == cast(Relay, other)._gateway

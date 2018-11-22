@@ -5,7 +5,7 @@ from itertools import cycle
 from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union
 import weakref
 
-from itsim.network.forwarding import Forwarding
+from itsim.network.route import Route
 from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
 from itsim.network.location import Location
@@ -74,7 +74,7 @@ class Node(_Node):
         self,
         link: Link,
         ar: AddressRepr = None,
-        forwardings: Optional[List[Forwarding]] = None
+        routes: Optional[List[Route]] = None
     ) -> "Node":
         """
         Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
@@ -85,13 +85,13 @@ class Node(_Node):
         :param ar:
             Optional address to assume as participant to the network embodied by the given link. If this is not
             provided, the address assumed is 0.0.0.0.
-        :param forwardings:
-            List of forwarding rules known by this node in order to exchange packets with other internetworking nodes.
+        :param routes:
+            List of routes known by this node in order to exchange packets with other internetworking nodes.
 
         :return: The node instance, so it can be further built.
         """
         link._connect(self)
-        interface = Interface(link, as_address(ar, link.cidr), forwardings or [])
+        interface = Interface(link, as_address(ar, link.cidr), routes or [])
         self._interfaces[link.cidr] = interface
 
         # TODO -- Decide whether to set up DHCP client for this interface
