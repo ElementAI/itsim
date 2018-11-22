@@ -41,6 +41,7 @@ class Socket(_Socket):
         self._pid: int = pid
         self._packet_queue: Queue[Packet] = Queue()
         self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
+        self._close_signal: greensim.Signal = greensim.Signal().turn_off()
 
     @property
     def protocol(self) -> Protocol:
@@ -76,7 +77,7 @@ class Socket(_Socket):
         """
         self._node._deallocate_socket(self)
         self._is_closed = True
-        self._packet_signal.turn_on()
+        self._close_signal.turn_on()
 
     @property
     def is_closed(self) -> bool:
@@ -128,12 +129,13 @@ class Socket(_Socket):
             raise ValueError("Socket is closed")
 
         try:
-            self._packet_signal.wait(timeout)
+            greensim.select(self._packet_signal, self._close_signal, timeout=timeout)
         except greensim.Timeout:
             raise Timeout()
 
-        if self.is_closed:
+        if self.is_closed or not self._packet_signal.is_on:
             raise ValueError("Socket is closed")
+
         output = self._packet_queue.get()
         if self._packet_queue.empty():
             self._packet_signal.turn_off()
