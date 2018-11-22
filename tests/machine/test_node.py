@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 import enum
+import gc
 from unittest.mock import patch, call
 
 import pytest
@@ -255,3 +256,12 @@ def test_recv_socket_timeout_none(socket80):
 
 def test_recv_socket_timeout_fired(socket80):
     assert run_simulation_timeout(socket80, 50) == SimulationResult.TIMEOUT
+
+
+@patch("itsim.machine.socket.Socket")
+def test_socket_lost_should_be_closed(mock, endpoint):
+    socket = endpoint.bind(9887)
+    assert not socket.is_closed
+    socket = None
+    gc.collect()
+    assert mock.close.assert_called_once()
