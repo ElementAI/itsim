@@ -10,9 +10,9 @@ def packet(address_dest: AddressRepr) -> Packet:
 
 def test_local():
     f = Local("192.168.1.0/24")
-    assert f.get_hop(packet("192.168.1.89")) == as_address("192.168.1.89")
+    assert f.get_hop(as_address("192.168.1.89")) == as_address("192.168.1.89")
 
 
 def test_relay():
     f = Relay("192.168.1.2", "0.0.0.0/0")
-    assert f.get_hop(packet("2.3.89.2")) == as_address("192.168.1.2")
+    assert f.get_hop(as_address("2.3.89.2")) == as_address("192.168.1.2")

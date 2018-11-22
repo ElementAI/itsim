@@ -1,22 +1,21 @@
-from .__init__ import _Node
-
 from collections import OrderedDict
 from itertools import cycle
-from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union
+from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union, Tuple
 
 from itsim.network.forwarding import Forwarding
 from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
 from itsim.network.location import Location
-from itsim.network.packet import Payload, Packet
+from itsim.network.packet import Packet
+from itsim.machine import _Node
 from itsim.machine.file_system import File
 from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Socket
-from itsim.machine.user_management.__init__ import UserAccount
+from itsim.machine.user_management import UserAccount
 from itsim.simulator import Simulator
-from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol
+from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol, Payload
 
 PORT_NULL = 0
 PORT_MAX = 2 ** 16 - 1
@@ -53,6 +52,16 @@ class EphemeralPortsAllInUse(Exception):
     pass
 
 
+class NoRouteToHost(Exception):
+    """
+    Raised when attempting to send a packet to a destination address for which the node knows no route.
+    """
+
+    def __init__(self, address: Address) -> None:
+        super().__init__()
+        self.address = address
+
+
 class Node(_Node):
     """
     Machine taking part to a network.
@@ -83,7 +92,7 @@ class Node(_Node):
             Link instance to connect this node to.
         :param ar:
             Optional address to assume as participant to the network embodied by the given link. If this is not
-            provided, the address assumed is 0.0.0.0.
+            provided, the address assumed is host number 0 within the CIDR associated to the link.
         :param forwardings:
             List of forwarding rules known by this node in order to exchange packets with other internetworking nodes.
 
@@ -118,7 +127,7 @@ class Node(_Node):
                 break
         raise EphemeralPortsAllInUse()
 
-    def bind(self, pr: PortRepr = 0) -> Socket:
+    def bind(self, protocol: Protocol = Protocol.NONE, pr: PortRepr = 0, as_pid: int = -1) -> Socket:
         """
         Reserves networking resources, in particular a port, for a calling process. If no port is provided, or port 0,
         then a random free port is thus bound. The binding is embedded in a :py:class:`Socket` instance which may be
@@ -126,6 +135,8 @@ class Node(_Node):
 
         :param pr:
             Optional port to bind.
+        :param as_pid:
+            Optional ID of process flagging itself as owner of the socket.
 
         :return:
             The :py:class:`Socket` instance suitable for sending packets (using the bound port as source) and receiving
@@ -134,7 +145,7 @@ class Node(_Node):
         port = as_port(pr) or self._get_port_ephemeral()
         if not self.is_port_free(port):
             raise PortAlreadyInUse(port)
-        socket = Socket(port, self)
+        socket = Socket(protocol, port, self, as_pid)
         self._sockets[port] = socket
         return socket
 
@@ -147,11 +158,51 @@ class Node(_Node):
     def _deallocate_socket(self, socket: Socket) -> None:
         del self._sockets[socket.port]
 
+    def _solve_transfer(self, address_dest: Address) -> Tuple[Interface, Address]:
+        interface_best = None
+        forwarding_best = None
+        for interface in self.interfaces():
+            for forwarding in interface.forwardings:
+                if address_dest in forwarding.cidr:
+                    if forwarding_best is None or forwarding.cidr.prefixlen > forwarding_best.cidr.prefixlen:
+                        forwarding_best = forwarding
+                        interface_best = interface
+
+        if forwarding_best is None:
+            raise NoRouteToHost(address_dest)
+
+        return cast(Interface, interface_best), cast(Forwarding, forwarding_best).get_hop(address_dest)
+
     def _send_packet(self, port_source: int, dest: Location, num_bytes: int, payload: Payload) -> None:
-        raise NotImplementedError()
+        interface, address_hop = self._solve_transfer(dest.hostname_as_address())
+        packet = Packet(Location(interface.address, port_source), dest, num_bytes, payload)
+        interface.link._transfer_packet(packet, address_hop)
 
     def _receive_packet(self, packet: Packet) -> None:
-        raise NotImplementedError()
+        address_dest = packet.dest.hostname_as_address()
+        if any(
+            interface.address == address_dest or interface.cidr.broadcast_address == address_dest
+            for interface in self.interfaces()
+        ):
+            if packet.dest.port in self._sockets:
+                self._sockets[packet.dest.port]._enqueue(packet)
+            else:
+                self.drop_packet(packet)
+        else:
+            self.handle_packet_transit(packet)
+
+    def handle_packet_transit(self, packet: Packet) -> None:
+        """
+        invoked when a packet is delivered to this node that is not addressed to it. The default behaviour is to drop
+        the packet.
+        """
+        self.drop_packet(packet)
+
+    def drop_packet(self, packet: Packet) -> None:
+        """
+        Invoked when a packet delivered to this node cannot be handled. The default is just to ignore it.
+        """
+        pass
 
     def resolve_name(self, hostname: Hostname) -> Address:
         """
@@ -223,7 +274,7 @@ class Node(_Node):
             :py:class:`~itsim.machine.process_management.thread.Thread` is opened to wait for another packet in parallel
         """
         for port in ports:
-            new_sock = self.bind(port)
+            new_sock = self.bind(protocol, port)
 
             def forward_recv(thread: Thread, socket: Socket):
                 pack = socket.recv()

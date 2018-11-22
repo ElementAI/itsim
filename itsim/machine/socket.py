@@ -5,7 +5,7 @@ import greensim
 from itsim.machine.__init__ import _Socket, _Node
 from itsim.network.location import LocationRepr, Location
 from itsim.network.packet import Packet
-from itsim.types import Port, Address, as_address, Payload, Hostname
+from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol
 
 
 class Timeout(Exception):
@@ -32,22 +32,36 @@ class Socket(_Socket):
         Node that instantiated this object.
     """
 
-    def __init__(self, port: Port, node: _Node) -> None:
+    def __init__(self, protocol: Protocol, port: Port, node: _Node, pid: int = -1) -> None:
         super().__init__()
         self._is_closed = False
         self._port = port
-        self._node = node
+        self._protocol = protocol
+        self._node: _Node = node
+        self._pid: int = pid
         self._packet_queue: Queue[Packet] = Queue()
         self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
 
     @property
-    def port(self):
+    def protocol(self) -> Protocol:
+        if self.is_closed:
+            raise ValueError("Socket is closed")
+        return self._protocol
+
+    @property
+    def port(self) -> Port:
         """
         Port reserved by this socket on the :py:class:`Node`.
         """
         if self.is_closed:
             raise ValueError("Socket is closed")
         return self._port
+
+    @property
+    def pid(self) -> int:
+        if self.is_closed:
+            raise ValueError("Socket is closed")
+        return self._pid
 
     def __enter__(self):
         return self
@@ -88,10 +102,10 @@ class Socket(_Socket):
         if self.is_closed:
             raise ValueError("Socket is closed")
         dest = Location.from_repr(dr)
-        address_dest = self._resolve_destination_final(dest.hostname)
+        address_dest = self._resolve_destination(dest.hostname)
         self._node._send_packet(self.port, Location(address_dest, dest.port), size, payload or {})
 
-    def _resolve_destination_final(self, hostname_dest: Hostname) -> Address:
+    def _resolve_destination(self, hostname_dest: Hostname) -> Address:
         try:
             return as_address(hostname_dest)
         except ValueError:

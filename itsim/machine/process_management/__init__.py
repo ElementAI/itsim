@@ -13,9 +13,10 @@ In addition, A tree can be constructed at any instant in the simulation that lis
 all running Threads in all Processes in all Nodes
 """
 
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 
 from itsim import AbstractITObject
+from itsim.machine.__init__ import _Node
 
 
 class _Daemon(AbstractITObject):
@@ -23,8 +24,17 @@ class _Daemon(AbstractITObject):
 
 
 class _Process(AbstractITObject):
+
     @abstractmethod
     def thread_complete(self, t) -> None:
+        pass
+
+    @abstractproperty
+    def node(self) -> _Node:
+        pass
+
+    @abstractproperty
+    def pid(self) -> int:
         pass
 
 
