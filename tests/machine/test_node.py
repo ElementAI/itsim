@@ -11,7 +11,7 @@ from greensim.random import constant
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.node import PortAlreadyInUse, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX, PORT_NULL, \
     EphemeralPortsAllInUse
-from itsim.machine.socket import Timeout
+from itsim.machine.socket import Timeout, Socket
 from itsim.network.forwarding import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
@@ -101,8 +101,6 @@ def test_socket_state(endpoint, socket80):
     socket80.close()
     assert socket80.is_closed
     assert endpoint.is_port_free(80)
-    with pytest.raises(ValueError):
-        socket80.port
 
 
 def test_socket_context_manager(socket80):
@@ -258,10 +256,21 @@ def test_recv_socket_timeout_fired(socket80):
     assert run_simulation_timeout(socket80, 50) == SimulationResult.TIMEOUT
 
 
-@patch("itsim.machine.socket.Socket")
-def test_socket_lost_should_be_closed(mock, endpoint):
-    socket = endpoint.bind(9887)
-    assert not socket.is_closed
-    socket = None
-    gc.collect()
-    assert mock.close.assert_called_once()
+class FakeSocket(Socket):
+    num_close = 0
+
+    def __init__(self, port, node):
+        super().__init__(port, node)
+
+    def close(self):
+        super().close()
+        FakeSocket.num_close += 1
+
+
+def test_socket_lost_should_be_closed(endpoint):
+    with patch("itsim.machine.node.Socket", FakeSocket):
+        socket = endpoint.bind(9887)
+        assert not socket.is_closed
+        socket = None
+        gc.collect()
+        assert FakeSocket.num_close == 1

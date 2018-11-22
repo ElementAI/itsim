@@ -45,9 +45,10 @@ class Socket(_Socket):
         """
         Port reserved by this socket on the :py:class:`Node`.
         """
-        if self.is_closed:
-            raise ValueError("Socket is closed")
         return self._port
+
+    def __del__(self):
+        self.close()
 
     def __enter__(self):
         return self

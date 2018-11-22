@@ -3,6 +3,7 @@ from .__init__ import _Node
 from collections import OrderedDict
 from itertools import cycle
 from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union
+import weakref
 
 from itsim.network.forwarding import Forwarding
 from itsim.network.interface import Interface
@@ -23,6 +24,8 @@ PORT_MAX = 2 ** 16 - 1
 PORT_EPHEMERAL_MIN = 32768
 PORT_EPHEMERAL_UPPER = 61000
 NUM_PORTS_EPHEMERAL = PORT_EPHEMERAL_UPPER - PORT_EPHEMERAL_MIN
+
+SocketWeakRef = Callable[[], Optional[Socket]]
 
 
 class NameNotFound(Exception):
@@ -62,7 +65,7 @@ class Node(_Node):
         super().__init__()
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
         self.connected_to(Loopback(), "127.0.0.1")
-        self._sockets: MutableMapping[Port, Socket] = OrderedDict()
+        self._sockets: MutableMapping[Port, SocketWeakRef] = OrderedDict()
         self._cycle_ports_ephemeral = cycle(range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER))
 
         self._proc_set: Set[Process] = set()
@@ -135,7 +138,7 @@ class Node(_Node):
         if not self.is_port_free(port):
             raise PortAlreadyInUse(port)
         socket = Socket(port, self)
-        self._sockets[port] = socket
+        self._sockets[port] = weakref.ref(socket)
         return socket
 
     def is_port_free(self, port: PortRepr) -> bool:
@@ -145,7 +148,8 @@ class Node(_Node):
         return port not in [PORT_NULL, PORT_MAX] and port not in self._sockets
 
     def _deallocate_socket(self, socket: Socket) -> None:
-        del self._sockets[socket.port]
+        if socket.port in self._sockets:
+            del self._sockets[socket.port]
 
     def _send_packet(self, port_source: int, dest: Location, num_bytes: int, payload: Payload) -> None:
         raise NotImplementedError()
