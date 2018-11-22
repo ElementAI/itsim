@@ -11,7 +11,7 @@ from itsim.machine.endpoint import Endpoint
 from itsim.machine.node import PortAlreadyInUse, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX, PORT_NULL, \
     EphemeralPortsAllInUse
 from itsim.machine.socket import Timeout
-from itsim.network.forwarding import Relay
+from itsim.network.route import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet
