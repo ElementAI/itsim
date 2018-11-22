@@ -271,6 +271,8 @@ def test_socket_lost_should_be_closed(endpoint):
     with patch("itsim.machine.node.Socket", FakeSocket):
         socket = endpoint.bind(9887)
         assert not socket.is_closed
+        assert not endpoint.is_port_free(9887)
         socket = None
         gc.collect()
+        assert endpoint.is_port_free(9887)
         assert FakeSocket.num_close == 1
