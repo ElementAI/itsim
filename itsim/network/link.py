@@ -21,6 +21,21 @@ class NoSuchAddress(Exception):
         self.address = address
 
 
+class InvalidTransferParameter(Exception):
+
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+
+class InvalidLatency(InvalidTransferParameter):
+    pass
+
+
+class InvalidBandwidth(InvalidTransferParameter):
+    pass
+
+
 class Link(_Link):
     """
     Physical medium network communications, intended to support a certain IP network.
@@ -79,7 +94,11 @@ class Link(_Link):
                 raise NoSuchAddress(hop)
 
         packet_latency = next(self._latency)
-        packet_bandwidth = next(self._bandwidth)  # Modeler's responsibility never to provide 0 bandwidth.
+        if packet_latency < 0.0:
+            raise InvalidLatency(packet_latency)
+        packet_bandwidth = next(self._bandwidth)
+        if packet_bandwidth <= 0.0:
+            raise InvalidBandwidth(packet_bandwidth)
         duration = packet_latency + 8 * packet.byte_size / packet_bandwidth
         for node in recipients:
             add_in(duration, node._receive_packet, packet)
