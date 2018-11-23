@@ -270,7 +270,7 @@ def test_send_packet(endpoint_2links, link_small, link_large):
                 source = interface.address
                 break
         else:
-            pytest.fail()
+            pytest.fail("No suitable source found.")
 
         with patch.object(link, "_transfer_packet") as mock:
             loc_dest = Location(dest, 443)
