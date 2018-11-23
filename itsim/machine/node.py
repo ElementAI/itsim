@@ -133,6 +133,8 @@ class Node(_Node):
         then a random free port is thus bound. The binding is embedded in a :py:class:`Socket` instance which may be
         then used to send and receive packets of information.
 
+        :param protocol:
+            Transport protocol nominally used for this socket.
         :param pr:
             Optional port to bind.
         :param as_pid:
