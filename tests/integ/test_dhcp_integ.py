@@ -1,6 +1,6 @@
 from greensim.random import normal, constant
 
-from itsim.machine.node import Socket
+from itsim.machine.socket import Socket
 from itsim.machine.process_management import _Thread
 from itsim.network.link import Link
 from itsim.network.location import Location
@@ -20,7 +20,8 @@ router = Router()
 
 def pack_send():
     global router
-    bound_sock = router._sockets[as_port(67)]
+    bound_sock = router._sockets[as_port(67)]()
+    assert isinstance(bound_sock, Socket)
 
     for req, res in DHCPDaemon.responses.items():
         bound_sock._enqueue(
