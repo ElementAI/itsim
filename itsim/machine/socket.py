@@ -34,7 +34,6 @@ class Socket(_Socket):
 
     def __init__(self, protocol: Protocol, port: Port, node: _Node, pid: int = -1) -> None:
         super().__init__()
-        self._is_closed = False
         self._port = port
         self._protocol = protocol
         self._node: _Node = node
@@ -76,7 +75,6 @@ class Socket(_Socket):
         Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
         """
         self._node._deallocate_socket(self)
-        self._is_closed = True
         self._close_signal.turn_on()
 
     @property
@@ -84,7 +82,7 @@ class Socket(_Socket):
         """
         Tells whether the socket has been closed.
         """
-        return self._is_closed
+        return self._close_signal.is_on
 
     def send(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
         """
@@ -133,7 +131,7 @@ class Socket(_Socket):
         except greensim.Timeout:
             raise Timeout()
 
-        if self.is_closed or not self._packet_signal.is_on:
+        if self.is_closed:  # Only possible if the close signal has been turned on.
             raise ValueError("Socket is closed")
 
         output = self._packet_queue.get()
