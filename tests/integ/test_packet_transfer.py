@@ -35,12 +35,11 @@ def client(thread: Thread) -> None:
 
 def server(thread: Thread) -> None:
     with thread.process.node.bind(Protocol.UDP, 9887) as socket:
-        while True:
-            packet = socket.recv()
-            assert packet.byte_size == 4
-            assert packet.payload["content"] == "ping"
-            socket.send(packet.source, 8, {"content": "pong"})
-            ledger.add("server")
+        packet = socket.recv()
+        assert packet.byte_size == 4
+        assert packet.payload["content"] == "ping"
+        socket.send(packet.source, 8, {"content": "pong"})
+        ledger.add("server")
 
 
 def test_packet_transfer():
