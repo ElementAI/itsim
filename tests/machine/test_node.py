@@ -258,20 +258,11 @@ def test_recv_socket_timeout_fired(socket80):
 
 
 def test_send_packet(endpoint_2links, link_small, link_large):
-    for dest, link, relay in [
-        ("192.168.1.67", link_small, "192.168.1.67"),
-        ("10.10.192.245", link_large, "10.10.192.245"),
-        ("172.92.0.2", link_large, "10.10.128.1")
+    for source, dest, link, relay in [
+        (ADDRESS_SMALL, "192.168.1.67", link_small, "192.168.1.67"),
+        (ADDRESS_LARGE, "10.10.192.245", link_large, "10.10.192.245"),
+        (ADDRESS_LARGE, "172.92.0.2", link_large, "10.10.128.1")
     ]:
-        for interface, route in (
-            (interface, route) for interface in endpoint_2links.interfaces() for route in interface.forwardings
-        ):
-            if as_address(dest) in route.cidr:
-                source = interface.address
-                break
-        else:
-            pytest.fail("No suitable source found.")
-
         with patch.object(link, "_transfer_packet") as mock:
             loc_dest = Location(dest, 443)
             endpoint_2links._send_packet(9887, loc_dest, 1234, {})
