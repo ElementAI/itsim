@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 import enum
+import gc
 from unittest.mock import patch, call
 
 import pytest
@@ -10,8 +11,8 @@ from greensim.random import constant
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.node import PortAlreadyInUse, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX, PORT_NULL, \
     EphemeralPortsAllInUse, NoRouteToHost
-from itsim.machine.socket import Timeout
-from itsim.network.forwarding import Relay
+from itsim.machine.socket import Timeout, Socket
+from itsim.network.route import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet
@@ -100,8 +101,6 @@ def test_socket_state(endpoint, socket80):
     socket80.close()
     assert socket80.is_closed
     assert endpoint.is_port_free(80)
-    with pytest.raises(ValueError):
-        socket80.port
 
 
 def test_socket_context_manager(socket80):
@@ -334,3 +333,25 @@ def test_packet_broadcast_alone_on_link(endpoint, link_small):
                 Packet(Location("192.168.1.100", socket.port), Location("192.168.1.255", 9887), 1234),
                 as_address("192.168.1.255")
             )
+
+
+class FakeSocket(Socket):
+    num_close = 0
+
+    def __init__(self, protocol, port, node, as_pid):
+        super().__init__(protocol, port, node, as_pid)
+
+    def close(self):
+        super().close()
+        FakeSocket.num_close += 1
+
+
+def test_socket_lost_should_be_closed(endpoint):
+    with patch("itsim.machine.node.Socket", FakeSocket):
+        socket = endpoint.bind(Protocol.NONE, 9887)
+        assert not socket.is_closed
+        assert not endpoint.is_port_free(9887)
+        socket = None
+        gc.collect()
+        assert endpoint.is_port_free(9887)
+        assert FakeSocket.num_close == 1

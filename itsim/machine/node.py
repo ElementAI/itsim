@@ -1,8 +1,9 @@
 from collections import OrderedDict
 from itertools import cycle
 from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union, Tuple
+import weakref
 
-from itsim.network.forwarding import Forwarding
+from itsim.network.route import Route
 from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
 from itsim.network.location import Location
@@ -71,7 +72,7 @@ class Node(_Node):
         super().__init__()
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
         self.connected_to(Loopback(), "127.0.0.1")
-        self._sockets: MutableMapping[Port, Socket] = OrderedDict()
+        self._sockets: MutableMapping[Port, weakref.ReferenceType] = OrderedDict()
         self._cycle_ports_ephemeral = cycle(range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER))
 
         self._proc_set: Set[Process] = set()
@@ -82,7 +83,7 @@ class Node(_Node):
         self,
         link: Link,
         ar: AddressRepr = None,
-        forwardings: Optional[List[Forwarding]] = None
+        routes: Optional[List[Route]] = None
     ) -> "Node":
         """
         Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
@@ -93,13 +94,13 @@ class Node(_Node):
         :param ar:
             Optional address to assume as participant to the network embodied by the given link. If this is not
             provided, the address assumed is host number 0 within the CIDR associated to the link.
-        :param forwardings:
-            List of forwarding rules known by this node in order to exchange packets with other internetworking nodes.
+        :param routes:
+            List of routes known by this node in order to exchange packets with other internetworking nodes.
 
         :return: The node instance, so it can be further built.
         """
         link._connect(self)
-        interface = Interface(link, as_address(ar, link.cidr), forwardings or [])
+        interface = Interface(link, as_address(ar, link.cidr), routes or [])
         self._interfaces[link.cidr] = interface
 
         # TODO -- Decide whether to set up DHCP client for this interface
@@ -148,7 +149,7 @@ class Node(_Node):
         if not self.is_port_free(port):
             raise PortAlreadyInUse(port)
         socket = Socket(protocol, port, self, as_pid)
-        self._sockets[port] = socket
+        self._sockets[port] = weakref.ref(socket)
         return socket
 
     def is_port_free(self, port: PortRepr) -> bool:
@@ -158,22 +159,23 @@ class Node(_Node):
         return port not in [PORT_NULL, PORT_MAX] and port not in self._sockets
 
     def _deallocate_socket(self, socket: Socket) -> None:
-        del self._sockets[socket.port]
+        if socket.port in self._sockets:
+            del self._sockets[socket.port]
 
     def _solve_transfer(self, address_dest: Address) -> Tuple[Interface, Address]:
         interface_best = None
-        forwarding_best = None
+        route_best = None
         for interface in self.interfaces():
-            for forwarding in interface.forwardings:
-                if address_dest in forwarding.cidr:
-                    if forwarding_best is None or forwarding.cidr.prefixlen > forwarding_best.cidr.prefixlen:
-                        forwarding_best = forwarding
+            for route in interface.routes:
+                if address_dest in route.cidr:
+                    if route_best is None or route.cidr.prefixlen > route_best.cidr.prefixlen:
+                        route_best = route
                         interface_best = interface
 
-        if forwarding_best is None:
+        if route_best is None:
             raise NoRouteToHost(address_dest)
 
-        return cast(Interface, interface_best), cast(Forwarding, forwarding_best).get_hop(address_dest)
+        return cast(Interface, interface_best), cast(Route, route_best).get_hop(address_dest)
 
     def _send_packet(self, port_source: int, dest: Location, num_bytes: int, payload: Payload) -> None:
         interface, address_hop = self._solve_transfer(dest.hostname_as_address())
@@ -187,7 +189,7 @@ class Node(_Node):
             for interface in self.interfaces()
         ):
             if packet.dest.port in self._sockets:
-                self._sockets[packet.dest.port]._enqueue(packet)
+                cast(Socket, self._sockets[packet.dest.port]())._enqueue(packet)
             else:
                 self.drop_packet(packet)
         else:
