@@ -88,9 +88,6 @@ class Location(ITObject):
     def __str__(self) -> str:
         return f"{str(self.hostname)}:{str(self.port)}"
 
-    def __repr__(self) -> str:
-        return repr(str(self))
-
     def __hash__(self) -> int:
         return hash(str(self))
 
