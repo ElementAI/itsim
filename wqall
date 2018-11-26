@@ -1,7 +1,7 @@
 import sys
 from typing import Iterator, Set
 
-from greensim.random import constant, bounded
+from greensim.random import constant, bandwidth
 
 from itsim.machine import _Node
 from itsim.network import _Connection, _Link
@@ -22,6 +22,21 @@ class NoSuchAddress(Exception):
         self.address = address
 
 
+class InvalidTransferParameter(Exception):
+
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+
+
+class InvalidLatency(InvalidTransferParameter):
+    pass
+
+
+class InvalidBandwidth(InvalidTransferParameter):
+    pass
+
+
 class Link(_Link):
     """
     Physical medium network communications, intended to support a certain IP network.
@@ -37,7 +52,7 @@ class Link(_Link):
     def __init__(self, c: CidrRepr, latency: VarRandomTime, bandwidth: VarRandomBandwidth) -> None:
         super().__init__()
         self._cidr = as_cidr(c)
-        self._latency = bounded(latency, lower=0.0)
+        self._latency = latency
         self._bandwidth = bounded(bandwidth, lower=sys.float_info.min)
         self._nodes: Set[_Node] = set()
 
@@ -80,7 +95,11 @@ class Link(_Link):
                 raise NoSuchAddress(hop)
 
         packet_latency = next(self._latency)
+        if packet_latency < 0.0:
+            raise InvalidLatency(packet_latency)
         packet_bandwidth = next(self._bandwidth)
+        if packet_bandwidth <= 0.0:
+            raise InvalidBandwidth(packet_bandwidth)
         duration = packet_latency + 8 * packet.byte_size / packet_bandwidth
         for node in recipients:
             add_in(duration, node._receive_packet, packet)

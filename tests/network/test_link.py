@@ -6,12 +6,12 @@ import pytest
 from greensim.random import constant
 
 from itsim.machine.endpoint import Endpoint
-from itsim.network.link import Link, NoSuchAddress, InvalidLatency, InvalidBandwidth
+from itsim.network.link import Link, NoSuchAddress
 from itsim.network.location import Location
 from itsim.network.packet import Packet
 from itsim.simulator import Simulator
 from itsim.types import as_address
-from itsim.units import S, B, MS, MbPS
+from itsim.units import S, B
 
 
 DURATION_TRANSFER_BIT_FIRST = 1 * S
@@ -90,26 +90,3 @@ def test_link_transfer_broadcast(link, laurel, hardy):
 
         for mock in mocks:
             mock.assert_called_with(packet)
-
-
-def run_simulation_invalid_link(latency, bandwidth):
-    link = Link("192.168.1.0/24", latency, bandwidth)
-    for n in [10, 20]:
-        Endpoint().connected_to(link, n)
-
-    run_simulation(
-        link,
-        Packet(Location("192.168.1.10", 9887), Location("192.168.1.20", 10987), 7890),
-        as_address("192.168.1.20")
-    )
-
-
-def test_link_invalid_latency():
-    with pytest.raises(InvalidLatency):
-        run_simulation_invalid_link(constant(-0.1 * MS), constant(1 * MbPS))
-
-
-def test_link_invalid_bandwidth():
-    for b in [0, -1 * MbPS]:
-        with pytest.raises(InvalidBandwidth):
-            run_simulation_invalid_link(constant(10 * MS), constant(b))
