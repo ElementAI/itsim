@@ -3,7 +3,7 @@ from ipaddress import ip_address
 import pytest
 
 from itsim.network.location import Location
-from itsim.types import as_address, as_hostname, as_port, AddressError
+from itsim.types import as_address, as_hostname, as_port, AddressError, is_ip_address, HostnameError
 
 
 def test_none_as_address():
@@ -81,8 +81,25 @@ def test_domain_as_hostname():
 
 
 def test_empty_as_hostname():
-    with pytest.raises(AddressError):
+    with pytest.raises(HostnameError):
         assert as_hostname("")
+
+
+def test_ip_address_none():
+    assert is_ip_address(None)
+
+
+def test_ip_address_address():
+    assert is_ip_address("192.168.1.34")
+
+
+def test_ip_address_int():
+    assert is_ip_address(45)
+
+
+def test_ip_address_hostname():
+    assert not is_ip_address("localhost")
+    assert not is_ip_address("google.com")
 
 
 def test_location_none_none():

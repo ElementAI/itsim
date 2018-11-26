@@ -17,9 +17,16 @@ Payload = Mapping[str, object]
 
 class AddressError(Exception):
 
-    def __init__(self, attempt) -> None:
+    def __init__(self, attempt: AddressRepr) -> None:
         super().__init__()
         self.attempt = attempt
+
+
+class HostnameError(Exception):
+
+    def __init__(self, attempt: HostnameRepr) -> None:
+        super().__init__()
+        self.attmept = attempt
 
 
 def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
@@ -92,13 +99,20 @@ def as_hostname(hr: HostnameRepr) -> Hostname:
     Returns a hostname from one of its representations: either an address or a string bearing a name formatted according
     to RFC 1034 of the IETF.
     """
-    try:
+    if is_ip_address(hr):
         return as_address(hr)
+    elif isinstance(hr, str) and len(hr) > 0:
+        return hr
+    else:
+        raise HostnameError(hr)
+
+
+def is_ip_address(ar: HostnameRepr) -> bool:
+    try:
+        as_address(ar)
+        return True
     except AddressError:
-        if isinstance(hr, str) and len(hr) > 0:
-            return hr
-        else:
-            raise
+        return False
 
 
 class Protocol(IntFlag):
