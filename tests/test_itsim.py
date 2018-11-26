@@ -17,7 +17,7 @@ def test_int_as_address():
 
 def test_int_as_address_nonV4():
     for n in [-1, 2**32]:
-        with pytest.raises(AddressError):
+        with pytest.raises(ValueError):
             as_address(n)
 
 

@@ -51,7 +51,7 @@ def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
         machine = ip_address(0)
     elif isinstance(ar, int):
         if ar < 0 or ar >= 2 ** 32:
-            raise AddressError(ar)
+            raise ValueError(ar)
         machine = ip_address(ar)
     elif isinstance(ar, str):
         try:
