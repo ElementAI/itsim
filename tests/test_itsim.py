@@ -5,7 +5,7 @@ import pytest
 
 from itsim import ITObject
 from itsim.network.location import Location
-from itsim.types import as_address, as_hostname, as_port, Protocol
+from itsim.types import as_address, as_hostname, as_port, Protocol, AddressError, is_ip_address, HostnameError
 
 
 def test_none_as_address():
@@ -21,7 +21,6 @@ def test_int_as_address_nonV4():
     for n in [-1, 2**32]:
         with pytest.raises(ValueError):
             as_address(n)
-            pytest.fail()
 
 
 def test_str_as_address():
@@ -46,6 +45,12 @@ def test_as_address_relative_squash():
         ("0.1.128.1", "10.10.128.0/17", "10.10.128.1")
     ]:
         assert as_address(a, r) == as_address(expected)
+
+
+def test_as_address_hostname():
+    for name in ["google.ca", "localhost"]:
+        with pytest.raises(AddressError):
+            as_address(name)
 
 
 def test_none_as_port():
@@ -78,9 +83,25 @@ def test_domain_as_hostname():
 
 
 def test_empty_as_hostname():
-    with pytest.raises(ValueError):
+    with pytest.raises(HostnameError):
         assert as_hostname("")
-        pytest.fail()
+
+
+def test_ip_address_none():
+    assert is_ip_address(None)
+
+
+def test_ip_address_address():
+    assert is_ip_address("192.168.1.34")
+
+
+def test_ip_address_int():
+    assert is_ip_address(45)
+
+
+def test_ip_address_hostname():
+    assert not is_ip_address("localhost")
+    assert not is_ip_address("google.com")
 
 
 def test_location_none_none():

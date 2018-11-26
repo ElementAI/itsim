@@ -17,7 +17,8 @@ from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Socket
 from itsim.machine.user_management.__init__ import UserAccount
 from itsim.simulator import Simulator
-from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol
+from itsim.types import Address, AddressRepr, as_address, as_port, Cidr, Hostname, Port, PortRepr, Protocol, \
+    is_ip_address
 
 PORT_NULL = 0
 PORT_MAX = 2 ** 16 - 1
@@ -167,9 +168,9 @@ class Node(_Node):
             IP address the name resolves to for this host. If resolution fails, the :py:class:`NameNotFound` exception
             is raised. If the given hostname is actually an IP address, then it is returned as is.
         """
-        try:
+        if is_ip_address(hostname):
             return as_address(hostname)
-        except ValueError:
+        else:
             # TODO -- Implement name resolution.
             raise NotImplementedError()
 
