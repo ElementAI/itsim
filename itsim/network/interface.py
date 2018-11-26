@@ -1,6 +1,6 @@
 from typing import List
 
-from itsim.network.forwarding import Forwarding, Local
+from itsim.network.route import Route, Local
 from itsim.network.link import Link
 from itsim.types import AddressRepr, Address, as_address, Cidr
 
@@ -14,15 +14,15 @@ class Interface:
         Link interfaced to.
     :param address:
         Address (IP) of the owning :py:class:`Node` on the associated :py:class:`Link`.
-    :param forwardings:
-        List of :py:class:`Forwarding` objects indicating the possible packet routes from the owning :py:class:`Node`
+    :param routes:
+        List of :py:class:`Route` objects indicating the possible packet routes from the owning :py:class:`Node`
         across the associated :py:class:`Link`.
     """
 
-    def __init__(self, link: Link, address: Address, forwardings: List[Forwarding]) -> None:
+    def __init__(self, link: Link, address: Address, routes: List[Route]) -> None:
         super().__init__()
         self._link = link
-        self.forwardings = forwardings
+        self.routes = routes
         self.address = address
 
     @property
@@ -56,13 +56,13 @@ class Interface:
         self._address = as_address(ar, self.cidr)
 
     @property
-    def forwardings(self):
+    def routes(self):
         """
-        List of :py:class:`Forwarding`s for this interface. A :py:class:`Local` forwarding to the CIDR of the associated
+        List of :py:class:`Route`s for this interface. A :py:class:`Local` route to the CIDR of the associated
         :py:class:`Link` is always present, even though it has not been explicitly specified.
         """
-        return [Local(self.cidr)] + self._forwardings
+        return [Local(self.cidr)] + self._routes
 
-    @forwardings.setter
-    def forwardings(self, fs: List[Forwarding]):
-        self._forwardings = fs
+    @routes.setter
+    def routes(self, fs: List[Route]):
+        self._routes = fs
