@@ -15,6 +15,20 @@ CidrRepr = Union[str, Cidr]
 Payload = Mapping[str, object]
 
 
+class AddressError(Exception):
+
+    def __init__(self, attempt: AddressRepr) -> None:
+        super().__init__()
+        self.attempt = attempt
+
+
+class HostnameError(Exception):
+
+    def __init__(self, attempt: HostnameRepr) -> None:
+        super().__init__()
+        self.attmept = attempt
+
+
 def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
     """
     Returns a strict ``Address`` object from one of its representations:
@@ -37,10 +51,13 @@ def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
         machine = ip_address(0)
     elif isinstance(ar, int):
         if ar < 0 or ar >= 2 ** 32:
-            raise ValueError(f"Given integer value {ar} does not correspond to a valid IPv4 address.")
+            raise ValueError(ar)
         machine = ip_address(ar)
     elif isinstance(ar, str):
-        machine = ip_address(ar)
+        try:
+            machine = ip_address(ar)
+        except ValueError:
+            raise AddressError(ar)
     else:
         machine = cast(Address, ar)
 
@@ -82,13 +99,20 @@ def as_hostname(hr: HostnameRepr) -> Hostname:
     Returns a hostname from one of its representations: either an address or a string bearing a name formatted according
     to RFC 1034 of the IETF.
     """
-    try:
+    if is_ip_address(hr):
         return as_address(hr)
-    except ValueError:
-        if isinstance(hr, str) and len(hr) > 0:
-            return hr
-        else:
-            raise
+    elif isinstance(hr, str) and len(hr) > 0:
+        return hr
+    else:
+        raise HostnameError(hr)
+
+
+def is_ip_address(ar: HostnameRepr) -> bool:
+    try:
+        as_address(ar)
+        return True
+    except AddressError:
+        return False
 
 
 class Protocol(IntFlag):

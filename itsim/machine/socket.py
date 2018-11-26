@@ -5,7 +5,7 @@ import greensim
 from itsim.machine.__init__ import _Socket, _Node
 from itsim.network.location import LocationRepr, Location
 from itsim.network.packet import Packet
-from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol
+from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol, is_ip_address
 
 
 class Timeout(Exception):
@@ -116,9 +116,9 @@ class Socket(_Socket):
         self._node._send_packet(self.port, Location(address_dest, dest.port), size, payload or {})
 
     def _resolve_destination(self, hostname_dest: Hostname) -> Address:
-        try:
+        if is_ip_address(hostname_dest):
             return as_address(hostname_dest)
-        except ValueError:
+        else:
             return self._node.resolve_name(hostname_dest)
 
     def _enqueue(self, packet: Packet) -> None:
