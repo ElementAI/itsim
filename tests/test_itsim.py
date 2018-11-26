@@ -144,7 +144,7 @@ def test_location_str():
 
 
 def test_location_repr():
-    assert repr(Location("195.78.23.3", 1025)) == repr("195.78.23.3:1025")
+    assert repr(Location("195.78.23.3", 1025)) == "195.78.23.3:1025"
 
 
 def test_location_hash():
