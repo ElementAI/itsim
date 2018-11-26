@@ -1,7 +1,8 @@
-import click
 from flask import Flask
 from flask_restful import Api, Resource, request
 from typing import Any
+
+from itsim.datastore.database import DatabaseSQLite
 
 
 class _Item(Resource):
@@ -69,16 +70,7 @@ class DatastoreRestServer:
         self._app.run(debug=True)
 
 
-@click.command()
-@click.option('--storage_mode', default='sqlite', help='Datastorage to be used by the datastore.')
-@click.option('--sqlite_file', default='itsim/datastore/storage/sqlite_01.sqlite', help='SQLite database file to use.')
-def launch_server(storage_mode: str, sqlite_file: str) -> None:
-    server = DatastoreRestServer(type=storage_mode, sqlite_file=sqlite_file)
-    server.run()
-
-
-if __name__ == "__main__":
-    # This import is here to allow running the server from the command line without itsim
-    # Documentation generation fails if at the top of the file.
-    from database import DatabaseSQLite
-    launch_server()
+# if __name__ == "__main__":
+#     # This import is here to allow running the server from the command line without itsim
+#     # Documentation generation fails if at the top of the file.
+#     launch_server()
