@@ -164,7 +164,7 @@ def test_protocol_name():
     ]:
         assert str(proto) == name
 
-        
+
 class MyITObject(ITObject):
     pass
 
