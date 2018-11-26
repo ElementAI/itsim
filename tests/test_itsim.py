@@ -1,9 +1,11 @@
 from ipaddress import ip_address
+import re
 
 import pytest
 
+from itsim import ITObject
 from itsim.network.location import Location
-from itsim.types import as_address, as_hostname, as_port
+from itsim.types import as_address, as_hostname, as_port, Protocol
 
 
 def test_none_as_address():
@@ -142,9 +144,33 @@ def test_location_str():
 
 
 def test_location_repr():
-    assert repr(Location("195.78.23.3", 1025)) == repr("195.78.23.3:1025")
+    assert repr(Location("195.78.23.3", 1025)) == "195.78.23.3:1025"
 
 
 def test_location_hash():
     loc = Location("google.ca", 25)
     assert hash(loc) == hash(str(loc))
+
+
+def test_protocol_name():
+    for proto, name in [
+        (Protocol.NONE, "NONE"),
+        (Protocol.UDP, "UDP"),
+        (Protocol.TCP, "TCP"),
+        (Protocol.TCP | Protocol.UDP, "UDP,TCP"),
+        (Protocol.SSL | Protocol.TCP, "SSL/TCP"),
+        (Protocol.SSL | Protocol.UDP | Protocol.TCP, "SSL/UDP,TCP"),
+        (Protocol.SSL, "SSL/")
+    ]:
+        assert str(proto) == name
+
+
+class MyITObject(ITObject):
+    pass
+
+
+def test_itsim_str_repr():
+    myio = MyITObject()
+    rx = "MyITObject{[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}}"
+    assert re.match(rx, str(myio))
+    assert repr(myio) == str(myio)

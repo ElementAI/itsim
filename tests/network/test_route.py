@@ -1,4 +1,4 @@
-from itsim.network.forwarding import Local, Relay
+from itsim.network.route import Local, Relay
 from itsim.network.location import Location
 from itsim.network.packet import Packet
 from itsim.types import AddressRepr, as_address
