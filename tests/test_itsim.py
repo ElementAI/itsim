@@ -1,7 +1,9 @@
 from ipaddress import ip_address
+import re
 
 import pytest
 
+from itsim import ITObject
 from itsim.network.location import Location
 from itsim.types import as_address, as_hostname, as_port, Protocol
 
@@ -161,3 +163,14 @@ def test_protocol_name():
         (Protocol.SSL, "SSL/")
     ]:
         assert str(proto) == name
+
+        
+class MyITObject(ITObject):
+    pass
+
+
+def test_itsim_str_repr():
+    myio = MyITObject()
+    rx = "MyITObject{[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}}"
+    assert re.match(rx, str(myio))
+    assert repr(myio) == str(myio)
