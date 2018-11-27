@@ -1,12 +1,25 @@
+import sys
 from typing import Iterator, Set
 
-from greensim.random import constant
+from greensim.random import constant, bounded
 
 from itsim.machine import _Node
 from itsim.network import _Connection, _Link
+from itsim.network.packet import Packet
 from itsim.random import VarRandomTime, VarRandomBandwidth
-from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr
+from itsim.simulator import add_in
+from itsim.types import CidrRepr, Cidr, as_cidr, AddressRepr, Address
 from itsim.units import GbPS
+
+
+BANDWIDTH_MIN = 1.0 / 10.0  # 1 bit every 10 seconds
+
+
+class NoSuchAddress(Exception):
+
+    def __init__(self, address: Address) -> None:
+        super().__init__()
+        self.address = address
 
 
 class Link(_Link):
@@ -24,8 +37,8 @@ class Link(_Link):
     def __init__(self, c: CidrRepr, latency: VarRandomTime, bandwidth: VarRandomBandwidth) -> None:
         super().__init__()
         self._cidr = as_cidr(c)
-        self._latency = latency
-        self._bandwidth = bandwidth
+        self._latency = bounded(latency, lower=0.0)
+        self._bandwidth = bounded(bandwidth, lower=sys.float_info.min)
         self._nodes: Set[_Node] = set()
 
     @property
@@ -49,10 +62,28 @@ class Link(_Link):
         """
         Iteration over the nodes connected to a link.
         """
-        raise NotImplementedError()
+        return iter(self._nodes)
 
     def _connect(self, node: _Node) -> None:
         self._nodes.add(node)
+
+    def _transfer_packet(self, packet: Packet, hop: Address) -> None:
+        # TODO -- Replace this inefficient loop with a sort of ARP
+        if hop == self.cidr.broadcast_address:
+            recipients = self.iter_nodes()
+        else:
+            for node, interface in [(node, interface) for node in self.iter_nodes() for interface in node.interfaces()]:
+                if interface.address == hop:
+                    recipients = iter([node])
+                    break
+            else:
+                raise NoSuchAddress(hop)
+
+        packet_latency = next(self._latency)
+        packet_bandwidth = next(self._bandwidth)
+        duration = packet_latency + 8 * packet.byte_size / packet_bandwidth
+        for node in recipients:
+            add_in(duration, node._receive_packet, packet)
 
 
 class Loopback(Link):
