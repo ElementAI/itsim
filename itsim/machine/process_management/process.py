@@ -28,6 +28,14 @@ class Process(_Process):
     def children(self) -> Set[_Process]:
         return self._children
 
+    @property
+    def node(self) -> _Node:
+        return self._node
+
+    @property
+    def pid(self) -> int:
+        return self._n
+
     def exc_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> Thread:
         t = Thread(sim, self, self._thread_counter)
         self._thread_counter += 1
