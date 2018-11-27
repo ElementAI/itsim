@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Optional, cast
 
 from itsim import AbstractITObject
-from itsim.network.packet import Packet
 from itsim.types import Address, as_cidr, Cidr, CidrRepr, AddressRepr, as_address
 
 
@@ -24,7 +23,7 @@ class Route(AbstractITObject):
         return self._cidr
 
     @abstractmethod
-    def get_hop(self, packet: Packet) -> Address:
+    def get_hop(self, dest: Address) -> Address:
         pass
 
     def __eq__(self, other: object) -> bool:
@@ -38,8 +37,8 @@ class Local(Route):
     Local route: packet is delivered directly to its destination.
     """
 
-    def get_hop(self, packet: Packet) -> Address:
-        return packet.dest.hostname_as_address()
+    def get_hop(self, dest: Address) -> Address:
+        return dest
 
 
 class Relay(Route):
@@ -51,7 +50,7 @@ class Relay(Route):
         super().__init__(cr)
         self._gateway = as_address(gr)
 
-    def get_hop(self, packet: Packet) -> Address:
+    def get_hop(self, dest: Address) -> Address:
         return self._gateway
 
     def __eq__(self, other: object) -> bool:

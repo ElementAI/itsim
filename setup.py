@@ -20,6 +20,7 @@ setup(
     version='0.0.1',
     packages=['itsim'],
     data_files=[('.', ['LICENSE'])],
+    scripts=["bin/itsim_serve_datastore.py"],
     install_requires=['greensim'],
     description='IT infrastructure and cyberattack simulation toolkit',
     long_description=long_description,

@@ -15,6 +15,20 @@ CidrRepr = Union[str, Cidr]
 Payload = Mapping[str, object]
 
 
+class AddressError(Exception):
+
+    def __init__(self, attempt: AddressRepr) -> None:
+        super().__init__()
+        self.attempt = attempt
+
+
+class HostnameError(Exception):
+
+    def __init__(self, attempt: HostnameRepr) -> None:
+        super().__init__()
+        self.attmept = attempt
+
+
 def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
     """
     Returns a strict ``Address`` object from one of its representations:
@@ -37,10 +51,13 @@ def as_address(ar: AddressRepr, rr: CidrRepr = "0.0.0.0/0") -> Address:
         machine = ip_address(0)
     elif isinstance(ar, int):
         if ar < 0 or ar >= 2 ** 32:
-            raise ValueError(f"Given integer value {ar} does not correspond to a valid IPv4 address.")
+            raise ValueError(ar)
         machine = ip_address(ar)
     elif isinstance(ar, str):
-        machine = ip_address(ar)
+        try:
+            machine = ip_address(ar)
+        except ValueError:
+            raise AddressError(ar)
     else:
         machine = cast(Address, ar)
 
@@ -82,27 +99,52 @@ def as_hostname(hr: HostnameRepr) -> Hostname:
     Returns a hostname from one of its representations: either an address or a string bearing a name formatted according
     to RFC 1034 of the IETF.
     """
-    try:
+    if is_ip_address(hr):
         return as_address(hr)
-    except ValueError:
-        if isinstance(hr, str) and len(hr) > 0:
-            return hr
-        else:
-            raise
+    elif isinstance(hr, str) and len(hr) > 0:
+        return hr
+    else:
+        raise HostnameError(hr)
+
+
+def is_ip_address(ar: HostnameRepr) -> bool:
+    try:
+        as_address(ar)
+        return True
+    except AddressError:
+        return False
 
 
 class Protocol(IntFlag):
     """
     Combinable indicators of network protocols, at the transport and application levels.
     """
+    NONE = 0x0  # Default
+
     # Transport
     UDP = 0x1
     TCP = 0x2
     BOTH = UDP | TCP
     # Confidentiality protection
-    CLEAR = 0x40000000
+    CLEAR = 0x00000000
     SSL = 0x80000000
     ANY = CLEAR | SSL
+
+    def __str__(self):
+        if self == Protocol.NONE:
+            return "NONE"
+
+        base_name = {Protocol.UDP: "UDP", Protocol.TCP: "TCP"}
+        bases = [[base_name[p]] if p & self else [] for p in [Protocol.UDP, Protocol.TCP]]
+        name = ",".join(sum(bases, []))
+
+        if Protocol.SSL & self:
+            name = f"SSL/{name}"
+
+        return name
+
+    def __repr__(self):
+        return str(self)
 
 
 class Ports(ABC):

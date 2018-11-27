@@ -10,6 +10,8 @@ from itsim.simulator import Simulator, now
 from itsim.types import Protocol
 from itsim.units import S, MS, MbPS
 
+ledger = set()
+
 
 def client(thread: Thread) -> None:
     with thread.process.node.bind(Protocol.UDP) as socket:
@@ -30,11 +32,11 @@ def client(thread: Thread) -> None:
 
 def server(thread: Thread) -> None:
     with thread.process.node.bind(Protocol.UDP, 9887) as socket:
-        while True:
-            packet = socket.recv()
-            assert packet.byte_size == 4
-            assert packet.payload["content"] == "ping"
-            socket.send(packet.source, 8, {"content": "pong"})
+        packet = socket.recv()
+        assert packet.byte_size == 4
+        assert packet.payload["content"] == "ping"
+        socket.send(packet.source, 8, {"content": "pong"})
+        ledger.add("server")
 
 
 def test_packet_transfer():
@@ -47,3 +49,5 @@ def test_packet_transfer():
     ponger.fork_exec(sim, server)
 
     sim.run(10.0 * S)
+
+    assert ledger == {"client", "server"}
