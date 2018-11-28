@@ -4,10 +4,11 @@ from itsim.datastore.datastore import DatastoreRestClient
 from itsim.time import now_iso8601
 
 """
-    To run those examples (from main itsim folder):
-        $ python itsim/datastore/datastore_server.py
-"""
+    Example showing how to use the datastore store/load
 
+    To run those examples (from main itsim folder):
+        $ python bin/itsim_datastore_server.py
+"""
 
 def example_datastore_rest_store_load_node():
     """
@@ -28,7 +29,7 @@ def example_datastore_rest_store_load_node():
                             node_label="pc_001")
 
     # Connect to a datastore
-    datastore = DatastoreRestClient(sim_uuid=sim_uuid, base_url='http://localhost:5000')
+    datastore = DatastoreRestClient(sim_uuid=sim_uuid)
 
     print("About to store: {0}".format(node.uuid))
     # Posting a node to the datastore

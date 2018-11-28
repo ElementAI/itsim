@@ -67,6 +67,8 @@ class DatabaseSQLite(Database):
         try:
             with self._conn:
                 cursor = self._conn.cursor()
+                cursor.execute("CREATE TABLE IF NOT EXISTS network_event(uuid TEXT, timestamp TEXT, sim_uuid TEXT, "
+                               "json TEXT)")
                 cursor.execute("CREATE TABLE IF NOT EXISTS node(uuid TEXT, timestamp TEXT, sim_uuid TEXT, json TEXT)")
                 cursor.execute("CREATE TABLE IF NOT EXISTS log(uuid TEXT, timestamp TEXT, sim_uuid TEXT, json TEXT)")
                 # TODO add all other tables here!
@@ -96,7 +98,20 @@ class DatabaseSQLite(Database):
 
                 # TODO: support all tables here
                 # Review consistency accross tables (from_time types... etc)
-                if table_name == "node":
+                if table_name == "network_event":
+                    if uuid is not None:
+                        if from_time is not None and to_time is not None:
+                            cursor.execute('SELECT * FROM network_event WHERE uuid=? AND timestamp BETWEEN ? AND ?',
+                                           (uuid, from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM network_event WHERE uuid=?', (uuid,))
+                    else:
+                        if from_time is not None and to_time is not None:
+                            cursor.execute('SELECT * FROM network_event WHERE timestamp BETWEEN ? AND ?',
+                                           (from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM network_event')
+                elif table_name == "node":
                     if uuid is not None:
                         if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM node WHERE uuid=? AND timestamp BETWEEN ? AND ?',
@@ -148,7 +163,9 @@ class DatabaseSQLite(Database):
                         uuid = item.uuid
                         entry = (uuid, timestamp, sim_uuid, json.dumps(item))
                         data.append(entry)
-                    if table_name == "node":
+                    if table_name == "network_event":
+                        cursor.executemany("INSERT INTO network_event VALUES (?, ?, ?, ?)", data)
+                    elif table_name == "node":
                         cursor.executemany("INSERT INTO node VALUES (?, ?, ?, ?)", data)
                     elif table_name == "log":
                         cursor.executemany("INSERT INTO log VALUES (?, ?, ?, ?)", data)
@@ -157,7 +174,11 @@ class DatabaseSQLite(Database):
                     item = items
                     table_name = item['type']
                     uuid = item['uuid']
-                    if table_name == "node":
+                    if table_name == "network_event":
+                        cursor.execute(
+                            "INSERT INTO network_event (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
+                            (uuid, timestamp, sim_uuid, json.dumps(item)))
+                    elif table_name == "node":
                         cursor.execute("INSERT INTO node (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
                                        (uuid, timestamp, sim_uuid, json.dumps(item)))
                     elif table_name == "log":

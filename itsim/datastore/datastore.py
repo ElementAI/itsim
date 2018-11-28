@@ -2,16 +2,11 @@ from abc import abstractmethod
 import requests
 import json
 from collections import namedtuple
-from itsim.schemas.itsim_items import itsim_object_types
-from itsim.time import now_iso8601
-from typing import Any, List
-from itsim.datastore.database import DatabaseSQLite
-
-"""
-    Local api instantiates a "local" datastore server, which handles the database interaction
-    REST api requires a datastore server to be running...
-"""
-
+from typing import Any
+from queue import Queue
+from threading import Thread, Timer
+from itsim.datastore.datastore_server import DatastoreRestServer
+from uuid import uuid4, UUID
 
 class DatastoreClient:
     """
@@ -25,11 +20,7 @@ class DatastoreClient:
         pass
 
     @abstractmethod
-    def store_item(self, sim_uuid: str, data: Any, overwrite: bool = True) -> int:  # post
-        pass
-
-    @abstractmethod
-    def create_table(self, table_name, column_list):
+    def store_item(self, data: Any, overwrite: bool = True) -> str: # post
         pass
 
     @abstractmethod
@@ -37,77 +28,66 @@ class DatastoreClient:
         pass
 
 
-class DatastoreLocalClient(DatastoreClient):
+class DatastoreRestClient(DatastoreClient):
 
-    def __init__(self, **kwargs) -> None:
-        if kwargs['type'] == 'sqlite':
-            self._database = DatabaseSQLite(kwargs['sqlite_file'])
-
-        elif kwargs['type'] == 'postgresql':
-            # host = kwargs['host']
-            # database = kwargs['database']
-            # user = kwargs['user']
-            # password = kwargs['password']
-            # self._database = ...
-            raise NotImplementedError
-        self._table_names = itsim_object_types
-
-    def load_item(self, item_type: str, uuid: str = None, from_time: str = None, to_time: str = None) -> Any:
-        """
-            Equivalent to REST server 'GET'
-
-        :param item_type:
-        :param uuid:
-        :return:
-        """
-        assert item_type in self._table_names, "Invalid item_type: {0} not in self._table_names".format(item_type)
-
-        # TODO: clean this up!
-        # items = self._database.select_items(item_type, uuid, from_time=from_time, to_time=to_time)
-        # if len(items) == 0:
-        #     return "Node not found", 404
-        # else:
-        #     return items[0], 201
-        return 0
-
-    def store_item(self, sim_uuid: str, data: Any, overwrite: bool = True) -> int:
-        """
-            Equivalent to REST server 'POST'
-
-        :param sim_uuid:
-        :param data: either a list of itsim objects (as json_data) or a single one.
-        :param overwrite:
-        :return:
-        """
-        time = now_iso8601()
-        items: List[Any] = []
-        if isinstance(data, list):
-            items = data
-        else:
-            items.append(data)
-
-        self._database.insert_items(time, sim_uuid, items)
-
-        return 201
-
-    def delete(self, item_type: str, uuid: str) -> None:
-        pass
-
-    def create_tables(self) -> None:
-        self._database.create_tables()
-
-
-# TODO: fix store_item(): inconsistent with base class...
-# class DatastoreRestClient(DatastoreClient):
-class DatastoreRestClient():
-
-    def __init__(self, **kwargs) -> None:
-        self.base_url = kwargs['base_url']              # ex: 'http://localhost:5000'
-        self._sim_uuid = kwargs['sim_uuid']
+    def __init__(self, hostname: str='0.0.0.0', port: int=5000, sim_uuid: UUID=uuid4()) -> None:
+        self._hostname = hostname
+        self._port = port
+        self._sim_uuid = sim_uuid
         self._headers = {'Accept': 'application/json'}
+        self._thr = None
 
-    def url(self, type: str, uuid: str) -> str:
-        return '{0}/{1}/{2}'.format(self.base_url, type, uuid)
+        if not self.server_is_alive():
+            self.launch_server_thread()
+            print(f"Couldn't find server, launching a local instance: http://{self._hostname}:{self._port}/")
+
+    def __del__(self):
+        """
+            Shutsdown the datastore server if it was created by constructor
+        :return:
+        """
+        if self._thr is not None:
+            response = requests.post(f"http://{self._hostname}:{self._port}/stop")
+            if response.status_code != 200:
+                print("Error shutting down the Datastore Server.")
+            self._thr.join(timeout=5.0)
+
+    def server_is_alive(self):
+        try:
+            print(f'http://{self._hostname}:{self._port}/isrunning/{self._sim_uuid}')
+            page = requests.get(f'http://{self._hostname}:{self._port}/isrunning/{self._sim_uuid}')
+            if page.status_code == 200:
+                return True
+            else:
+                return False
+        except:
+            return False
+
+    def launch_server_thread(self):
+        def start_and_run_server(server, hostname, queue_port):
+            for port in range(5000, 2 ** 16 - 1):
+                timer = None
+                try:
+                    timer = Timer(0.05, lambda: queue_port.put(port))
+                    timer.start()
+                    server.run(host=hostname, port=port, debug=False)
+                    return
+                except OSError as err:
+                    if err.errno == 97:  # Port already in use.
+                        if timer is not None:
+                            timer.cancel()
+            # At this point, we were unable to find a suitable port -- fail.
+            queue_port.put(0)
+        try:
+            server = DatastoreRestServer(type="sqlite", sqlite_file=":memory:")
+            queue_port = Queue()
+            self._thr = Thread(target=start_and_run_server, args=(server, self._hostname, queue_port))
+            self._thr.start()
+            self._port = queue_port.get()
+            if self._port == 0:
+                raise Exception('Unable to start the datastore server')
+        except:
+            print('Unable to start the datastore server.')
 
     def load_item(self, item_type: str, uuid: str, from_time: str = None, to_time: str = None) -> Any:
         """
@@ -117,9 +97,9 @@ class DatastoreRestClient():
         :param uuid:
         :return:
         """
-
-        request_time_range = {'from_time': from_time, 'to_time': to_time}
-        response = requests.get(self.url(item_type, uuid), headers=self._headers, json=request_time_range)
+        response = requests.get(f'http:://{self._hostname}:{self._port}/{item_type}/{uuid}',
+                                headers=self._headers,
+                                json={'from_time': from_time, 'to_time': to_time})
 
         if response.status_code == 404:
             return None, 404
@@ -136,11 +116,10 @@ class DatastoreRestClient():
         :param overwrite:
         :return:
         """
-        response = requests.post(self.url(data.type, data.uuid), headers=self._headers, json=data)
+        response = requests.post(f'http://{self._hostname}:{self._port}/{data.type}/{data.uuid}',
+                                 headers=self._headers,
+                                 json=data)
         return response.text  # 201?
 
     def delete(self, item_type: str, uuid: str) -> None:
-        pass
-
-    def create_table(self, table_name: str, column_list: List[str]) -> None:
         pass

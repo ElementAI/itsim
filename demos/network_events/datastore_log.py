@@ -4,10 +4,10 @@ from itsim.datastore.itsim_logging import create_logger
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.time import now_iso8601
 
-"""
-    TODO: REVIEW create_tables()... for now, tables must be created by local datastore.
-"""
 
+"""
+    Example showing how to use the datastore logger
+"""
 
 def example_datastore_log_store():
     """
@@ -33,7 +33,7 @@ def example_datastore_log_store():
     logger.error('This is an error')
 
     # Retrieving the log from the datastore
-    datastore = DatastoreRestClient(sim_uuid=sim_uuid, base_url=datastore_server_url)
+    datastore = DatastoreRestClient(sim_uuid=sim_uuid)
 
     to_time = now_iso8601()
     log, code = datastore.load_item('log', uuid=None, from_time=from_time, to_time=to_time)
