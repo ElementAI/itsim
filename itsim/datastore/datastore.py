@@ -1,11 +1,14 @@
 from abc import abstractmethod
 import requests
 import json
+import os
+import logging
 from collections import namedtuple
 from typing import Any
 from queue import Queue
 from threading import Thread, Timer
 from itsim.datastore.datastore_server import DatastoreRestServer
+from itsim.logging import create_logger
 from uuid import uuid4, UUID
 
 class DatastoreClient:
@@ -36,6 +39,7 @@ class DatastoreRestClient(DatastoreClient):
         self._sim_uuid = sim_uuid
         self._headers = {'Accept': 'application/json'}
         self._thr = None
+        self._db_file = '.sqlite'
 
         if not self.server_is_alive():
             self.launch_server_thread()
@@ -51,6 +55,9 @@ class DatastoreRestClient(DatastoreClient):
             if response.status_code != 200:
                 print("Error shutting down the Datastore Server.")
             self._thr.join(timeout=5.0)
+            if os.path.isfile(self._db_file):
+                os.remove(self._db_file)
+
 
     def server_is_alive(self):
         try:
@@ -79,7 +86,7 @@ class DatastoreRestClient(DatastoreClient):
             # At this point, we were unable to find a suitable port -- fail.
             queue_port.put(0)
         try:
-            server = DatastoreRestServer(type="sqlite", sqlite_file=":memory:")
+            server = DatastoreRestServer(type="sqlite", sqlite_file=self._db_file)
             queue_port = Queue()
             self._thr = Thread(target=start_and_run_server, args=(server, self._hostname, queue_port))
             self._thr.start()
@@ -89,6 +96,17 @@ class DatastoreRestClient(DatastoreClient):
         except:
             print('Unable to start the datastore server.')
 
+    # Creating the logger for console and datastore output
+    def create_logger(self, logger_name: str=__name__,
+                       console_level=logging.DEBUG,
+                       datastore_level=logging.DEBUG):
+        return create_logger(logger_name,
+                              self._sim_uuid,
+                              f'http://{self._hostname}:{self._port}/',
+                              console_level,
+                              datastore_level)
+
+
     def load_item(self, item_type: str, uuid: str, from_time: str = None, to_time: str = None) -> Any:
         """
             Requests GET
@@ -97,7 +115,7 @@ class DatastoreRestClient(DatastoreClient):
         :param uuid:
         :return:
         """
-        response = requests.get(f'http:://{self._hostname}:{self._port}/{item_type}/{uuid}',
+        response = requests.get(f'http://{self._hostname}:{self._port}/{item_type}/{uuid}',
                                 headers=self._headers,
                                 json={'from_time': from_time, 'to_time': to_time})
 

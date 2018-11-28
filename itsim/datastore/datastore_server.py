@@ -20,7 +20,7 @@ class _Item(Resource):
 
         request_time_range = request.get_json()
 
-        items = DatabaseSQLite(self._db_file).select_items(item_type,
+        items = DatabaseSQLite(sqlite_file=self._db_file).select_items(item_type,
                                                            uuid,
                                                            str_output=True,
                                                            from_time=request_time_range['from_time'],
@@ -40,7 +40,7 @@ class _Item(Resource):
         sim_uuid = content['sim_uuid']
         timestamp = content['timestamp']
 
-        DatabaseSQLite(self._db_file).insert_items(timestamp, sim_uuid, content)
+        DatabaseSQLite(sqlite_file=self._db_file).insert_items(timestamp, sim_uuid, content)
         return "ok", 201
 
     def delete(self, item_type: str, uuid: str) -> Any:
@@ -55,21 +55,16 @@ class _Item(Resource):
 
 class DatastoreRestServer:
 
-    def __init__(self, **kwargs) -> None:
-        assert kwargs['type'] == 'sqlite', 'Datastore server only support sqlite databases.'
+    def __init__(self, type: str='sqlite', sqlite_file: str=':memory:') -> None:
+        assert type == 'sqlite', 'Datastore server only support sqlite databases.'
+        self._db_file = sqlite_file
 
-        self._db_file = kwargs['sqlite_file']
-
-        DatabaseSQLite(self._db_file).create_tables()
+        DatabaseSQLite(sqlite_file=self._db_file).create_tables()
 
         # Init. the server (Http Rest API)
         self._app = Flask(__name__)
         self._api = Api(self._app)
 
-        """
-            Note: all itsim_objects use the same rest functions (from _Item class).
-            This could eventually be split for object specific implementation
-        """
         self._api.add_resource(_Item, "/<string:item_type>/<string:uuid>", resource_class_args=(self._db_file,))
         self._app.add_url_rule("/stop", "stop", self.stop_server, methods=["POST"])
 

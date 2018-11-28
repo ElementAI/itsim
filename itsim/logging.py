@@ -33,7 +33,7 @@ class DatastoreRestHandler(Handler):
         :return: post's response
         """
         log_uuid, log_entry = self.format(record)
-        url = self._server_url + '/log/' + log_uuid
+        url = self._server_url + 'log/' + log_uuid
         headers = {'Accept': 'application/json'}
         return requests.post(url, headers=headers, json=log_entry)
 
@@ -79,7 +79,7 @@ def create_logger(name: str,
     :param sim_uuid: simulation's uuid
     :param console_level: log level for the console output
     :param datastore_level: log level for the datastore output
-    :param datastore_server: datastore's url server (ex: 'http://localhost:5000')
+    :param datastore_server: datastore's url (ex: 'http://localhost:5000/')
     :return: logger
     """
 
