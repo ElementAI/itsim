@@ -28,6 +28,8 @@ def client(thread: Thread) -> None:
             pytest.fail()
         except Timeout:
             assert now() > 5.0
+        finally:
+            ledger.add("client")
 
 
 def server(thread: Thread) -> None:

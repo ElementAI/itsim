@@ -75,16 +75,15 @@ class Node(_Node):
         self.connected_to(Loopback(), "127.0.0.1")
         self._sockets: MutableMapping[Port, weakref.ReferenceType] = OrderedDict()
         self._cycle_ports_ephemeral = cycle(range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER))
-
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
 
     def connected_to(
-        self,
-        link: Link,
-        ar: AddressRepr = None,
-        routes: Optional[List[Route]] = None
+            self,
+            link: Link,
+            ar: AddressRepr = None,
+            routes: Optional[List[Route]] = None
     ) -> "Node":
         """
         Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
@@ -95,6 +94,12 @@ class Node(_Node):
         :param ar:
             Optional address to assume as participant to the network embodied by the given link. If this is not
             provided, the address assumed is host number 0 within the CIDR associated to the link.
+        :param dhcp_with:
+            Simulator with which to launch a DHCP client to gather networking information for the link connected to.
+        :param dhcp_delay:
+            Delay advanced before DHCP client is started. This is mostly useful when instantiating an infra from
+            scratch, whereby the server starts at the same time as the client, so as to avoid undue unresponded DISCOVER
+            requests at the beginning.
         :param routes:
             List of routes known by this node in order to exchange packets with other internetworking nodes.
 
@@ -104,7 +109,6 @@ class Node(_Node):
         interface = Interface(link, as_address(ar, link.cidr), routes or [])
         self._interfaces[link.cidr] = interface
 
-        # TODO -- Decide whether to set up DHCP client for this interface
         return self
 
     def addresses(self) -> Iterator[Address]:
@@ -278,6 +282,7 @@ class Node(_Node):
             `trigger` method on `daemon`. After the packet receipt and before `trigger` is executed a new
             :py:class:`~itsim.machine.process_management.thread.Thread` is opened to wait for another packet in parallel
         """
+
         for port in ports:
             new_sock = self.bind(protocol, port)
 

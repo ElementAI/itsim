@@ -1,6 +1,6 @@
 from enum import Enum, unique
 from itertools import cycle
-from typing import Optional, MutableMapping, Generator, cast, Mapping, Any
+from typing import Any, cast, Generator, Iterator, Mapping, MutableMapping, Optional
 from uuid import UUID, uuid4
 
 from greensim.random import normal
@@ -11,10 +11,9 @@ from itsim.machine.process_management import _Thread
 from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Socket, Timeout
-from itsim.network.link import Link
 from itsim.random import num_bytes
 from itsim.simulator import now, advance
-from itsim.types import Address, as_address, Payload, Protocol
+from itsim.types import Address, as_address, Cidr, Payload, Protocol
 from itsim.units import B, S
 
 
@@ -70,26 +69,21 @@ class DHCPDaemon(Daemon):
     responses = {"DHCPDISCOVER": "DHCPOFFER", "DHCPREQUEST": "DHCPACK"}
     size_packet_dhcp = num_bytes(normal(100.0 * B, 30.0 * B), header=240 * B)
 
-    def __init__(self, num_host_first: int) -> None:
+    def __init__(self, num_host_first: int, cidr: Cidr, address_options: Iterator[Address]) -> None:
         super().__init__(self.on_packet)
         if num_host_first <= 0:
             raise ValueError(f"num_host first >= 1 (here {num_host_first})")
-        self._num_host_first = num_host_first
         self._address_allocation: MutableMapping[UUID, _AddressAllocation] = {}
-
-    def for_link(self, link: Link) -> None:
-        self._cidr = link.cidr
+        self._cidr = cidr
         upper_num_host = int(self._cidr.hostmask)
-        if self._num_host_first >= upper_num_host:
+        if num_host_first >= upper_num_host:
             raise ValueError(
-                f"First host number is too high ({self._num_host_first}) for this link's CIDR; use " +  # noqa: W504
+                f"First host number is too high ({num_host_first}) for this link's CIDR; use " +  # noqa: W504
                 f"{upper_num_host - 1} or lower."
             )
-        self._num_hosts_max = upper_num_host - self._num_host_first
-        self._seq_num_hosts = cycle(as_address(n, self._cidr) for n in range(self._num_host_first, upper_num_host))
-
-    def running_as(self, thread: Thread) -> None:
-        for address in thread.process.node.addresses():
+        self._num_hosts_max = upper_num_host - num_host_first
+        self._seq_num_hosts = cycle(as_address(n, self._cidr) for n in range(num_host_first, upper_num_host))
+        for address in address_options:
             if address in self._cidr:
                 self._address_mine = address
                 break
@@ -103,7 +97,10 @@ class DHCPDaemon(Daemon):
             return
         message = payload[Field.MESSAGE]
         node_id = payload[Field.NODE_ID]
-        address_maybe = as_address(payload[Field.ADDRESS], self._cidr) if Field.ADDRESS in payload else None
+
+        address_maybe = None
+        if Field.ADDRESS in payload:
+            address_maybe = as_address(payload[Field.ADDRESS], self._cidr)
 
         if message == DHCP.DISCOVER:
             self.handle_discover(socket, node_id, address_maybe)

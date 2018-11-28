@@ -1,8 +1,4 @@
-from .__init__ import _Link
 from itsim.machine.node import Node
-from itsim.machine.process_management import _Daemon
-from itsim.simulator import Simulator
-from itsim.types import PortRepr, Protocol
 
 
 class Router(Node):
@@ -17,13 +13,3 @@ class Router(Node):
 
     def __init__(self) -> None:
         super().__init__()
-
-    def with_daemon_on(self,
-                       sim: Simulator,
-                       link: _Link,
-                       daemon: _Daemon,
-                       protocol: Protocol,
-                       *ports: PortRepr) -> "Router":
-        self.connected_to(link)
-        self.networking_daemon(sim, protocol, *ports)(daemon)
-        return self
