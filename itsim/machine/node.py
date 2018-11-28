@@ -230,17 +230,17 @@ class Node(_Node):
     def procs(self) -> Set[Process]:
         return self._proc_set
 
-    def fork_exec_in(self, sim: Simulator, time: float, f: Callable[..., None], *args, **kwargs) -> Process:
+    def run_proc_in(self, sim: Simulator, time: float, f: Callable[..., None], *args, **kwargs) -> Process:
         proc = Process(self.next_proc_number(), self, self._default_process_parent)
         self._proc_set |= set([proc])
         proc.exc_in(sim, time, f, *args, **kwargs)
         return proc
 
-    def fork_exec(self, sim: Simulator, f: Callable[..., None], *args, **kwargs) -> Process:
-        return self.fork_exec_in(sim, 0, f, *args, **kwargs)
+    def run_proc(self, sim: Simulator, f: Callable[..., None], *args, **kwargs) -> Process:
+        return self.run_proc_in(sim, 0, f, *args, **kwargs)
 
     def run_file(self, sim: Simulator, file: File, user: UserAccount) -> None:
-        self.fork_exec(sim, file.get_executable(user))
+        self.run_proc(sim, file.get_executable(user))
 
     def next_proc_number(self) -> int:
         self._process_counter += 1
@@ -250,17 +250,13 @@ class Node(_Node):
         self._proc_set -= set([p])
 
     def with_proc_at(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
-        self.fork_exec_in(sim, time, f, *args, **kwargs)
+        self.run_proc_in(sim, time, f, *args, **kwargs)
         return self
 
     def with_files(self, *files: File) -> None:
         pass
 
-    def subscribe_networking_daemon(self,
-                                    sim: Simulator,
-                                    daemon: Daemon,
-                                    protocol: Protocol,
-                                    *ports: PortRepr) -> None:
+    def run_networking_daemon(self, sim: Simulator, daemon: Daemon, protocol: Protocol, *ports: PortRepr) -> None:
         """
         This method contains the logic subscribing the daemon to network events
 
@@ -286,7 +282,7 @@ class Node(_Node):
                 thread._process.exc(sim, forward_recv, socket)
                 daemon.trigger(thread, pack, socket)
 
-            self.fork_exec(sim, forward_recv, new_sock)
+            self.run_proc(sim, forward_recv, new_sock)
 
     def networking_daemon(self, sim: Simulator, protocol: Protocol, *ports: PortRepr) -> Callable:
         """
@@ -322,7 +318,7 @@ class Node(_Node):
                 daemon = Daemon(cast(Callable, server_behaviour))
             else:
                 raise TypeError("Daemon must have trigger() or be of type Callable")
-            self.subscribe_networking_daemon(sim, daemon, protocol, *ports)
+            self.run_networking_daemon(sim, daemon, protocol, *ports)
             return server_behaviour
 
         return _decorator
