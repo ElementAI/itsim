@@ -100,8 +100,8 @@ class DatastoreRestClient(DatastoreClient):
     # Creating the logger for console and datastore output
     def create_logger(self,
                       logger_name: str = __name__,
-                      console_level = logging.DEBUG,
-                      datastore_level = logging.DEBUG) -> Logger:
+                      console_level=logging.DEBUG,
+                      datastore_level=logging.DEBUG) -> Logger:
 
         return create_logger(logger_name,
                              str(self._sim_uuid),
