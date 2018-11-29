@@ -20,8 +20,8 @@ class EndpointChattering(Endpoint):
         super().__init__()
         self._peers: Set[Address] = set()
         self._interval_broadcast = uniform(3.0 * S, 6.0 * S)
-        self.fork_exec(sim, self.server)
-        self.fork_exec(sim, self.client)
+        self.run_proc(sim, self.server)
+        self.run_proc(sim, self.client)
 
     def server(self, thread: Thread):
         with thread.process.node.bind(Protocol.UDP, 10000) as socket:
