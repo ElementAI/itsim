@@ -37,7 +37,7 @@ class DatastoreClient:
 
 class DatastoreRestClient(DatastoreClient):
 
-    def __init__(self, hostname: str='0.0.0.0', port: int=5000, sim_uuid: UUID=uuid4()) -> None:
+    def __init__(self, hostname: str = '0.0.0.0', port: int = 5000, sim_uuid: UUID = uuid4()) -> None:
         self._hostname = hostname
         self._port = port
         self._sim_uuid = sim_uuid
@@ -99,9 +99,9 @@ class DatastoreRestClient(DatastoreClient):
 
     # Creating the logger for console and datastore output
     def create_logger(self,
-                      logger_name: str=__name__,
-                      console_level=logging.DEBUG,
-                      datastore_level=logging.DEBUG) -> Logger:
+                      logger_name: str = __name__,
+                      console_level = logging.DEBUG,
+                      datastore_level = logging.DEBUG) -> Logger:
 
         return create_logger(logger_name,
                              str(self._sim_uuid),

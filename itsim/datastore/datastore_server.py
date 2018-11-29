@@ -55,7 +55,7 @@ class _Item(Resource):
 
 class DatastoreRestServer:
 
-    def __init__(self, type: str='sqlite', sqlite_file: str=':memory:') -> None:
+    def __init__(self, type: str = 'sqlite', sqlite_file: str = ':memory:') -> None:
         assert type == 'sqlite', 'Datastore server only support sqlite databases.'
         self._db_file = sqlite_file
 
