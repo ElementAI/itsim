@@ -1,6 +1,6 @@
 from enum import Enum, unique
 from itertools import cycle
-from typing import Any, cast, Generator, Iterator, Mapping, MutableMapping, Optional
+from typing import Any, cast, Generator, Mapping, MutableMapping, Optional
 from uuid import UUID, uuid4
 
 from greensim.random import normal
@@ -69,7 +69,7 @@ class DHCPDaemon(Daemon):
     responses = {"DHCPDISCOVER": "DHCPOFFER", "DHCPREQUEST": "DHCPACK"}
     size_packet_dhcp = num_bytes(normal(100.0 * B, 30.0 * B), header=240 * B)
 
-    def __init__(self, num_host_first: int, cidr: Cidr, address_options: Iterator[Address]) -> None:
+    def __init__(self, num_host_first: int, cidr: Cidr, address: Address) -> None:
         super().__init__(self.on_packet)
         if num_host_first <= 0:
             raise ValueError(f"num_host first >= 1 (here {num_host_first})")
@@ -83,12 +83,7 @@ class DHCPDaemon(Daemon):
             )
         self._num_hosts_max = upper_num_host - num_host_first
         self._seq_num_hosts = cycle(as_address(n, self._cidr) for n in range(num_host_first, upper_num_host))
-        for address in address_options:
-            if address in self._cidr:
-                self._address_mine = address
-                break
-        else:
-            raise RuntimeError("DHCP server can only run on a node with its own address on the target link.")
+        self._address_mine = address
 
     def on_packet(self, thread: _Thread, packet: Packet, socket: Socket) -> None:
         payload = cast(Mapping[Field, Any], packet.payload)

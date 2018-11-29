@@ -18,7 +18,7 @@ def test_dhcp_exchange():
 
     link = Link("10.1.128.0/18", uniform(100 * MS, 200 * MS), constant(100 * MbPS))
     router = Router().connected_to(link, "10.1.128.1")
-    router.networking_daemon(sim, Protocol.UDP, 67)(DHCPDaemon(100, link.cidr, "10.1.128.1"))
+    router.networking_daemon(sim, Protocol.UDP, 67)(DHCPDaemon(100, link.cidr, as_address("10.1.128.1")))
 
     endpoints = [Endpoint().connected_to(link) for n in range(3)]
     for endpoint in endpoints:
