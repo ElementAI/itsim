@@ -60,13 +60,12 @@ class DatabaseSQLite(Database):
 
     def select_items(self,
                      table_name: str,
-                     uuid: str,
+                     uuid: str = None,
                      str_output: bool = False,
                      from_time: str = None,
                      to_time: str = None) -> Any:
         """
-        # conditions: List of query conditions (ex: query_list = [{'column':'timestamp', 'operator'= '=',
-        #         'value':'xyz'}, {'column_name':'simulation_uuid', 'value':'1234'}])
+            Note: add simulation uuid to queries (for supporting logging from multiple sims running at once)
 
         :param table_name:
         :param conditions:
@@ -79,43 +78,45 @@ class DatabaseSQLite(Database):
             with self._conn:
                 cursor = self._conn.cursor()
 
+                from_time = None if from_time == 'None' else from_time
+                to_time = None if to_time == 'None' else to_time
+
                 # TODO: support all tables here
-                # Review consistency accross tables (from_time types... etc)
                 if table_name == "network_event":
                     if uuid is not None:
-                        if (from_time is not None and to_time is not None) and (from_time != 'None' and to_time != 'None'):
+                        if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM network_event WHERE uuid=? AND timestamp BETWEEN ? AND ?',
                                            (uuid, from_time, to_time))
                         else:
                             cursor.execute('SELECT * FROM network_event WHERE uuid=?', (uuid,))
                     else:
-                        if (from_time is not None and to_time is not None) and (from_time != 'None' and to_time != 'None'):
+                        if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM network_event WHERE timestamp BETWEEN ? AND ?',
                                            (from_time, to_time))
                         else:
                             cursor.execute('SELECT * FROM network_event')
                 elif table_name == "node":
                     if uuid is not None:
-                        if (from_time is not None and to_time is not None) and (from_time != 'None' and to_time != 'None'):
+                        if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM node WHERE uuid=? AND timestamp BETWEEN ? AND ?',
                                            (uuid, from_time, to_time))
                         else:
                             cursor.execute('SELECT * FROM node WHERE uuid=?', (uuid,))
                     else:
-                        if (from_time is not None and to_time is not None) and (from_time != 'None' and to_time != 'None'):
+                        if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM node WHERE timestamp BETWEEN ? AND ?', (from_time, to_time))
                         else:
                             cursor.execute('SELECT * FROM node')
 
                 elif table_name == "log":
                     if uuid is not None and uuid != 'None':
-                        if (from_time is not None and to_time is not None) and (from_time != 'None' and to_time != 'None'):
+                        if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM log WHERE uuid=? AND timestamp BETWEEN ? AND ?',
                                            (uuid, from_time, to_time))
                         else:
                             cursor.execute('SELECT * FROM log WHERE uuid=?', (uuid,))
                     else:
-                        if (from_time is not None and to_time is not None) and (from_time != 'None' and to_time != 'None'):
+                        if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM log WHERE timestamp BETWEEN ? AND ?', (from_time, to_time))
                         else:
                             cursor.execute('SELECT * FROM log')
