@@ -68,9 +68,9 @@ def client(port):
 
 
 def test_context():
-    with server() as (ss, port):
-        assert port == 5000
-        with server() as (ss, port):
-            assert port == 5001
-            with server() as (ss, port):
-                assert port == 5002
+    with server() as (ss, port1):
+        assert port1 >= 5000
+        with server() as (ss, port2):
+            assert port2 > port1
+            with server() as (ss, port3):
+                assert port3 > port2
