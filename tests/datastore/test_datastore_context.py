@@ -9,12 +9,14 @@ import requests
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.datastore.datastore_server import DatastoreRestServer
 
+
 def stop_server():
     do_stop = flask.request.environ.get('werkzeug.server.shutdown')
     if do_stop is None:
         raise RuntimeError("Testing server supposed to be werkzeug!")
     do_stop()
     return "OK"
+
 
 def start_and_run_server(server, queue_port):
     for port in range(5000, 2 ** 16 - 1):
@@ -28,8 +30,9 @@ def start_and_run_server(server, queue_port):
             if err.errno == 97:  # Port already in use.
                 if timer is not None:
                     timer.cancel()
-     # At this point, we were unable to find a suitable port -- fail.
+    # At this point, we were unable to find a suitable port -- fail.
     queue_port.put(0)
+
 
 @contextmanager
 def server():
@@ -62,6 +65,7 @@ def server():
 
 def client(port):
     return DatastoreRestClient(base_url=f"http://localhost:{port}", sim_uuid=str(uuid4()))
+
 
 def test_context():
     with server() as (ss, port):

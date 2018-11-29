@@ -117,7 +117,6 @@ def test_datastore_store_load_network_event():
             src=['192.168.1.111', 64],
             dst=['192.168.1.20', 72]))
 
-
     datastore = DatastoreRestClient(sim_uuid=sim_uuid)
 
     for event in network_events:

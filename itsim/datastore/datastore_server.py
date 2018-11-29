@@ -21,10 +21,10 @@ class _Item(Resource):
         request_time_range = request.get_json()
 
         items = DatabaseSQLite(sqlite_file=self._db_file).select_items(item_type,
-                                                           uuid,
-                                                           str_output=True,
-                                                           from_time=request_time_range['from_time'],
-                                                           to_time=request_time_range['to_time'])
+                                                                       uuid,
+                                                                       str_output=True,
+                                                                       from_time=request_time_range['from_time'],
+                                                                       to_time=request_time_range['to_time'])
         if items is None:
             return "Node not found", 404
         elif len(items) == 0:

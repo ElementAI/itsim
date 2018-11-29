@@ -2,7 +2,7 @@ import logging
 import requests
 import uuid
 
-from logging import Handler, Formatter
+from logging import Handler, Formatter, Logger
 from itsim.schemas.itsim_items import create_json_item
 from itsim.time import now_iso8601
 from typing import Any
@@ -71,7 +71,7 @@ def create_logger(name: str,
                   sim_uuid: str,
                   datastore_server: str,
                   console_level: Any = None,
-                  datastore_level: Any = None) -> Any:
+                  datastore_level: Any = None) -> Logger:
     """
     Function for setting up the itsim logger (avoids subclassing the Python logging class)
 

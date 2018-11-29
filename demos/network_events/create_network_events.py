@@ -5,6 +5,7 @@ from itsim.time import now_iso8601
 from time import sleep
 import random
 
+
 def create_network_events():
     sim_uuid = str(uuid.uuid4())   # should be in simulation object
     event_uuid1 = str(uuid.uuid4())

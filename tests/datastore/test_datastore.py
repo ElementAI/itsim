@@ -1,10 +1,10 @@
-import pytest
 import os
 import uuid
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.schemas.itsim_items import create_json_item
 from itsim.time import now_iso8601
 from contextlib import contextmanager
+
 
 @contextmanager
 def db_file():
@@ -24,6 +24,7 @@ def test_store_load_items():
     :return:
     """
     with db_file() as (sqlite_file):
+        del sqlite_file
         sim_uuid = str(uuid.uuid4())
         node_uuid = str(uuid.uuid4())
         network_uuid = str(uuid.uuid4())
@@ -37,22 +38,22 @@ def test_store_load_items():
                                 node_label='1')
 
         network_event = create_json_item(sim_uuid=sim_uuid,
-                                timestamp=now_iso8601(),
-                                item_type="network_event",
-                                uuid=network_uuid,
-                                uuid_node=str(uuid.uuid4()),
-                                network_event_type='open',
-                                protocol='UDP',
-                                pid=32145,
-                                src=['192.168.1.1', 64],
-                                dst=['192.168.11.200', 72])
+                                         timestamp=now_iso8601(),
+                                         item_type="network_event",
+                                         uuid=network_uuid,
+                                         uuid_node=str(uuid.uuid4()),
+                                         network_event_type='open',
+                                         protocol='UDP',
+                                         pid=32145,
+                                         src=['192.168.1.1', 64],
+                                         dst=['192.168.11.200', 72])
 
         log = create_json_item(sim_uuid=sim_uuid,
-                                timestamp=now_iso8601(),
-                                item_type="log",
-                                uuid=log_uuid,
-                                content='log msg',
-                                level='DEBUG')
+                               timestamp=now_iso8601(),
+                               item_type="log",
+                               uuid=log_uuid,
+                               content='log msg',
+                               level='DEBUG')
 
         datastore = DatastoreRestClient(sim_uuid=sim_uuid)
 
