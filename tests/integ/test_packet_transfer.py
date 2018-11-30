@@ -46,9 +46,9 @@ def test_packet_transfer():
 
     link = Link("10.11.12.0/24", latency=uniform(100 * MS, 200 * MS), bandwidth=constant(100 * MbPS))
     pinger = Endpoint().connected_to(link, "10.11.12.10")
-    pinger.fork_exec_in(sim, 0.1, client)
+    pinger.run_proc_in(sim, 0.1, client)
     ponger = Endpoint().connected_to(link, "10.11.12.20")
-    ponger.fork_exec(sim, server)
+    ponger.run_proc(sim, server)
 
     sim.run(10.0 * S)
 
