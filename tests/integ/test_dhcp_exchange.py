@@ -3,7 +3,7 @@ from greensim.random import uniform, constant
 from itsim.machine.endpoint import Endpoint
 from itsim.network.link import Link
 from itsim.network.router import Router
-from itsim.network.service.dhcp import DHCPDaemon, dhcp_client
+from itsim.network.service.dhcp import DHCPDaemon, DHCPClient
 from itsim.simulator import Simulator
 from itsim.types import Protocol, AddressRepr, as_address
 from itsim.units import S, MS, MbPS
@@ -22,7 +22,7 @@ def test_dhcp_exchange():
 
     endpoints = [Endpoint().connected_to(link) for n in range(3)]
     for endpoint in endpoints:
-        endpoint.fork_exec_in(sim, 0.0, dhcp_client, endpoint._interfaces[link.cidr])
+        endpoint.schedule_daemon(sim, 0.0, DHCPClient(endpoint._interfaces[link.cidr]))
         assert set(endpoint.addresses()) == set_addresses("127.0.0.1", link.cidr.network_address)
 
     sim.run(10.0 * S)

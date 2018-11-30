@@ -260,6 +260,9 @@ class Node(_Node):
     def with_files(self, *files: File) -> None:
         pass
 
+    def schedule_daemon(self, sim: Simulator, time: float, daemon: Daemon) -> None:
+        self.fork_exec_in(sim, time, daemon.trigger)
+
     def subscribe_networking_daemon(self,
                                     sim: Simulator,
                                     daemon: Daemon,
