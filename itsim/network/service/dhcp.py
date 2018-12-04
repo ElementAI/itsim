@@ -17,7 +17,7 @@ from itsim.types import Address, as_address, Cidr, Payload, Protocol
 from itsim.units import B, S
 
 
-LEASE_DURATION = 86400
+LEASE_DURATION = 86400 * S
 DHCP_SERVER_PORT = 67
 DHCP_CLIENT_PORT = 68
 DHCP_CLIENT_RETRIES = 3
