@@ -1,89 +1,174 @@
-from itsim.schemas.itsim_items import create_json_item
-from itsim.datastore.datastore import DatastoreRestClient
-from itsim.time import now_iso8601
-from time import sleep
-import random
-from uuid import uuid4
+from abc import abstractmethod
+import sqlite3
+import json
+from collections import namedtuple
+from typing import Any, List, Optional
+from uuid import UUID
+
+class Database:
+    """
+     Base class for datastore database implementations
+    """
+    def __init(self) -> None:
+        pass
+
+    @abstractmethod
+    def create_tables(self) -> None:
+        pass
+
+    @abstractmethod
+    def select_items(self, table_name: str, uuid: UUID, str_output=False, from_time=None, to_time=None) -> Any:
+        pass
+
+    @abstractmethod
+    def insert_items(self, time: str, sim_uuid: UUID, item_list: List[Any]) -> None:
+        pass
 
 
-def create_network_events():
-    sim_uuid = uuid4()   # should be in simulation object
-    event_uuid1 = uuid4()
-    node_uuid1 = uuid4()
-    event_uuid2 = uuid4()
-    node_uuid2 = uuid4()
+class DatabaseSQLite(Database):
+    """
+        Database implementation for SQLite
 
-    network_events = []
+        Notes:      Timestamp TEXT as ISO8601 strings (“YYYY-MM-DD HH:MM:SS.SSS”).
+                    https://sqlitebrowser.org/
 
-    # open1
-    network_events.append(
-        create_json_item(
-            sim_uuid=sim_uuid,
-            timestamp=now_iso8601(),
-            item_type="network_event",
-            uuid=str(event_uuid1),
-            uuid_node=str(node_uuid1),
-            network_event_type='open',
-            protocol='UDP',
-            pid=32145,
-            src=['192.168.1.1', 64],
-            dst=['192.168.11.200', 72]))
-    sleep(random.uniform(0, 2))
+    :param sqlite_file:
+    :param create_tables_if_absent:
+    """
+    def __init__(self, sqlite_file: str, create_tables_if_absent: bool = True) -> None:
+        self._sqlite_file = sqlite_file
+        self._conn = sqlite3.connect(self._sqlite_file)
+        if create_tables_if_absent:
+            self.create_tables()
 
-    # open 2
-    network_events.append(
-        create_json_item(
-            sim_uuid=sim_uuid,
-            timestamp=now_iso8601(),
-            item_type="network_event",
-            uuid=str(event_uuid2),
-            uuid_node=str(node_uuid2),
-            network_event_type='open',
-            protocol='UDP',
-            pid=32145,
-            src=['192.168.1.111', 64],
-            dst=['192.168.1.20', 72]))
-    sleep(random.uniform(0, 10))
+    def create_tables(self) -> Any:
+        """
 
-    # close 1
-    network_events.append(
-        create_json_item(
-            sim_uuid=sim_uuid,
-            timestamp=now_iso8601(),
-            item_type="network_event",
-            uuid=str(event_uuid1),
-            uuid_node=str(node_uuid1),
-            network_event_type='close',
-            protocol='UDP',
-            pid=32145,
-            src=['192.168.1.1', 64],
-            dst=['192.168.11.200', 72]))
-    sleep(random.uniform(0, 2))
+        :param table_name:
+        :return:
+        """
+        try:
+            with self._conn:
+                cursor = self._conn.cursor()
+                cursor.execute("CREATE TABLE IF NOT EXISTS network_event(uuid TEXT, timestamp TEXT, sim_uuid TEXT, "
+                               "json TEXT)")
+                cursor.execute("CREATE TABLE IF NOT EXISTS node(uuid TEXT, timestamp TEXT, sim_uuid TEXT, json TEXT)")
+                cursor.execute("CREATE TABLE IF NOT EXISTS log(uuid TEXT, timestamp TEXT, sim_uuid TEXT, json TEXT)")
+                # TODO add all other tables here!
+        except sqlite3.IntegrityError:
+            print("SQLite create tables failedfailed.")
 
-    # close 2
-    network_events.append(
-        create_json_item(
-            sim_uuid=sim_uuid,
-            timestamp=now_iso8601(),
-            item_type="network_event",
-            uuid=str(event_uuid2),
-            uuid_node=str(node_uuid2),
-            network_event_type='close',
-            protocol='UDP',
-            pid=32145,
-            src=['192.168.1.111', 64],
-            dst=['192.168.1.20', 72]))
+    def select_items(self,
+                     table_name: str,
+                     # uuid: Optional[UUID] = None,
+                     uuid: Optional[str] = None,
+                     str_output: Optional[bool] = False,
+                     from_time: Optional[str] = None,
+                     to_time: Optional[str] = None) -> Any:
+        """
+            Note: add simulation uuid to queries (for supporting logging from multiple sims running at once)
 
-    # Connect to a datastore
-    datastore = DatastoreRestClient(sim_uuid=sim_uuid)
+        :param table_name:
+        :param conditions:
+        :param str_output:
+        :param from_time:
+        :param to_time:
+        :return:
+        """
+        try:
+            with self._conn:
+                cursor = self._conn.cursor()
 
-    for event in network_events:
-        datastore.store_item(event)
+                from_time = None if from_time == 'None' else from_time
+                to_time = None if from_time == 'None' else from_time
 
-    node = datastore.load_item("network_event", event_uuid2)
-    print(f'Loaded: {node.uuid_node}')
+                # TODO: support all tables here
+                if table_name == "network_event":
+                    if uuid is not None:
+                        if from_time is not None and to_time is not None:
+                            cursor.execute('SELECT * FROM network_event WHERE uuid=? AND timestamp BETWEEN ? AND ?',
+                                           (str(uuid), from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM network_event WHERE uuid=?', (str(uuid),))
+                    else:
+                        if from_time and to_time is not None:
+                            cursor.execute('SELECT * FROM network_event WHERE timestamp BETWEEN ? AND ?',
+                                           (from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM network_event')
+                elif table_name == "node":
+                    if uuid is not None:
+                        if from_time is not None and to_time is not None:
+                            cursor.execute('SELECT * FROM node WHERE uuid=? AND timestamp BETWEEN ? AND ?',
+                                           (str(uuid), from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM node WHERE uuid=?', (str(uuid),))
+                    else:
+                        if from_time is not None and to_time is not None:
+                            cursor.execute('SELECT * FROM node WHERE timestamp BETWEEN ? AND ?', (from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM node')
 
+                elif table_name == "log":
+                    if uuid is not None:
+                        if from_time is not None and to_time is not None:
+                            cursor.execute('SELECT * FROM log WHERE uuid=? AND timestamp BETWEEN ? AND ?',
+                                           (str(uuid), from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM log WHERE uuid=?', (str(uuid),))
+                    else:
+                        if from_time is not None and to_time is not None:
+                            cursor.execute('SELECT * FROM log WHERE timestamp BETWEEN ? AND ?', (from_time, to_time))
+                        else:
+                            cursor.execute('SELECT * FROM log')
 
-if __name__ == '__main__':
-    create_network_events()
-    print("Done")
+                all_rows = cursor.fetchall()
+
+                json_results = []
+                for row in all_rows:
+                    if str_output:
+                        json_results.append(row[3])
+                    else:
+                        json_results.append(
+                            json.loads(row[3], object_hook=lambda d: namedtuple('X', d.keys())(*d.values())))
+                return json_results
+        except sqlite3.IntegrityError:
+            print("SQLite select failed.")
+
+    def insert_items(self, timestamp: str, sim_uuid_str: str, items: List[Any]) -> None:
+        try:
+            with self._conn:
+                cursor = self._conn.cursor()
+
+                if isinstance(items, list):
+                    data = []
+                    for item in items:
+                        table_name = item.type
+                        uuid_str = item.uuid
+                        entry = (uuid_str, timestamp, sim_uuid_str, json.dumps(item))
+                        data.append(entry)
+                    if table_name == "network_event":
+                        cursor.executemany("INSERT INTO network_event VALUES (?, ?, ?, ?)", data)
+                    elif table_name == "node":
+                        cursor.executemany("INSERT INTO node VALUES (?, ?, ?, ?)", data)
+                    elif table_name == "log":
+                        cursor.executemany("INSERT INTO log VALUES (?, ?, ?, ?)", data)
+                    # TODO: add cases for all tables explicitely here
+                else:
+                    item = items
+                    table_name = item['type']
+                    uuid_str = item['uuid']
+                    if table_name == "network_event":
+                        cursor.execute(
+                            "INSERT INTO network_event (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
+                            (uuid_str, timestamp, sim_uuid_str, json.dumps(item)))
+                    elif table_name == "node":
+                        cursor.execute("INSERT INTO node (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
+                                       (uuid_str, timestamp, sim_uuid_str, json.dumps(item)))
+                    elif table_name == "log":
+                        cursor.execute("INSERT INTO log (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
+                                       (uuid_str, timestamp, sim_uuid_str, json.dumps(item)))
+                    # TODO: add cases for all tables explicitely here
+
+        except sqlite3.IntegrityError:
+            print("SQLite insert_items failed.")

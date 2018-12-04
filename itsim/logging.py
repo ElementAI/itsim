@@ -69,8 +69,8 @@ class DatastoreFormatter(Formatter):
 def create_logger(name: str,
                   sim_uuid: UUID,
                   datastore_server: str,
-                  console_level: Any = None,
-                  datastore_level: Any = None) -> Logger:
+                  console_level: int = logging.CRITICAL,
+                  datastore_level: int = logging.INFO) -> Logger:
     """
     Function for setting up the itsim logger (avoids subclassing the Python logging class)
 

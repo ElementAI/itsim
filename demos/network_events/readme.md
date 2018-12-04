@@ -23,9 +23,8 @@ $ jupyter notebook
 
 
 #####Note: Using virtual environment within the notebook:
-- Install ipykernel package and create a new kernel:
+- Create a new kernel (using the ipykernel module):
 ```
-$ pip install ipykernel
 $ ipython kernel install --user --name=itsim
 ```
 - Then create a notebook from jupyter based on the newly created kernel.

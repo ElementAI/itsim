@@ -21,12 +21,10 @@ class DatastoreClient:
         pass
 
     @abstractmethod
-    # get
     def load_item(self, item_type: str, uuid: UUID, from_time: str = None, to_time: str = None) -> str:
         pass
 
     @abstractmethod
-    # post
     def store_item(self, data: Any, overwrite: bool = True) -> None:
         pass
 
