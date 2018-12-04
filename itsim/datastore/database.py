@@ -2,7 +2,7 @@ from abc import abstractmethod
 import sqlite3
 import json
 from collections import namedtuple
-from typing import Any
+from typing import Any, List
 
 
 class Database:
@@ -17,11 +17,11 @@ class Database:
         pass
 
     @abstractmethod
-    def select_items(self, table_name, query_conditions, str_output=False, from_time=None, to_time=None) -> Any:
+    def select_items(self, table_name: str, uuid: str, str_output=False, from_time=None, to_time=None) -> Any:
         pass
 
     @abstractmethod
-    def insert_items(self, time, sim_uuid, item_list) -> None:
+    def insert_items(self, time: str, sim_uuid: str, item_list: List[Any]) -> None:
         pass
 
 
@@ -60,7 +60,7 @@ class DatabaseSQLite(Database):
 
     def select_items(self,
                      table_name: str,
-                     uuid: str = None,
+                     uuid_str: str = None,
                      str_output: bool = False,
                      from_time: str = None,
                      to_time: str = None) -> Any:
@@ -83,12 +83,12 @@ class DatabaseSQLite(Database):
 
                 # TODO: support all tables here
                 if table_name == "network_event":
-                    if uuid is not None:
+                    if uuid_str is not None:
                         if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM network_event WHERE uuid=? AND timestamp BETWEEN ? AND ?',
-                                           (uuid, from_time, to_time))
+                                           (uuid_str, from_time, to_time))
                         else:
-                            cursor.execute('SELECT * FROM network_event WHERE uuid=?', (uuid,))
+                            cursor.execute('SELECT * FROM network_event WHERE uuid=?', (uuid_str,))
                     else:
                         if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM network_event WHERE timestamp BETWEEN ? AND ?',
@@ -96,12 +96,12 @@ class DatabaseSQLite(Database):
                         else:
                             cursor.execute('SELECT * FROM network_event')
                 elif table_name == "node":
-                    if uuid is not None:
+                    if uuid_str is not None:
                         if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM node WHERE uuid=? AND timestamp BETWEEN ? AND ?',
-                                           (uuid, from_time, to_time))
+                                           (uuid_str, from_time, to_time))
                         else:
-                            cursor.execute('SELECT * FROM node WHERE uuid=?', (uuid,))
+                            cursor.execute('SELECT * FROM node WHERE uuid=?', (uuid_str,))
                     else:
                         if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM node WHERE timestamp BETWEEN ? AND ?', (from_time, to_time))
@@ -109,12 +109,12 @@ class DatabaseSQLite(Database):
                             cursor.execute('SELECT * FROM node')
 
                 elif table_name == "log":
-                    if uuid is not None and uuid != 'None':
+                    if uuid_str is not None and uuid_str != 'None':
                         if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM log WHERE uuid=? AND timestamp BETWEEN ? AND ?',
-                                           (uuid, from_time, to_time))
+                                           (uuid_str, from_time, to_time))
                         else:
-                            cursor.execute('SELECT * FROM log WHERE uuid=?', (uuid,))
+                            cursor.execute('SELECT * FROM log WHERE uuid=?', (uuid_str,))
                     else:
                         if from_time is not None and to_time is not None:
                             cursor.execute('SELECT * FROM log WHERE timestamp BETWEEN ? AND ?', (from_time, to_time))
@@ -134,7 +134,7 @@ class DatabaseSQLite(Database):
         except sqlite3.IntegrityError:
             print("SQLite select failed.")
 
-    def insert_items(self, timestamp: str, sim_uuid: str, items: Any) -> None:
+    def insert_items(self, timestamp: str, sim_uuid_str: str, items: List[Any]) -> None:
         try:
             with self._conn:
                 cursor = self._conn.cursor()
@@ -143,8 +143,8 @@ class DatabaseSQLite(Database):
                     data = []
                     for item in items:
                         table_name = item.type
-                        uuid = item.uuid
-                        entry = (uuid, timestamp, sim_uuid, json.dumps(item))
+                        uuid_str = item.uuid
+                        entry = (uuid_str, timestamp, sim_uuid_str, json.dumps(item))
                         data.append(entry)
                     if table_name == "network_event":
                         cursor.executemany("INSERT INTO network_event VALUES (?, ?, ?, ?)", data)
@@ -156,17 +156,17 @@ class DatabaseSQLite(Database):
                 else:
                     item = items
                     table_name = item['type']
-                    uuid = item['uuid']
+                    uuid_str = item['uuid']
                     if table_name == "network_event":
                         cursor.execute(
                             "INSERT INTO network_event (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
-                            (uuid, timestamp, sim_uuid, json.dumps(item)))
+                            (uuid_str, timestamp, sim_uuid_str, json.dumps(item)))
                     elif table_name == "node":
                         cursor.execute("INSERT INTO node (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
-                                       (uuid, timestamp, sim_uuid, json.dumps(item)))
+                                       (uuid_str, timestamp, sim_uuid_str, json.dumps(item)))
                     elif table_name == "log":
                         cursor.execute("INSERT INTO log (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
-                                       (uuid, timestamp, sim_uuid, json.dumps(item)))
+                                       (uuid_str, timestamp, sim_uuid_str, json.dumps(item)))
                     # TODO: add cases for all tables explicitely here
 
         except sqlite3.IntegrityError:

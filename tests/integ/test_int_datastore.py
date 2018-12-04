@@ -17,7 +17,7 @@ def test_datastore_logger():
     logger.error('This is an error')    # Logging to console and datastore log table
 
     to_time = now_iso8601()             # Retrieving the log from the datastore
-    log, code = datastore.load_item('log', uuid=None, from_time=from_time, to_time=to_time)
+    log = datastore.load_item('log', uuid=None, from_time=from_time, to_time=to_time)
 
     assert log.content == 'This is an error'
 
@@ -42,10 +42,9 @@ def test_datastore_store_load_node():
     print(f'Storing node: {node.uuid}')
     datastore.store_item(node)                  # Posting a node to the datastore
     item_type = 'node'                          # Retrieving the node from the datastore
-    node, response_code = datastore.load_item(item_type, node_uuid)
+    node = datastore.load_item(item_type, node_uuid)
     print(f'Loaded: {node.uuid}')
 
-    assert response_code == 201
     assert node.uuid == node_uuid
 
 
@@ -123,8 +122,8 @@ def test_datastore_store_load_network_event():
         datastore.store_item(event)
 
     item_type = 'network_event'
-    node, response_code = datastore.load_item(item_type, event_uuid1)
+    node = datastore.load_item(item_type, event_uuid1)
     assert node.uuid_node == node_uuid1
 
-    node, response_code = datastore.load_item(item_type, event_uuid2)
+    node = datastore.load_item(item_type, event_uuid2)
     assert node.uuid_node == node_uuid2

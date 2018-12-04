@@ -1,7 +1,6 @@
 import logging
 import requests
-import uuid
-
+from uuid import UUID, uuid4
 from logging import Handler, Formatter, Logger
 from itsim.schemas.itsim_items import create_json_item
 from itsim.time import now_iso8601
@@ -33,14 +32,14 @@ class DatastoreRestHandler(Handler):
         :return: post's response
         """
         log_uuid, log_entry = self.format(record)
-        url = self._server_url + 'log/' + log_uuid
+        url = f'{self._server_url}log/{str(log_uuid)}'
         headers = {'Accept': 'application/json'}
         return requests.post(url, headers=headers, json=log_entry)
 
 
 class DatastoreFormatter(Formatter):
 
-    def __init__(self, sim_uuid: str) -> None:
+    def __init__(self, sim_uuid: UUID) -> None:
         """
         Formatter allowing a log entry to be converted to a JSON object (for sending it to a datastore server)
         :param sim_uuid: Simulation's uuid
@@ -57,18 +56,18 @@ class DatastoreFormatter(Formatter):
         :return: tuple: log's uuid, JSON log object
         """
 
-        log_uuid = str(uuid.uuid4())
+        log_uuid = uuid4()
         log = create_json_item(sim_uuid=self._sim_uuid,
                                timestamp=now_iso8601(),
                                item_type='log',
-                               uuid=log_uuid,
+                               uuid=str(log_uuid),
                                content=record.message,
                                level=record.levelname)
         return log_uuid, log
 
 
 def create_logger(name: str,
-                  sim_uuid: str,
+                  sim_uuid: UUID,
                   datastore_server: str,
                   console_level: Any = None,
                   datastore_level: Any = None) -> Logger:

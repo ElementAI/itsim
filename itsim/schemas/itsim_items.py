@@ -1,6 +1,7 @@
 import warlock
 import jsonschema
 from typing import Any, List
+from uuid import UUID
 
 UUID_SCHEMA = {
     "description": "UUID",
@@ -142,13 +143,13 @@ def check_validity(data: Any, schema: Any) -> None:
         assert False
 
 
-def create_json_item(sim_uuid: str, timestamp: str, item_type: str, **kwargs) -> Any:
+def create_json_item(sim_uuid: UUID, timestamp: str, item_type: str, **kwargs) -> Any:
     # TODO: assert required kwargs for each type
     json_item = None
 
     if item_type.lower() == 'network_event':
         creator = warlock.model_factory(NETWORK_EVENT_SCHEMA)
-        json_item = creator(sim_uuid=sim_uuid, timestamp=timestamp, type=item_type.lower(),
+        json_item = creator(sim_uuid=str(sim_uuid), timestamp=timestamp, type=item_type.lower(),
                             uuid=kwargs['uuid'],
                             uuid_node=kwargs['uuid_node'],
                             network_event_type=kwargs['network_event_type'],
@@ -158,11 +159,11 @@ def create_json_item(sim_uuid: str, timestamp: str, item_type: str, **kwargs) ->
                             dst=kwargs['dst'])
     elif item_type.lower() == 'node':
         creator = warlock.model_factory(NODE_SCHEMA)
-        json_item = creator(sim_uuid=sim_uuid, timestamp=timestamp, type=item_type.lower(),
+        json_item = creator(sim_uuid=str(sim_uuid), timestamp=timestamp, type=item_type.lower(),
                             uuid=kwargs['uuid'], node_label=kwargs['node_label'])
     elif item_type.lower() == 'log':
         creator = warlock.model_factory(LOG_SCHEMA)
-        json_item = creator(sim_uuid=sim_uuid, timestamp=timestamp, type=item_type.lower(),
+        json_item = creator(sim_uuid=str(sim_uuid), timestamp=timestamp, type=item_type.lower(),
                             uuid=kwargs['uuid'], content=kwargs['content'], level=kwargs['level'])
     else:
         raise ValueError("Wrong item type")

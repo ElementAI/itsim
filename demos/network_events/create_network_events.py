@@ -1,17 +1,17 @@
-import uuid
 from itsim.schemas.itsim_items import create_json_item
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.time import now_iso8601
 from time import sleep
 import random
+from uuid import uuid4
 
 
 def create_network_events():
-    sim_uuid = str(uuid.uuid4())   # should be in simulation object
-    event_uuid1 = str(uuid.uuid4())
-    node_uuid1 = str(uuid.uuid4())
-    event_uuid2 = str(uuid.uuid4())
-    node_uuid2 = str(uuid.uuid4())
+    sim_uuid = uuid4()   # should be in simulation object
+    event_uuid1 = uuid4()
+    node_uuid1 = uuid4()
+    event_uuid2 = uuid4()
+    node_uuid2 = uuid4()
 
     network_events = []
 
@@ -21,8 +21,8 @@ def create_network_events():
             sim_uuid=sim_uuid,
             timestamp=now_iso8601(),
             item_type="network_event",
-            uuid=event_uuid1,
-            uuid_node=node_uuid1,
+            uuid=str(event_uuid1),
+            uuid_node=str(node_uuid1),
             network_event_type='open',
             protocol='UDP',
             pid=32145,
@@ -36,8 +36,8 @@ def create_network_events():
             sim_uuid=sim_uuid,
             timestamp=now_iso8601(),
             item_type="network_event",
-            uuid=event_uuid2,
-            uuid_node=node_uuid2,
+            uuid=str(event_uuid2),
+            uuid_node=str(node_uuid2),
             network_event_type='open',
             protocol='UDP',
             pid=32145,
@@ -51,8 +51,8 @@ def create_network_events():
             sim_uuid=sim_uuid,
             timestamp=now_iso8601(),
             item_type="network_event",
-            uuid=event_uuid1,
-            uuid_node=node_uuid1,
+            uuid=str(event_uuid1),
+            uuid_node=str(node_uuid1),
             network_event_type='close',
             protocol='UDP',
             pid=32145,
@@ -66,8 +66,8 @@ def create_network_events():
             sim_uuid=sim_uuid,
             timestamp=now_iso8601(),
             item_type="network_event",
-            uuid=event_uuid2,
-            uuid_node=node_uuid2,
+            uuid=str(event_uuid2),
+            uuid_node=str(node_uuid2),
             network_event_type='close',
             protocol='UDP',
             pid=32145,
@@ -80,7 +80,7 @@ def create_network_events():
     for event in network_events:
         datastore.store_item(event)
 
-    node, response_code = datastore.load_item("network_event", event_uuid2)
+    node = datastore.load_item("network_event", event_uuid2)
     print(f'Loaded: {node.uuid_node}')
 
 
