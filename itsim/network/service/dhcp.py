@@ -3,7 +3,7 @@ from itertools import cycle
 from typing import Any, cast, Generator, Mapping, MutableMapping, Optional
 from uuid import UUID, uuid4
 
-from greensim.random import normal
+from greensim.random import normal, VarRandom
 
 from itsim.network.interface import Interface
 from itsim.network.packet import Packet
@@ -17,12 +17,14 @@ from itsim.types import Address, as_address, Cidr, Payload, Protocol
 from itsim.units import B, S
 
 
-LEN_PACKET_DHCP = 348
 LEASE_DURATION = 86400
 DHCP_SERVER_PORT = 67
 DHCP_CLIENT_PORT = 68
 DHCP_CLIENT_RETRIES = 3
-RESERVATION_TIME_SECONDS = 30
+DHCP_SIZE_MEAN = 100.0 * B
+DHCP_SIZE_STDEV = 30.0 * B
+DHCP_HEADER_SIZE = 240 * B
+RESERVATION_TIME = 30 * S
 
 
 @unique
@@ -71,9 +73,16 @@ class _AddressAllocation:
 
 class DHCPDaemon(Daemon):
     responses = {"DHCPDISCOVER": "DHCPOFFER", "DHCPREQUEST": "DHCPACK"}
-    size_packet_dhcp = num_bytes(normal(100.0 * B, 30.0 * B), header=240 * B)
 
-    def __init__(self, num_host_first: int, cidr: Cidr, address: Address) -> None:
+    def __init__(self, num_host_first: int,
+                 cidr: Cidr,
+                 address: Address,
+                 lease_duration: float = LEASE_DURATION,
+                 dhcp_client_port: int = DHCP_CLIENT_PORT,
+                 reservation_time: float = RESERVATION_TIME,
+                 size_packet_dhcp: VarRandom[int] = num_bytes(
+                     normal(DHCP_SIZE_MEAN, DHCP_SIZE_STDEV), header = DHCP_HEADER_SIZE
+                 )) -> None:
         super().__init__(self.on_packet)
         if num_host_first <= 0:
             raise ValueError(f"num_host first >= 1 (here {num_host_first})")
@@ -87,7 +96,11 @@ class DHCPDaemon(Daemon):
             )
         self._num_hosts_max = upper_num_host - num_host_first
         self._seq_num_hosts = cycle(as_address(n, self._cidr) for n in range(num_host_first, upper_num_host))
-        self._address_mine = address
+        self._gateway_address = address
+        self._lease_duration = lease_duration
+        self._dhcp_client_port = dhcp_client_port
+        self._reservation_time = reservation_time
+        self._size_packet_dhcp = size_packet_dhcp
 
     def on_packet(self, thread: _Thread, packet: Packet, socket: Socket) -> None:
         payload = cast(Mapping[Field, Any], packet.payload)
@@ -111,10 +124,6 @@ class DHCPDaemon(Daemon):
             return
 
     def handle_discover(self, socket: Socket, node_id: UUID, address_maybe: Optional[Address]) -> None:
-        if len(self._address_allocation) == self._num_hosts_max:
-            # Network is full! Cannot allocate any more address (https://tools.ietf.org/html/rfc2131#section-4.3.1)
-            return
-
         if address_maybe is not None and address_maybe not in self._address_allocation:
             suggestion = cast(Address, address_maybe)
         else:
@@ -129,12 +138,12 @@ class DHCPDaemon(Daemon):
 
         self._address_allocation[node_id] = _AddressAllocation(suggestion)
         socket.send(
-            (self._cidr.broadcast_address, DHCP_CLIENT_PORT),
-            LEN_PACKET_DHCP,
+            (self._cidr.broadcast_address, self._dhcp_client_port),
+            next(self._size_packet_dhcp),
             cast(Payload, {
                 Field.MESSAGE: DHCP.OFFER,
                 Field.ADDRESS: suggestion,
-                Field.SERVER: self._address_mine,
+                Field.SERVER: self._gateway_address,
                 Field.NODE_ID: node_id
             })
         )
@@ -142,7 +151,7 @@ class DHCPDaemon(Daemon):
         # Reserve for 30 seconds -- a REQUEST for the address must have been received by then.
         # Otherwise, drop the reservation.
         unique = self._address_allocation[node_id].unique
-        advance(RESERVATION_TIME_SECONDS * S)
+        advance(self._reservation_time)
         if not self._address_allocation[node_id].is_confirmed and self._address_allocation[node_id].unique == unique:
             del self._address_allocation[node_id]
 
@@ -155,13 +164,13 @@ class DHCPDaemon(Daemon):
             # This REQUEST is proper, confirming the allocation of the address.
             self._address_allocation[node_id].is_confirmed = True
             socket.send(
-                (address, DHCP_CLIENT_PORT),
-                LEN_PACKET_DHCP,
+                (address, self._dhcp_client_port),
+                next(self._size_packet_dhcp),
                 cast(Payload, {
                     Field.MESSAGE: DHCP.ACK,
                     Field.ADDRESS: address,
                     Field.NODE_ID: node_id,
-                    Field.LEASE_DURATION: LEASE_DURATION
+                    Field.LEASE_DURATION: self._lease_duration
                 })
             )
         else:
@@ -170,31 +179,50 @@ class DHCPDaemon(Daemon):
 
 
 class DHCPClient(Daemon):
+    """
+    NB All packets except ACK are sent to the broadcast address
+    """
 
-    def __init__(self, interface: Interface) -> None:
+    def __init__(self,
+                 interface: Interface,
+                 dhcp_server_port: int = DHCP_SERVER_PORT,
+                 dhcp_client_port: int = DHCP_CLIENT_PORT,
+                 dhcp_client_retries: int = DHCP_CLIENT_RETRIES,
+                 reservation_time: float = RESERVATION_TIME,
+                 size_packet_dhcp: VarRandom[int] = num_bytes(
+                     normal(DHCP_SIZE_MEAN, DHCP_SIZE_STDEV), header = DHCP_HEADER_SIZE
+                 )) -> None:
         super().__init__(self.run_client)
         self._interface = interface
+        self._dhcp_server_port = dhcp_server_port
+        self._dhcp_client_port = dhcp_client_port
+        self._dhcp_client_retries = dhcp_client_retries
+        self._reservation_time = reservation_time
+        self._size_packet_dhcp = size_packet_dhcp
 
     def run_client(self, thread: Thread) -> None:
-        for _ in range(DHCP_CLIENT_RETRIES):
+        for _ in range(self._dhcp_client_retries):
             # Retry after each failure to get an address.
             if self._dhcp_get_address(thread):
                 break
 
     def _dhcp_iter_responses(self, socket: Socket, node_id: UUID, message: DHCP) -> Generator[Packet, None, None]:
-        time_remaining = RESERVATION_TIME_SECONDS
+        time_remaining = self._reservation_time
         while time_remaining >= 0.0:
-            time_before_recv = now()
-            packet = socket.recv(time_remaining)
-            time_remaining -= (now() - time_before_recv)
-            if packet.payload.get(cast(str, Field.MESSAGE)) == message and \
-               packet.payload.get(cast(str, Field.NODE_ID)) == node_id:
-                yield packet
+            try:
+                time_before_recv = now()
+                packet = socket.recv(time_remaining)
+                time_remaining -= (now() - time_before_recv)
+                if packet.payload.get(cast(str, Field.MESSAGE)) == message and \
+                   packet.payload.get(cast(str, Field.NODE_ID)) == node_id:
+                    yield packet
+            except Timeout:
+                return
 
     def _dhcp_discover(self, socket: Socket, node_id: UUID, address_broadcast: Address) -> Optional[Address]:
         socket.send(
-            (address_broadcast, DHCP_SERVER_PORT),
-            LEN_PACKET_DHCP,
+            (address_broadcast, self._dhcp_server_port),
+            next(self._size_packet_dhcp),
             cast(Payload, {Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: node_id})
         )
 
@@ -209,33 +237,36 @@ class DHCPClient(Daemon):
                       socket: Socket,
                       node_id: UUID,
                       address_broadcast: Address,
-                      address_proposed: Address) -> bool:
+                      address_proposed: Address,
+                      interface: Interface) -> bool:
         socket.send(
-            (address_broadcast, DHCP_SERVER_PORT),
-            LEN_PACKET_DHCP,
+            (address_broadcast, self._dhcp_server_port),
+            next(self._size_packet_dhcp),
             cast(Payload, {Field.MESSAGE: DHCP.REQUEST, Field.NODE_ID: node_id, Field.ADDRESS: address_proposed})
         )
 
+        # Set the interface to the new address, in the expecation it will be confirmed
+        address_orig = interface.address
+        # NB this affects the action of socket.recv(), so it must come before that call
+        interface.address = cast(Address, address_proposed)
         # Wait for our ACK.
         for packet in self._dhcp_iter_responses(socket, node_id, DHCP.ACK):
             if packet.dest.hostname_as_address() == address_proposed:
                 return True
+        # The address was not confirmed, fall back
+        interface.address = address_orig
         return False
 
     def _dhcp_get_address(self, thread: Thread) -> bool:
-        address_orig = self._interface.address
         node_id = thread.process.node.uuid
         try:
             broadcast_address = self._interface.cidr.broadcast_address
-            with thread.process.node.bind(Protocol.UDP, DHCP_CLIENT_PORT, thread.process.pid) as socket:
+            with thread.process.node.bind(Protocol.UDP, self._dhcp_client_port, thread.process.pid) as socket:
                 address = self._dhcp_discover(socket, node_id, broadcast_address)
                 if address is not None:
-                    self._interface.address = cast(Address, address)
-                    if not self._dhcp_request(socket, node_id, broadcast_address, address):
-                        self._interface.address = address_orig
-                        return False
-                    return True
-                else:
-                    return False
+                    return self._dhcp_request(socket, node_id, broadcast_address, address, self._interface)
+
         except Timeout:
-            return False
+            pass
+
+        return False
