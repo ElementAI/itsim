@@ -133,7 +133,6 @@ class DHCPDaemon(Daemon):
                     break
             else:
                 # Decline to allocate as per https://tools.ietf.org/html/rfc2131#section-4.3.1
-                # This should be redundant with the validation above
                 return
 
         self._address_allocation[node_id] = _AddressAllocation(suggestion)
