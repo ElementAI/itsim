@@ -96,7 +96,7 @@ class DHCPDaemon(Daemon):
             )
         self._num_hosts_max = upper_num_host - num_host_first
         self._seq_num_hosts = cycle(as_address(n, self._cidr) for n in range(num_host_first, upper_num_host))
-        self._gateway_address = address
+        self._gateway_address = gateway_address
         self._lease_duration = lease_duration
         self._dhcp_client_port = dhcp_client_port
         self._reservation_time = reservation_time
