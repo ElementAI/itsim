@@ -76,7 +76,7 @@ class DHCPDaemon(Daemon):
 
     def __init__(self, num_host_first: int,
                  cidr: Cidr,
-                 address: Address,
+                 gateway_address: Address,
                  lease_duration: float = LEASE_DURATION,
                  dhcp_client_port: int = DHCP_CLIENT_PORT,
                  reservation_time: float = RESERVATION_TIME,
