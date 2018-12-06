@@ -11,7 +11,7 @@ from threading import Thread, Timer
 from itsim.datastore.datastore_server import DatastoreRestServer
 from itsim.logging import create_logger
 from uuid import uuid4, UUID
-
+import tempfile
 
 class DatastoreClient:
     """
@@ -38,13 +38,13 @@ class DatastoreRestClient(DatastoreClient):
     def __init__(self, hostname: str = '0.0.0.0', port: int = 5000, sim_uuid: UUID = uuid4()) -> None:
         self._sim_uuid = sim_uuid
         self._headers = {'Accept': 'application/json'}
-        self._db_file = '.sqlite'
         self._url = f'http://{hostname}:{port}/'
-        self._started_server = 'no'
+        self._started_server = False
 
         if not self.server_is_alive():
+            _, self._db_file = tempfile.mkstemp(suffix=".sqlite")
             port = self.launch_server_thread(hostname)
-            self._started_server = 'yes'
+            self._started_server = True
             self._url = f'http://{hostname}:{port}/'
             print(f"Couldn't find server, launching a local instance: {self._url}")
 
@@ -52,7 +52,7 @@ class DatastoreRestClient(DatastoreClient):
         """
             Shuts down the datastore server if it was created by constructor
         """
-        if self._started_server == 'yes':
+        if self._started_server:
             response = requests.post(f'{self._url}stop')
             if response.status_code != 200:
                 print("Error shutting down the Datastore Server.")

@@ -1,5 +1,6 @@
 import pytest
 import os
+import tempfile
 from uuid import UUID, uuid4
 from itsim.datastore.database import DatabaseSQLite
 from itsim.schemas.items import create_json_node, create_json_network_event, create_json_log
@@ -9,7 +10,8 @@ from contextlib import contextmanager
 
 @contextmanager
 def db_file():
-    sqlite_file_name = '.sqlite'
+    _, sqlite_file_name = tempfile.mkstemp(suffix=".sqlite")
+
     try:
         if os.path.isfile(sqlite_file_name):
             os.remove(sqlite_file_name)
