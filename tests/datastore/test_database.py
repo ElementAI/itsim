@@ -23,12 +23,12 @@ def test_create_tables():
 
     with db_file() as (sqlite_file):
         sim_uuid = uuid4()
-        node_uuid = str(uuid4())
+        node_uuid = uuid4()
         timestamp = now_iso8601()
 
         node = create_json_node(sim_uuid=sim_uuid,
                                 timestamp=timestamp,
-                                uuid=str(node_uuid),
+                                uuid=node_uuid,
                                 node_label='1')
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=False)
@@ -57,7 +57,7 @@ def test_insert_node():
 
         node = create_json_node(sim_uuid=sim_uuid,
                                 timestamp=timestamp,
-                                uuid=str(node_uuid),
+                                uuid=node_uuid,
                                 node_label='1')
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
@@ -74,8 +74,8 @@ def test_insert_nework_event():
 
         network_event = create_json_network_event(sim_uuid=sim_uuid,
                                                   timestamp=now_iso8601(),
-                                                  uuid=str(uuid4()),
-                                                  uuid_node=str(uuid4()),
+                                                  uuid=uuid4(),
+                                                  uuid_node=uuid4(),
                                                   network_event_type='open',
                                                   protocol='UDP',
                                                   pid=32145,
@@ -96,7 +96,7 @@ def test_insert_log():
 
         log = create_json_log(sim_uuid=sim_uuid,
                               timestamp=now_iso8601(),
-                              uuid=str(uuid4()),
+                              uuid=uuid4(),
                               content='log msg',
                               level='DEBUG')
 

@@ -2,7 +2,7 @@ from abc import abstractmethod
 import sqlite3
 import json
 from collections import namedtuple
-from typing import Any, List
+from typing import Any, List, Optional
 
 
 class Database:
@@ -60,19 +60,12 @@ class DatabaseSQLite(Database):
 
     def select_items(self,
                      table_name: str,
-                     uuid_str: str = None,
+                     uuid_str: Optional[str] = None,
                      str_output: bool = False,
-                     from_time: str = None,
-                     to_time: str = None) -> Any:
+                     from_time: Optional[str] = None,
+                     to_time: Optional[str] = None) -> Any:
         """
             Note: add simulation uuid to queries (for supporting logging from multiple sims running at once)
-
-        :param table_name:
-        :param conditions:
-        :param str_output:
-        :param from_time:
-        :param to_time:
-        :return:
         """
         try:
             with self._conn:

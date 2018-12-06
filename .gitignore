@@ -115,3 +115,5 @@ Pipfile.lock
 # Unit test temp databases
 .sqlite
 
+# Pycharm
+.idea/

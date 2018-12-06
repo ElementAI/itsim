@@ -129,7 +129,7 @@ class DatastoreRestClient(DatastoreClient):
         response = requests.post(f'{self._url}{data.type}/{data.uuid}',
                                  headers=self._headers,
                                  json=data)
-        if response.text == 'ok':
+        if response.text != '"ok"\n':
             raise RuntimeError("Unable to store data on server (Post didn't return 'OK')")
 
     def delete(self, item_type: str, uuid: UUID) -> None:

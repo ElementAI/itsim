@@ -1,6 +1,5 @@
-import uuid
 import random
-
+from uuid import uuid4
 from itsim.schemas.items import create_json_node, create_json_network_event
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.time import now_iso8601
@@ -9,7 +8,7 @@ from time import sleep
 
 def test_datastore_logger():
     from_time = now_iso8601()
-    sim_uuid = str(uuid.uuid4())
+    sim_uuid = uuid4()
 
     datastore = DatastoreRestClient(sim_uuid=sim_uuid)
     logger = datastore.create_logger()
@@ -28,8 +27,8 @@ def test_datastore_store_load_node():
         The datastore uses a SQLite database to archive its data.
     :return:
     """
-    sim_uuid = str(uuid.uuid4())
-    node_uuid = str(uuid.uuid4())
+    sim_uuid = uuid4()
+    node_uuid = uuid4()
 
     node = create_json_node(sim_uuid=sim_uuid,
                             timestamp=now_iso8601(),
@@ -45,15 +44,15 @@ def test_datastore_store_load_node():
     node = datastore.load_item(item_type, node_uuid)
     print(f'Loaded: {node.uuid}')
 
-    assert node.uuid == node_uuid
+    assert node.uuid == str(node_uuid)
 
 
 def test_datastore_store_load_network_event():
-    sim_uuid = str(uuid.uuid4())
-    event_uuid1 = str(uuid.uuid4())
-    node_uuid1 = str(uuid.uuid4())
-    event_uuid2 = str(uuid.uuid4())
-    node_uuid2 = str(uuid.uuid4())
+    sim_uuid = uuid4()
+    event_uuid1 = uuid4()
+    node_uuid1 = uuid4()
+    event_uuid2 = uuid4()
+    node_uuid2 = uuid4()
 
     network_events = []
 
@@ -119,7 +118,7 @@ def test_datastore_store_load_network_event():
 
     item_type = 'network_event'
     node = datastore.load_item(item_type, event_uuid1)
-    assert node.uuid_node == node_uuid1
+    assert node.uuid_node == str(node_uuid1)
 
     node = datastore.load_item(item_type, event_uuid2)
-    assert node.uuid_node == node_uuid2
+    assert node.uuid_node == str(node_uuid2)

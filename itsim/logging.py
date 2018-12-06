@@ -59,7 +59,7 @@ class DatastoreFormatter(Formatter):
         log_uuid = uuid4()
         log = create_json_log(sim_uuid=self._sim_uuid,
                                timestamp=now_iso8601(),
-                               uuid=str(log_uuid),
+                               uuid=log_uuid,
                                content=record.message,
                                level=record.levelname)
         return log_uuid, log

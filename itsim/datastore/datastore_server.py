@@ -20,11 +20,22 @@ class _Item(Resource):
 
         request_time_range = request.get_json()
 
+        # items = DatabaseSQLite(sqlite_file=self._db_file).select_items(item_type,
+        #                                                                uuid,
+        #                                                                str_output=True,
+        #                                                                from_time=request_time_range['from_time'],
+        #                                                                to_time=request_time_range['to_time'])
+
+        uuid = None if uuid.lower() == 'none' else uuid
+        from_time = None if request_time_range['from_time'].lower() == 'none' else request_time_range['from_time']
+        to_time = None if request_time_range['to_time'].lower() == 'none' else request_time_range['to_time']
+
         items = DatabaseSQLite(sqlite_file=self._db_file).select_items(item_type,
                                                                        uuid,
                                                                        str_output=True,
-                                                                       from_time=request_time_range['from_time'],
-                                                                       to_time=request_time_range['to_time'])
+                                                                       from_time=from_time,
+                                                                       to_time=to_time)
+
         if items is None:
             return "Node not found", 404
         elif len(items) == 0:
