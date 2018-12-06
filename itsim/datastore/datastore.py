@@ -5,7 +5,7 @@ import os
 import logging
 from logging import Logger
 from collections import namedtuple
-from typing import Any
+from typing import Any, Optional
 from queue import Queue
 from threading import Thread, Timer
 from itsim.datastore.datastore_server import DatastoreRestServer
@@ -52,22 +52,22 @@ class DatastoreRestClient(DatastoreClient):
         """
             Shuts down the datastore server if it was created by constructor
         """
+        timeout_thr_join = 5.0
+
         if self._started_server:
             response = requests.post(f'{self._url}stop')
             if response.status_code != 200:
-                print("Error shutting down the Datastore Server.")
-            self._thr.join(timeout=5.0)
+                raise RuntimeError("Error shutting down the Datastore Server.")
+            self._thr.join(timeout=timeout_thr_join)
             if os.path.isfile(self._db_file):
                 os.remove(self._db_file)
 
     def server_is_alive(self) -> bool:
         try:
-            print(f'{self._url}isrunning/{self._sim_uuid}')
-            page = requests.get(f'{self._url}isrunning/{self._sim_uuid}')
-            if page.status_code == 200:
-                return True
-            else:
-                return False
+            is_alive_url = f'{self._url}isrunning/{self._sim_uuid}'
+            print(is_alive_url)
+            page = requests.get(is_alive_url)
+            return page.status_code == 200
         except Exception:
             return False
 
@@ -107,7 +107,8 @@ class DatastoreRestClient(DatastoreClient):
                              console_level,
                              datastore_level)
 
-    def load_item(self, item_type: str, uuid: UUID, from_time: str = None, to_time: str = None) -> str:
+    def load_item(self, item_type: str, uuid: UUID, from_time: Optional[str] = None,
+                  to_time: Optional[str] = None) -> str:
         """
             Requests GET
         """
@@ -122,7 +123,7 @@ class DatastoreRestClient(DatastoreClient):
             return json.loads(json.loads(response.content),
                               object_hook=lambda d: namedtuple('X', d.keys())(*d.values()))
 
-    def store_item(self, data: Any, overwrite: bool = True) -> None:
+    def store_item(self, data: Any, overwrite: Optional[bool] = True) -> None:
         """
             Requests POST
         """
