@@ -2,7 +2,7 @@ import logging
 import requests
 from uuid import UUID, uuid4
 from logging import Handler, Formatter, Logger
-from itsim.schemas.itsim_items import create_json_item
+from itsim.schemas.items import create_json_log
 from itsim.time import now_iso8601
 from typing import Any
 
@@ -57,9 +57,8 @@ class DatastoreFormatter(Formatter):
         """
 
         log_uuid = uuid4()
-        log = create_json_item(sim_uuid=self._sim_uuid,
+        log = create_json_log(sim_uuid=self._sim_uuid,
                                timestamp=now_iso8601(),
-                               item_type='log',
                                uuid=str(log_uuid),
                                content=record.message,
                                level=record.levelname)

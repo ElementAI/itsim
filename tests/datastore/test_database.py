@@ -2,7 +2,7 @@ import pytest
 import os
 from uuid import UUID, uuid4
 from itsim.datastore.database import DatabaseSQLite
-from itsim.schemas.itsim_items import create_json_item
+from itsim.schemas.items import create_json_node, create_json_network_event, create_json_log
 from itsim.time import now_iso8601
 from contextlib import contextmanager
 
@@ -26,9 +26,8 @@ def test_create_tables():
         node_uuid = str(uuid4())
         timestamp = now_iso8601()
 
-        node = create_json_item(sim_uuid=sim_uuid,
+        node = create_json_node(sim_uuid=sim_uuid,
                                 timestamp=timestamp,
-                                item_type='node',
                                 uuid=str(node_uuid),
                                 node_label='1')
 
@@ -56,9 +55,8 @@ def test_insert_node():
         node_uuid = uuid4()
         timestamp = now_iso8601()
 
-        node = create_json_item(sim_uuid=sim_uuid,
+        node = create_json_node(sim_uuid=sim_uuid,
                                 timestamp=timestamp,
-                                item_type='node',
                                 uuid=str(node_uuid),
                                 node_label='1')
 
@@ -74,16 +72,15 @@ def test_insert_nework_event():
     with db_file() as (sqlite_file):
         sim_uuid = uuid4()
 
-        network_event = create_json_item(sim_uuid=sim_uuid,
-                                         timestamp=now_iso8601(),
-                                         item_type="network_event",
-                                         uuid=str(uuid4()),
-                                         uuid_node=str(uuid4()),
-                                         network_event_type='open',
-                                         protocol='UDP',
-                                         pid=32145,
-                                         src=['192.168.1.1', 64],
-                                         dst=['192.168.11.200', 72])
+        network_event = create_json_network_event(sim_uuid=sim_uuid,
+                                                  timestamp=now_iso8601(),
+                                                  uuid=str(uuid4()),
+                                                  uuid_node=str(uuid4()),
+                                                  network_event_type='open',
+                                                  protocol='UDP',
+                                                  pid=32145,
+                                                  src=['192.168.1.1', 64],
+                                                  dst=['192.168.11.200', 72])
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
         database.insert_items(network_event.timestamp, network_event.sim_uuid, network_event)
@@ -97,12 +94,11 @@ def test_insert_log():
     with db_file() as (sqlite_file):
         sim_uuid = uuid4()
 
-        log = create_json_item(sim_uuid=sim_uuid,
-                               timestamp=now_iso8601(),
-                               item_type="log",
-                               uuid=str(uuid4()),
-                               content='log msg',
-                               level='DEBUG')
+        log = create_json_log(sim_uuid=sim_uuid,
+                              timestamp=now_iso8601(),
+                              uuid=str(uuid4()),
+                              content='log msg',
+                              level='DEBUG')
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
         database.insert_items(log.timestamp, log.sim_uuid, log)
@@ -118,10 +114,9 @@ def test_select_node():
         node_uuid = uuid4()
         timestamp = now_iso8601()
 
-        node = create_json_item(sim_uuid=sim_uuid,
+        node = create_json_node(sim_uuid=sim_uuid,
                                 timestamp=timestamp,
-                                item_type='node',
-                                uuid=str(node_uuid),
+                                uuid=node_uuid,
                                 node_label='1')
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
@@ -143,16 +138,15 @@ def test_select_network_event():
         sim_uuid = uuid4()
         network_uuid = uuid4()
 
-        network_event = create_json_item(sim_uuid=sim_uuid,
-                                         timestamp=now_iso8601(),
-                                         item_type="network_event",
-                                         uuid=str(network_uuid),
-                                         uuid_node=str(uuid4()),
-                                         network_event_type='open',
-                                         protocol='UDP',
-                                         pid=32145,
-                                         src=['192.168.1.1', 64],
-                                         dst=['192.168.11.200', 72])
+        network_event = create_json_network_event(sim_uuid=sim_uuid,
+                                                  timestamp=now_iso8601(),
+                                                  uuid=network_uuid,
+                                                  uuid_node=uuid4(),
+                                                  network_event_type='open',
+                                                  protocol='UDP',
+                                                  pid=32145,
+                                                  src=['192.168.1.1', 64],
+                                                  dst=['192.168.11.200', 72])
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
         database.insert_items(network_event.timestamp, network_event.sim_uuid, network_event)
@@ -171,12 +165,11 @@ def test_select_log():
     with db_file() as (sqlite_file):
         sim_uuid = uuid4()
         log_uuid = uuid4()
-        log = create_json_item(sim_uuid=sim_uuid,
-                               timestamp=now_iso8601(),
-                               item_type="log",
-                               uuid=str(log_uuid),
-                               content='log msg',
-                               level='DEBUG')
+        log = create_json_log(sim_uuid=sim_uuid,
+                              timestamp=now_iso8601(),
+                              uuid=log_uuid,
+                              content='log msg',
+                              level='DEBUG')
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
         database.insert_items(log.timestamp, log.sim_uuid, log)
@@ -191,16 +184,15 @@ def test_select_log():
 def test_select_items_timerange():
 
     def create_dummy_network_event(sim_uuid: UUID, timestamp: str, network_uuid: UUID):
-        return create_json_item(sim_uuid=str(sim_uuid),
-                                timestamp=timestamp,
-                                item_type="network_event",
-                                uuid=str(network_uuid),
-                                uuid_node=str(uuid4()),
-                                network_event_type='open',
-                                protocol='UDP',
-                                pid=32145,
-                                src=['192.168.1.1', 64],
-                                dst=['192.168.11.200', 72])
+        return create_json_network_event(sim_uuid=sim_uuid,
+                                         timestamp=timestamp,
+                                         uuid=network_uuid,
+                                         uuid_node=uuid4(),
+                                         network_event_type='open',
+                                         protocol='UDP',
+                                         pid=32145,
+                                         src=['192.168.1.1', 64],
+                                         dst=['192.168.11.200', 72])
 
     with db_file() as (sqlite_file):
         sim_uuid = uuid4()

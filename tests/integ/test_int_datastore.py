@@ -1,7 +1,7 @@
 import uuid
 import random
 
-from itsim.schemas.itsim_items import create_json_item
+from itsim.schemas.items import create_json_node, create_json_network_event
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.time import now_iso8601
 from time import sleep
@@ -30,9 +30,9 @@ def test_datastore_store_load_node():
     """
     sim_uuid = str(uuid.uuid4())
     node_uuid = str(uuid.uuid4())
-    node = create_json_item(sim_uuid=sim_uuid,
+
+    node = create_json_node(sim_uuid=sim_uuid,
                             timestamp=now_iso8601(),
-                            item_type='node',
                             uuid=node_uuid,
                             node_label="pc_001")
 
@@ -59,10 +59,9 @@ def test_datastore_store_load_network_event():
 
     # open1
     network_events.append(
-        create_json_item(
+        create_json_network_event(
             sim_uuid=sim_uuid,
             timestamp=now_iso8601(),
-            item_type="network_event",
             uuid=event_uuid1,
             uuid_node=node_uuid1,
             network_event_type='open',
@@ -74,10 +73,9 @@ def test_datastore_store_load_network_event():
 
     # open 2
     network_events.append(
-        create_json_item(
+        create_json_network_event(
             sim_uuid=sim_uuid,
             timestamp=now_iso8601(),
-            item_type="network_event",
             uuid=event_uuid2,
             uuid_node=node_uuid2,
             network_event_type='open',
@@ -89,10 +87,9 @@ def test_datastore_store_load_network_event():
 
     # close 1
     network_events.append(
-        create_json_item(
+        create_json_network_event(
             sim_uuid=sim_uuid,
             timestamp=now_iso8601(),
-            item_type="network_event",
             uuid=event_uuid1,
             uuid_node=node_uuid1,
             network_event_type='close',
@@ -104,10 +101,9 @@ def test_datastore_store_load_network_event():
 
     # close 2
     network_events.append(
-        create_json_item(
+        create_json_network_event(
             sim_uuid=sim_uuid,
             timestamp=now_iso8601(),
-            item_type="network_event",
             uuid=event_uuid2,
             uuid_node=node_uuid2,
             network_event_type='close',

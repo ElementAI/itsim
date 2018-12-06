@@ -1,7 +1,7 @@
 import os
 import uuid
 from itsim.datastore.datastore import DatastoreRestClient
-from itsim.schemas.itsim_items import create_json_item
+from itsim.schemas.items import create_json_node, create_json_network_event, create_json_log
 from itsim.time import now_iso8601
 from contextlib import contextmanager
 
@@ -29,9 +29,8 @@ def test_store_load_node():
         node_uuid = str(uuid.uuid4())
         timestamp = now_iso8601()
 
-        node = create_json_item(sim_uuid=sim_uuid,
+        node = create_json_node(sim_uuid=sim_uuid,
                                 timestamp=timestamp,
-                                item_type='node',
                                 uuid=str(node_uuid),
                                 node_label='1')
 
@@ -52,9 +51,8 @@ def test_store_load_network_event():
         sim_uuid = str(uuid.uuid4())
         network_uuid = str(uuid.uuid4())
 
-        network_event = create_json_item(sim_uuid=sim_uuid,
+        network_event = create_json_network_event(sim_uuid=sim_uuid,
                                          timestamp=now_iso8601(),
-                                         item_type="network_event",
                                          uuid=str(network_uuid),
                                          uuid_node=str(uuid.uuid4()),
                                          network_event_type='open',
@@ -80,9 +78,8 @@ def test_store_load_log():
         sim_uuid = str(uuid.uuid4())
         log_uuid = str(uuid.uuid4())
 
-        log = create_json_item(sim_uuid=sim_uuid,
+        log = create_json_log(sim_uuid=sim_uuid,
                                timestamp=now_iso8601(),
-                               item_type="log",
                                uuid=str(log_uuid),
                                content='log msg',
                                level='DEBUG')
