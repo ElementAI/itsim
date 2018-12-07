@@ -1,4 +1,4 @@
-#Itsim Datastore
+# ITsim Datastore
 
 The datastore provides a way for itsim to archive and query simulation telemetry and logs.
 
