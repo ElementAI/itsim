@@ -36,14 +36,14 @@ def test_create_tables():
 
         # Expected to fail as tables are not created in DB
         with pytest.raises(sqlite3.OperationalError):
-            database.insert_items(node.timestamp, node.sim_uuid, node)
+            database.insert_items(node)
 
         if os.path.isfile(sqlite_file):
             os.remove(sqlite_file)
 
         # Expected to pass as tables are created in DB
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
-        database.insert_items(node.timestamp, node.sim_uuid, node)
+        database.insert_items(node)
 
 
 def test_insert_node():
@@ -60,9 +60,8 @@ def test_insert_node():
                                 timestamp=timestamp,
                                 uuid=node_uuid,
                                 node_label='1')
-
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
-        database.insert_items(node.timestamp, node.sim_uuid, node)
+        database.insert_items(node)
 
 
 def test_insert_nework_event():
@@ -84,7 +83,7 @@ def test_insert_nework_event():
                                                   dst=['192.168.11.200', 72])
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
-        database.insert_items(network_event.timestamp, network_event.sim_uuid, network_event)
+        database.insert_items(network_event)
 
 
 def test_insert_log():
@@ -102,7 +101,7 @@ def test_insert_log():
                               level='DEBUG')
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
-        database.insert_items(log.timestamp, log.sim_uuid, log)
+        database.insert_items(log)
 
 
 def test_select_node():
@@ -121,7 +120,7 @@ def test_select_node():
                                 node_label='1')
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
-        database.insert_items(node.timestamp, node.sim_uuid, node)
+        database.insert_items(node)
         result = database.select_items('node', node.uuid)
         assert len(result) == 1
         assert result[0].uuid == node.uuid
@@ -150,7 +149,7 @@ def test_select_network_event():
                                                   dst=['192.168.11.200', 72])
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
-        database.insert_items(network_event.timestamp, network_event.sim_uuid, network_event)
+        database.insert_items(network_event)
         result = database.select_items('network_event', network_event.uuid)
         assert len(result) == 1
         assert result[0].uuid == network_event.uuid
@@ -173,7 +172,7 @@ def test_select_log():
                               level='DEBUG')
 
         database = DatabaseSQLite(sqlite_file=sqlite_file, create_tables_if_absent=True)
-        database.insert_items(log.timestamp, log.sim_uuid, log)
+        database.insert_items(log)
         result = database.select_items('log', log.uuid)
         assert len(result) == 1
         assert result[0].uuid == log.uuid
@@ -197,53 +196,21 @@ def test_select_items_timerange():
 
     with db_file() as (sqlite_file):
         sim_uuid = uuid4()
-
-        network_uuid = [uuid4() for _ in range(5)]
-
-        timestamp1 = now_iso8601()
+        nb_events = 5
+        network_uuid = []
+        timestamps = []
         database = DatabaseSQLite(sqlite_file=sqlite_file)
 
-        network_event_1 = create_dummy_network_event(sim_uuid, now_iso8601(), network_uuid[0])
-        database.insert_items(network_event_1.timestamp,
-                              network_event_1.sim_uuid,
-                              network_event_1)
+        for i in range(nb_events):
+            timestamps.append(now_iso8601())
+            network_uuid.append(uuid4())
+            database.insert_items(create_dummy_network_event(sim_uuid, now_iso8601(), network_uuid[i]))
+        timestamps.append(now_iso8601())
 
-        timestamp2 = now_iso8601()
-        network_event_2 = create_dummy_network_event(sim_uuid, now_iso8601(), network_uuid[1])
-        database.insert_items(network_event_2.timestamp,
-                              network_event_2.sim_uuid,
-                              network_event_2)
-
-        timestamp3 = now_iso8601()
-        network_event_3 = create_dummy_network_event(sim_uuid, now_iso8601(), network_uuid[2])
-        database.insert_items(network_event_3.timestamp,
-                              network_event_3.sim_uuid,
-                              network_event_3)
-
-        network_event_4 = create_dummy_network_event(sim_uuid, now_iso8601(), network_uuid[3])
-        database.insert_items(network_event_4.timestamp,
-                              network_event_4.sim_uuid,
-                              network_event_4)
-
-        network_event_5 = create_dummy_network_event(sim_uuid, now_iso8601(), network_uuid[4])
-        database.insert_items(network_event_5.timestamp,
-                              network_event_5.sim_uuid,
-                              network_event_5)
-
-        timestamp6 = now_iso8601()
-
-        result = database.select_items('network_event', from_time=timestamp1, to_time=timestamp2)
-        assert len(result) == 1
-        assert result[0].uuid == str(network_uuid[0])
-
-        result = database.select_items('network_event', from_time=timestamp1, to_time=timestamp3)
-        assert len(result) == 2
-        assert result[0].uuid == str(network_uuid[0])
-        assert result[1].uuid == str(network_uuid[1])
-
-        result = database.select_items('network_event', from_time=timestamp2, to_time=timestamp6)
-        assert len(result) == 4
-        assert result[0].uuid == str(network_uuid[1])
-        assert result[1].uuid == str(network_uuid[2])
-        assert result[2].uuid == str(network_uuid[3])
-        assert result[3].uuid == str(network_uuid[4])
+        for ts_index_start, ts_index_stop in [(0, 1), (0, 2), (1, nb_events - 1)]:
+            results = database.select_items('network_event',
+                                            from_time=timestamps[ts_index_start],
+                                            to_time=timestamps[ts_index_stop])
+            expected_result_len = ts_index_stop - ts_index_start
+            assert len(results) == expected_result_len
+            assert [str(network_uuid[i]) for i in range(ts_index_start, ts_index_stop)] == [r.uuid for r in results]

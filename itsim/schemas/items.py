@@ -173,18 +173,17 @@ def create_json_network_event(sim_uuid: UUID,
                               network_event_type: str,
                               protocol: str,
                               pid: int,
-                              src: List[Tuple[str,int]],
-                              dst: List[Tuple[str,int]]) -> Any:
+                              src: List[Tuple[str, int]],
+                              dst: List[Tuple[str, int]]) -> Any:
 
     creator = warlock.model_factory(NETWORK_EVENT_SCHEMA)
     json_item = creator(sim_uuid=str(sim_uuid), timestamp=timestamp, type="network_event",
                         uuid=str(uuid),
                         uuid_node=str(uuid_node),
                         network_event_type=network_event_type,
-                        protocol= protocol,
+                        protocol=protocol,
                         pid=pid,
                         src=src,
                         dst=dst)
     check_validity(json_item, NETWORK_EVENT_SCHEMA)
     return json_item
-

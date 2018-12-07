@@ -38,10 +38,7 @@ class _Item(Resource):
             return "Invalid format", 400
 
         content = request.get_json()
-        sim_uuid = content['sim_uuid']
-        timestamp = content['timestamp']
-
-        DatabaseSQLite(sqlite_file=self._db_file).insert_items(timestamp, sim_uuid, content)
+        DatabaseSQLite(sqlite_file=self._db_file).insert_items(content)
         return "ok", 201
 
     def delete(self, item_type: str, uuid: str) -> Any:

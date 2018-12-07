@@ -2,7 +2,7 @@ from abc import abstractmethod
 import sqlite3
 import json
 from collections import namedtuple
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 
 class Database:
@@ -21,7 +21,7 @@ class Database:
         pass
 
     @abstractmethod
-    def insert_items(self, time: str, sim_uuid: str, item_list: List[Any]) -> None:
+    def insert_items(self, item_list: Any) -> None:
         pass
 
 
@@ -127,7 +127,7 @@ class DatabaseSQLite(Database):
         except sqlite3.IntegrityError:
             print("SQLite select failed.")
 
-    def insert_items(self, timestamp: str, sim_uuid_str: str, items: List[Any]) -> None:
+    def insert_items(self, items: Any) -> None:
         try:
             with self._conn:
                 cursor = self._conn.cursor()
@@ -136,8 +136,7 @@ class DatabaseSQLite(Database):
                     data = []
                     for item in items:
                         table_name = item.type
-                        uuid_str = item.uuid
-                        entry = (uuid_str, timestamp, sim_uuid_str, json.dumps(item))
+                        entry = (item.uuid, item.timestamp, item.sim_uuid, json.dumps(item))
                         data.append(entry)
                     if table_name == "network_event":
                         cursor.executemany("INSERT INTO network_event VALUES (?, ?, ?, ?)", data)
@@ -149,17 +148,16 @@ class DatabaseSQLite(Database):
                 else:
                     item = items
                     table_name = item['type']
-                    uuid_str = item['uuid']
                     if table_name == "network_event":
                         cursor.execute(
                             "INSERT INTO network_event (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
-                            (uuid_str, timestamp, sim_uuid_str, json.dumps(item)))
+                            (item['uuid'], item['timestamp'], item['sim_uuid'], json.dumps(item)))
                     elif table_name == "node":
                         cursor.execute("INSERT INTO node (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
-                                       (uuid_str, timestamp, sim_uuid_str, json.dumps(item)))
+                                       (item['uuid'], item['timestamp'], item['sim_uuid'], json.dumps(item)))
                     elif table_name == "log":
                         cursor.execute("INSERT INTO log (uuid, timestamp, sim_uuid, json) VALUES (?, ?, ?, ?)",
-                                       (uuid_str, timestamp, sim_uuid_str, json.dumps(item)))
+                                       (item['uuid'], item['timestamp'], item['sim_uuid'], json.dumps(item)))
                     # TODO: add cases for all tables explicitely here
 
         except sqlite3.IntegrityError:

@@ -6,7 +6,7 @@ import random
 from uuid import uuid4
 
 """
-    Datastore client starts a datastore server if it can't connect to an existing one. 
+    Datastore client starts a datastore server if it can't connect to an existing one.
 """
 
 
@@ -16,7 +16,6 @@ def create_network_events():
     node_uuid1 = uuid4()
     event_uuid2 = uuid4()
     node_uuid2 = uuid4()
-
     network_events = []
 
     # open1

@@ -59,10 +59,10 @@ def test_store_load_log():
     log_uuid = uuid4()
 
     log = create_json_log(sim_uuid=sim_uuid,
-                           timestamp=now_iso8601(),
-                           uuid=log_uuid,
-                           content='log msg',
-                           level='DEBUG')
+                          timestamp=now_iso8601(),
+                          uuid=log_uuid,
+                          content='log msg',
+                          level='DEBUG')
 
     datastore = DatastoreRestClient(sim_uuid=sim_uuid)
 
