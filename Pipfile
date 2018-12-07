@@ -12,12 +12,16 @@ jsonschema="*"
 
 [dev-packages]
 flake8 = "*"
+ipykernel= "*"
 itsim = {editable = true, path = "."}
+jupyter = "*"
 mypy = "*"
+plotly = "*"
 pudb = "*"
 pytest = {version = ">=3.8.2", index = "pypi"}
 pytest-cov = {version = ">=2.5.1", index = "pypi"}
 pytest-xprocess = "*"
+requests = "*"
 setuptools = "*"
 sphinx = "*"
 twine = "*"
