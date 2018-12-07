@@ -117,8 +117,8 @@ class DatastoreRestClient(DatastoreClient):
                                 headers=self._headers,
                                 json={'from_time': from_time, 'to_time': to_time})
 
-        if response.status_code == 404:
-            raise RuntimeError("Unable to load data from server (Get returned status code 404)")
+        if response.status_code not in range(200, 299):
+            raise RuntimeError("Error raised while loading data from server")
             return ''
         else:
             return json.loads(json.loads(response.content),
@@ -131,8 +131,8 @@ class DatastoreRestClient(DatastoreClient):
         response = requests.post(f'{self._url}{data.type}/{data.uuid}',
                                  headers=self._headers,
                                  json=data)
-        if response.text != '"ok"\n':
-            raise RuntimeError("Unable to store data on server (Post didn't return 'OK')")
+        if response.status_code not in range(200, 299):
+            raise RuntimeError("Error raised while storing data on server")
 
     def delete(self, item_type: str, uuid: UUID) -> None:
         pass
