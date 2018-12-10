@@ -22,7 +22,7 @@ def test_dhcp_exchange():
 
     endpoints = [Endpoint().connected_to(link) for n in range(3)]
     for endpoint in endpoints:
-        endpoint.schedule_daemon(sim, 0.0, DHCPClient(endpoint._interfaces[link.cidr]))
+        endpoint.schedule_daemon_in(sim, 0.0, DHCPClient(endpoint._interfaces[link.cidr]))
         assert set(endpoint.addresses()) == set_addresses("127.0.0.1", link.cidr.network_address)
 
     sim.run(10.0 * S)

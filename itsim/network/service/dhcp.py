@@ -44,6 +44,7 @@ class Field(Enum):
     SERVER = "server"
 
 
+# Represents a reservation of a particular address in a DHCPDaemon
 class _AddressAllocation:
 
     def __init__(self, address: Address) -> None:
@@ -72,7 +73,23 @@ class _AddressAllocation:
 
 
 class DHCPDaemon(Daemon):
-    responses = {"DHCPDISCOVER": "DHCPOFFER", "DHCPREQUEST": "DHCPACK"}
+    """
+    Initialize a :py:class:`DHCPDaemon`
+
+    :param cidr:
+        The CIDR for which this instance is expected to allocate addresses
+    :param gateway_address:
+        Gateway to the Internet for this network
+    :param lease_duration:
+        Duration of address leases issued by this instance. Defaults to one day
+    :param dhcp_client_port:
+        Port used by DHCP clients on this network. Defaults to {DHCP_CLIENT_PORT}
+    :param reservation_time:
+        Maximum delay between the allocation of an address by this instance and the confirmation from the client.
+        Defaults to {RESERVATION_TIME}
+    :param size_packet_dhcp:
+        A `greensim.random.VarRandom[int]` which will be sampled to produce the sizes of packets sent by this server
+    """
 
     def __init__(self, num_host_first: int,
                  cidr: Cidr,
@@ -83,6 +100,7 @@ class DHCPDaemon(Daemon):
                  size_packet_dhcp: VarRandom[int] = num_bytes(
                      normal(DHCP_SIZE_MEAN, DHCP_SIZE_STDEV), header = DHCP_HEADER_SIZE
                  )) -> None:
+
         super().__init__(self.on_packet)
         if num_host_first <= 0:
             raise ValueError(f"num_host first >= 1 (here {num_host_first})")
@@ -103,6 +121,22 @@ class DHCPDaemon(Daemon):
         self._size_packet_dhcp = size_packet_dhcp
 
     def on_packet(self, thread: _Thread, packet: Packet, socket: Socket) -> None:
+        """
+        General-purpose method for handling all :py:class:`~itsim.network.packet.Packet` objects received.
+        This is expected to be called as result of the call to
+        :py:meth:`~itsim.machine.process_management.daemon.Daemon.trigger`
+        made by :py:meth:`~itsim.machine.Node.run_networking_daemon`
+
+        NB In the DHCP process all packets except ACK are sent to the broadcast address
+
+        :param thread:
+            The :py:class:`~itsim.machine.process_management.thread.Thread` that this method is executing in
+        :param packet:
+            The :py:class:`~itsim.network.packet.Packet` that was received
+        :param socket:
+            The :py:class:`~itsim.machine.socket.Socket` to be used for sending any
+            :py:class:`~itsim.network.packet.Packet` necessary in response
+        """
         payload = cast(Mapping[Field, Any], packet.payload)
         if Field.MESSAGE not in payload or Field.NODE_ID not in payload:
             # Don't bother processing ill-formed messages.
@@ -116,14 +150,25 @@ class DHCPDaemon(Daemon):
             address_maybe = as_address(payload[Field.ADDRESS], self._cidr)
 
         if message == DHCP.DISCOVER:
-            self.handle_discover(socket, node_id, address_maybe)
-        elif message == DHCP.REQUEST:
-            self.handle_request(socket, node_id, address_maybe)
+            self._handle_discover(socket, node_id, address_maybe)
+        elif message == DHCP.REQUEST and address_maybe is not None:
+            self._handle_request(socket, node_id, address_maybe)
         else:
             # Can't do anything with this, drop.
             return
 
-    def handle_discover(self, socket: Socket, node_id: UUID, address_maybe: Optional[Address]) -> None:
+    def _handle_discover(self, socket: Socket, node_id: UUID, address_maybe: Optional[Address]) -> None:
+        """
+        Respond to the Discover step of DHCP by allocating and broadcasting an :py:class:`~itsim.types.Address`
+
+        :param socket:
+            The :py:class:`~itsim.machine.socket.Socket` to be used for broadcasting the new allocation
+        :param node_id:
+            UUID unique to the :py:class:`~itsim.machine.Node` requesting an allocation.
+            In practice, this is a stand-in for a MAC address
+        :param address_maybe:
+            If the client requested a specific :py:class:`~itsim.types.Address`, it should be passed in here
+        """
         if address_maybe is not None and address_maybe not in self._address_allocation:
             suggestion = cast(Address, address_maybe)
         else:
@@ -154,10 +199,18 @@ class DHCPDaemon(Daemon):
         if not self._address_allocation[node_id].is_confirmed and self._address_allocation[node_id].unique == unique:
             del self._address_allocation[node_id]
 
-    def handle_request(self, socket: Socket, node_id: UUID, address_maybe: Optional[Address]) -> None:
-        if address_maybe is None:
-            return  # Never mind a REQUEST without an address.
-        address = cast(Address, address_maybe)
+    def _handle_request(self, socket: Socket, node_id: UUID, address: Address) -> None:
+        """
+        Respond to the Requesting step of DHCP by allocating and ACKing an :py:class:`~itsim.types.Address`
+
+        :param socket:
+            The :py:class:`~itsim.machine.socket.Socket` to be used for sending the ACK
+        :param node_id:
+            UUID unique to the :py:class:`~itsim.machine.Node` requesting an allocation.
+            In practice, this is a stand-in for a MAC address
+        :param address:
+            The :py:class:`~itsim.types.Address` being confirmed.
+        """
 
         if node_id in self._address_allocation and address == self._address_allocation[node_id].address:
             # This REQUEST is proper, confirming the allocation of the address.

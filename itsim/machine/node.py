@@ -94,12 +94,6 @@ class Node(_Node):
         :param ar:
             Optional address to assume as participant to the network embodied by the given link. If this is not
             provided, the address assumed is host number 0 within the CIDR associated to the link.
-        :param dhcp_with:
-            Simulator with which to launch a DHCP client to gather networking information for the link connected to.
-        :param dhcp_delay:
-            Delay advanced before DHCP client is started. This is mostly useful when instantiating an infra from
-            scratch, whereby the server starts at the same time as the client, so as to avoid undue unresponded DISCOVER
-            requests at the beginning.
         :param routes:
             List of routes known by this node in order to exchange packets with other internetworking nodes.
 
@@ -260,7 +254,15 @@ class Node(_Node):
     def with_files(self, *files: File) -> None:
         pass
 
-    def schedule_daemon(self, sim: Simulator, time: float, daemon: Daemon) -> None:
+    def schedule_daemon_in(self, sim: Simulator, time: float, daemon: Daemon) -> None:
+        """
+        Schedules a :py:meth:`Daemon.trigger` to run after a particular time.
+        This is a convenience method for :py:meth:`Node.run_proc_in`
+
+        :param sim: Simulator instance.
+        :param time: Time in the future to schedule the trigger method
+        :param daemon: Instance of :py:class:`Daemon` whose :py:meth:`Daemon.trigger` method will be scheduled
+        """
         self.run_proc_in(sim, time, daemon.trigger)
 
     def run_networking_daemon(self,
