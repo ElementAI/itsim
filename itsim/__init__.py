@@ -21,6 +21,9 @@ class ITObject(TaggedObject):
     def uuid(self) -> UUID:
         return self._uuid
 
+    def uuid_str(self) -> str:
+        return str(self._uuid)
+
     def __str__(self) -> str:
         return f"{type(self).__name__}{{{str(self.uuid)}}}"
 

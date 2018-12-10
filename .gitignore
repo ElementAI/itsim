@@ -111,3 +111,9 @@ Pipfile.lock
 
 # Vim
 .*.sw*
+
+# Unit test temp databases
+.sqlite
+
+# Pycharm
+.idea/
