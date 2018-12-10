@@ -3,7 +3,8 @@ from greensim.random import uniform, constant
 from itsim.machine.endpoint import Endpoint
 from itsim.network.link import Link
 from itsim.network.router import Router
-from itsim.network.service.dhcp import DHCPServer, DHCPClient
+from itsim.network.service.dhcp.dhcp_client import DHCPClient
+from itsim.network.service.dhcp.dhcp_server import DHCPServer
 from itsim.simulator import Simulator
 from itsim.types import Protocol, AddressRepr, as_address
 from itsim.units import S, MS, MbPS
