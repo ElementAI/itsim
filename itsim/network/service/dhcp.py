@@ -72,9 +72,10 @@ class _AddressAllocation:
         return f"AA[{self.address}, {str(self.unique)[0:3]}, {self.is_confirmed}]"
 
 
-class DHCPDaemon(Daemon):
+class DHCPServer(Daemon):
     """
-    Initialize a :py:class:`DHCPDaemon`
+    Initialize a :py:class:`DHCPDaemon`, which is a :py:class:`~itsim.machine.process_management.daemon.Daemon` for
+    handling the server side of the DHCP interaction
 
     :param cidr:
         The CIDR for which this instance is expected to allocate addresses
@@ -83,10 +84,10 @@ class DHCPDaemon(Daemon):
     :param lease_duration:
         Duration of address leases issued by this instance. Defaults to one day
     :param dhcp_client_port:
-        Port used by DHCP clients on this network. Defaults to {DHCP_CLIENT_PORT}
+        Port used by DHCP clients on this network. Defaults to 68
     :param reservation_time:
         Maximum delay between the allocation of an address by this instance and the confirmation from the client.
-        Defaults to {RESERVATION_TIME}
+        Defaults to 30 seconds
     :param size_packet_dhcp:
         A `greensim.random.VarRandom[int]` which will be sampled to produce the sizes of packets sent by this server
     """
@@ -232,7 +233,23 @@ class DHCPDaemon(Daemon):
 
 class DHCPClient(Daemon):
     """
-    NB All packets except ACK are sent to the broadcast address
+    Initialize a :py:class:`DHCPClient`, which is a :py:class:`~itsim.machine.process_management.daemon.Daemon` for
+    handling the client side of the DHCP interaction
+
+    :param interface:
+        The :py:class:`~itsim.network.interface.Interface` that this client should seek an
+        :py:class:`~itsim.types.Address` for
+    :param dhcp_server_port:
+        Port used by DHCP servers on this network. Defaults to 67
+    :param dhcp_client_port:
+        Port used by DHCP clients on this network. Defaults to 68
+    :param dhcp_client_retries:
+        Number of times to attempt requesting an address before giving up. Defaults to 3
+    :param reservation_time:
+        Maximum delay between the allocation of an address by this instance and the confirmation from the client.
+        Defaults to 30 seconds
+    :param size_packet_dhcp:
+        A `greensim.random.VarRandom[int]` which will be sampled to produce the sizes of packets sent by this client
     """
 
     def __init__(self,
@@ -253,12 +270,35 @@ class DHCPClient(Daemon):
         self._size_packet_dhcp = size_packet_dhcp
 
     def run_client(self, thread: Thread) -> None:
+        """
+        Attempt and, if necessary retry, to resolve an :py:class:`~itsim.types.Address` for the
+        :py:class:`~itsim.network.interface.Interface` that this client is assigned to
+
+        This is expected to be called as result of the call to
+        :py:meth:`~itsim.machine.process_management.daemon.Daemon.trigger`
+        made by :py:meth:`~itsim.machine.Node.run_networking_daemon`
+
+        :param thread:
+            The :py:class:`~itsim.machine.process_management.thread.Thread` that this method is executing in
+        """
         for _ in range(self._dhcp_client_retries):
             # Retry after each failure to get an address.
             if self._dhcp_get_address(thread):
                 break
 
     def _dhcp_iter_responses(self, socket: Socket, node_id: UUID, message: DHCP) -> Generator[Packet, None, None]:
+        """
+        Filter incoming :py:class:`~itsim.network.packet.Packet` objects until one is found for this client
+        or the reservation time expires, whichever comes first
+
+        :param socket:
+            The :py:class:`~itsim.machine.socket.Socket` to be used for broadcasting the new allocation
+        :param node_id:
+            UUID unique to the :py:class:`~itsim.machine.Node` requesting an allocation via this client.
+            In practice, this is a stand-in for a MAC address
+        :param message:
+            The type of message to wait on (e.g., offer)
+        """
         time_remaining = self._reservation_time
         while time_remaining >= 0.0:
             try:
@@ -271,9 +311,19 @@ class DHCPClient(Daemon):
             except Timeout:
                 return
 
-    def _dhcp_discover(self, socket: Socket, node_id: UUID, address_broadcast: Address) -> Optional[Address]:
+    def _dhcp_discover(self, socket: Socket, node_id: UUID) -> Optional[Address]:
+        """
+        Begin the Discover step of DHCP by requesting an :py:class:`~itsim.types.Address`
+
+        :param socket:
+            The :py:class:`~itsim.machine.socket.Socket` to be used for broadcasting the new allocation
+        :param node_id:
+            UUID unique to the :py:class:`~itsim.machine.Node` requesting an allocation.
+            In practice, this is a stand-in for a MAC address
+        """
+
         socket.send(
-            (address_broadcast, self._dhcp_server_port),
+            (self._interface.cidr.broadcast_address, self._dhcp_server_port),
             next(self._size_packet_dhcp),
             cast(Payload, {Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: node_id})
         )
@@ -285,38 +335,51 @@ class DHCPClient(Daemon):
 
         return None
 
-    def _dhcp_request(self,
-                      socket: Socket,
-                      node_id: UUID,
-                      address_broadcast: Address,
-                      address_proposed: Address,
-                      interface: Interface) -> bool:
+    def _dhcp_request(self, socket: Socket, node_id: UUID, address_proposed: Address) -> bool:
+        """
+        Begin the request step of DHCP by saving and confirming an :py:class:`~itsim.types.Address`
+
+        :param socket:
+            The :py:class:`~itsim.machine.socket.Socket` to be used for broadcasting the new allocation
+        :param node_id:
+            UUID unique to the :py:class:`~itsim.machine.Node` requesting an allocation.
+            In practice, this is a stand-in for a MAC address
+        :param address_proposed:
+            The :py:class:`~itsim.types.Address` that was offered and should be confirmed
+        """
+
         socket.send(
-            (address_broadcast, self._dhcp_server_port),
+            (self._interface.cidr.broadcast_address, self._dhcp_server_port),
             next(self._size_packet_dhcp),
             cast(Payload, {Field.MESSAGE: DHCP.REQUEST, Field.NODE_ID: node_id, Field.ADDRESS: address_proposed})
         )
 
         # Set the interface to the new address, in the expecation it will be confirmed
-        address_orig = interface.address
+        address_orig = self._interface.address
         # NB this affects the action of socket.recv(), so it must come before that call
-        interface.address = cast(Address, address_proposed)
+        self._interface.address = cast(Address, address_proposed)
         # Wait for our ACK.
         for packet in self._dhcp_iter_responses(socket, node_id, DHCP.ACK):
             if packet.dest.hostname_as_address() == address_proposed:
                 return True
         # The address was not confirmed, fall back
-        interface.address = address_orig
+        self._interface.address = address_orig
         return False
 
     def _dhcp_get_address(self, thread: Thread) -> bool:
+        """
+        Make a single attempt to resolve an :py:class:`~itsim.types.Address` for the
+        :py:class:`~itsim.network.interface.Interface` that this client is assigned to
+
+        :param thread:
+            The :py:class:`~itsim.machine.process_management.thread.Thread` that this method is executing in
+        """
         node_id = thread.process.node.uuid
         try:
-            broadcast_address = self._interface.cidr.broadcast_address
             with thread.process.node.bind(Protocol.UDP, self._dhcp_client_port, thread.process.pid) as socket:
-                address = self._dhcp_discover(socket, node_id, broadcast_address)
+                address = self._dhcp_discover(socket, node_id)
                 if address is not None:
-                    return self._dhcp_request(socket, node_id, broadcast_address, address, self._interface)
+                    return self._dhcp_request(socket, node_id, address)
 
         except Timeout:
             pass
