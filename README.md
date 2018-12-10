@@ -17,27 +17,30 @@ To install on Linux:
 
 ## Log level meaning
 
-1. **CRITICAL** -- An unrecoverable error condition has been encountered.
-   - Expect things to go boom.
+1. **CRITICAL** -- An unrecoverable error condition has been encountered. The
+   simulation process is crashing.
    - In any case, discard all telemetry generated beyond this message.
    - This occurrence should be investigated so as to determine whether it has
      been caused by the simulated model or by ITsim routines. In the latter
      case, submit a bug report; any data collected from the simulation that
      you can share would help.
-1. **ERROR** -- An error condition has been encountered, and this condition
-   will either be fixed, recovered or tolerated.
+1. **ERROR** -- A recoverable error condition has been encountered, leading to
+   a certain waste of computation time.
    - The simulation should keep running.
-   - Telemetry beyond this message is likely good, but should be treated as
-     suspicious.
-   - This occurrence should be investigated so as to determine whether it has
-     been caused by the simulated model or by ITsim routines. In the latter
-     case, submit a bug report; any data collected from the simulation that
-     you can share would help.
-1. **WARNING** -- An anomalous condition has been encountered, but this is
-   very unlikely to represent a problem.
+   - Telemetry beyond this message is good.
+   - This situation reveals an issue with the simulation code. It should be
+     investigated so as to determine whether it has been caused by the
+     simulated model or by ITsim routines.
+     - In the former case, please proceed with fixing your model code before
+       running another simulation with the intent of capturing and using the
+       output.
+     - In the latter case, submit a bug report; any data collected from the
+       simulation that you can share would help.
+1. **WARNING** -- An anomalous condition yet correct situation has been
+   encountered: a code path known or expected to be rarely run.
    - This occurrence should be investigated so as to determine whether it
      stems from a bug, either in the simulated model or in ITsim routines. In
-     the latter cases, submit a bug report; any data collected from the
+     the latter case, submit a bug report; any data collected from the
      simulation that you can share would help.
 1. **INFO** -- Default log level. Reports information regarding simulation
    progress that is meaningful to the users of a model.
