@@ -247,7 +247,7 @@ class Node(_Node):
     def proc_exit(self, p: Process) -> None:
         self._proc_set -= set([p])
 
-    def with_proc_at(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
+    def with_proc_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
         self.run_proc_in(sim, time, f, *args, **kwargs)
         return self
 
