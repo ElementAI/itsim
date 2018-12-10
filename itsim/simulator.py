@@ -1,8 +1,16 @@
 import greensim
+from uuid import UUID
 
 
 class Simulator(greensim.Simulator):
-    pass
+
+    # Todo: validate this in unit tests.
+    @property
+    def uuid(self) -> UUID:
+        return UUID(self._name)
+
+    def uuid_str(self) -> str:
+        return str(self.uuid)
 
 
 add = greensim.add
