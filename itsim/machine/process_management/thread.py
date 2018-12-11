@@ -69,7 +69,7 @@ class Thread(_Thread):
     def __str__(self):
         return "(%s)" % ", ".join([str(y) for y in [
             self._sim,
-            self._process,
+            self._process.pid,
             self._n,
             self._scheduled
         ]])

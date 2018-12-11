@@ -82,11 +82,11 @@ class Process(_Process):
 
     def __str__(self):
         return "(%s)" % ", ".join([str(y) for y in [
-            self._children,
-            self._parent,
+            [c.pid for c in self._children],
+            self._parent.pid if self._parent is not None else "<no parent>",
             self._threads,
             self._n,
-            self._node,
+            f'Node({", ".join(str(addr) for addr in self._node.addresses())})',
             self._thread_counter
         ]])
 
