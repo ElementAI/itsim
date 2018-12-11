@@ -15,40 +15,40 @@ class Dashboard(ITObject):
         self._sim = sim
 
     def exit(self) -> None:
-        pass
+        raise NotImplementedError()
 
     def run_proc(self, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Process:
-        pass
+        raise NotImplementedError()
 
     def run_proc_in(self, delay: float, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Process:
-        pass
+        raise NotImplementedError()
 
     def wait_proc(self, timeout: Optional[float] = None) -> _Process:
-        pass
+        raise NotImplementedError()
 
     def run_thread(self, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Thread:
-        pass
+        raise NotImplementedError()
 
     def run_thread_in(self, delay: float, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Thread:
-        pass
+        raise NotImplementedError()
 
     def now(self) -> float:
         return self._sim.now()
 
     def bind(self, protocol: Protocol = Protocol.NONE, pr: PortRepr = 0) -> _Socket:
-        pass
+        raise NotImplementedError()
 
     def addresses(self) -> Generator[Address, None, None]:
-        pass
+        raise NotImplementedError()
 
     @property
     def current_thread(self) -> _Thread:
-        pass
+        raise NotImplementedError()
 
     @property
     def current_process(self) -> _Process:
-        pass
+        raise NotImplementedError()
 
     @property
     def local_node(self) -> _Node:
-        pass
+        raise NotImplementedError()
