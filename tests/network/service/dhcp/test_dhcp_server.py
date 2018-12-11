@@ -75,6 +75,9 @@ def test_on_packet_drop(server):
     feed_on_packet({Field.MESSAGE: 0}, server)
     feed_on_packet({Field.MESSAGE: 0, Field.NODE_ID: 0}, server)
 
+    # No Address is supplied to Request
+    feed_on_packet({Field.MESSAGE: DHCP.REQUEST, Field.NODE_ID: uuid4()}, server)
+
     server._handle_discover.assert_not_called()
     server._handle_request.assert_not_called()
 
@@ -162,7 +165,67 @@ def test_decline():
                            server=server,
                            mock_sock=mock_sock)
             if i < server._num_hosts_max:
-                print()
                 mock_sock.send.assert_called_once()
             else:
                 mock_sock.send.assert_not_called()
+
+
+@patch("itsim.machine.socket.Socket")
+def test_handle_request_drop(mock_sock, server):
+    address = as_address("192.168.1.2")
+    bogus = as_address("192.168.1.3")
+    node_id = uuid4()
+    feed_on_packet({Field.MESSAGE: DHCP.DISCOVER,
+                    Field.NODE_ID: node_id,
+                    Field.ADDRESS: address},
+                   server=server,
+                   mock_sock=mock_sock)
+
+    # The Discover should trigger one response
+    mock_sock.send.assert_called_once()
+
+    # A different UUID is supplied
+    feed_on_packet({Field.MESSAGE: DHCP.REQUEST,
+                    Field.NODE_ID: uuid4(),
+                    Field.ADDRESS: address},
+                   server=server,
+                   mock_sock=mock_sock)
+
+    # A different Address is supplied
+    feed_on_packet({Field.MESSAGE: DHCP.REQUEST,
+                    Field.NODE_ID: uuid4(),
+                    Field.ADDRESS: bogus},
+                   server=server,
+                   mock_sock=mock_sock)
+
+    # Both Requests should be ignored
+    mock_sock.send.assert_called_once()
+
+
+def test_request(server):
+    address = as_address("192.168.1.2")
+    node_id = uuid4()
+
+    feed_on_packet({Field.MESSAGE: DHCP.DISCOVER,
+                    Field.NODE_ID: node_id,
+                    Field.ADDRESS: address},
+                   server=server)
+
+    with patch("itsim.machine.socket.Socket") as mock_sock:
+        feed_on_packet({Field.MESSAGE: DHCP.REQUEST,
+                        Field.NODE_ID: node_id,
+                        Field.ADDRESS: address},
+                       server=server,
+                       mock_sock=mock_sock)
+
+        mock_sock.send.assert_called_once_with((address, server._dhcp_client_port),
+                                               1,
+                                               {Field.MESSAGE: DHCP.ACK,
+                                                Field.ADDRESS: address,
+                                                Field.NODE_ID: node_id,
+                                                Field.LEASE_DURATION: server._lease_duration})
+
+    assert node_id in server._address_allocation
+    assert server._address_allocation[node_id].is_confirmed
+    assert address == server._address_allocation[node_id].address
+    assert server._reserved[address]
