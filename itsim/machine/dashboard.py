@@ -18,10 +18,10 @@ class Dashboard(ITObject):
         raise NotImplementedError()
 
     def run_proc(self, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Process:
-        raise NotImplementedError()
+        return self.run_proc_in(0, fn, *args, **kwargs)
 
     def run_proc_in(self, delay: float, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Process:
-        raise NotImplementedError()
+        return self.node.run_proc_in(self._sim, delay, fn, *args, **kwargs)
 
     def wait_proc(self, timeout: Optional[float] = None) -> _Process:
         raise NotImplementedError()
@@ -36,7 +36,7 @@ class Dashboard(ITObject):
         return self._sim.now()
 
     def bind(self, protocol: Protocol = Protocol.NONE, pr: PortRepr = 0) -> _Socket:
-        return self.local_node.bind(protocol, pr, self.process.pid)
+        return self.node.bind(protocol, pr, self.process.pid)
 
     def addresses(self) -> Generator[Address, None, None]:
         raise NotImplementedError()
@@ -50,5 +50,5 @@ class Dashboard(ITObject):
         return self.thread.process
 
     @property
-    def local_node(self) -> _Node:
+    def node(self) -> _Node:
         return self.process.node
