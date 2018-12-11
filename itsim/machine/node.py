@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from itertools import cycle
-from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union, Tuple
+from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union, Tuple, Any
 import weakref
 
 from itsim.network.route import Route
@@ -248,6 +248,9 @@ class Node(_Node):
 
     def proc_exit(self, p: Process) -> None:
         self._proc_set -= set([p])
+
+    def with_proc(self, sim: Simulator, f: Callable[..., None], *args: Any, **kwargs: Any) -> _Node:
+        return self.with_proc_in(sim, 0, f, *args, **kwargs)
 
     def with_proc_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
         self.run_proc_in(sim, time, f, *args, **kwargs)
