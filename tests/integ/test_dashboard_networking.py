@@ -3,7 +3,7 @@ from typing import Set, Mapping, Any
 import pytest
 
 from greensim.random import constant
-from itsim.machine.api import API
+from itsim.machine.dashboard import Dashboard
 from itsim.machine.endpoint import Endpoint
 from itsim.network.link import Link
 from itsim.simulator import Simulator, advance
@@ -26,30 +26,30 @@ TIME_TRANSFER = LATENCY + LEN_PACKET / BANDWIDTH
 PORT_SERVICE = 10987
 
 
-def get_my_address(api: API) -> Address:
-    for addr in api.addresses():
+def get_my_address(d: Dashboard) -> Address:
+    for addr in d.addresses():
         if addr in CIDR:
             return addr
     else:
         raise RuntimeError("Why does this node have no address?")
 
 
-def client(api: API) -> None:
-    num = int(get_my_address(api)) - int(CIDR.network_address)
-    with api.bind(Protocol.UDP) as socket:
+def client(d: Dashboard) -> None:
+    num = int(get_my_address(d)) - int(CIDR.network_address)
+    with d.bind(Protocol.UDP) as socket:
         assert socket.port != PORT_SERVICE
         socket.send((as_address(NUM_ENDPOINTS - num - 1, CIDR), PORT_SERVICE), LEN_PACKET)
 
 
-def server(api: API, log: Log) -> None:
-    address = api.addresses()
-    with api.bind(Protocol.UDP, PORT_SERVICE) as socket:
+def server(d: Dashboard, log: Log) -> None:
+    address = d.addresses()
+    with d.bind(Protocol.UDP, PORT_SERVICE) as socket:
         packet = socket.recv()
         assert address == packet.dest.hostname_as_address()
         log.append((packet.src.hostname_as_address(), packet.dest.hostname_as_address()))
 
 
-def test_api_networking() -> None:
+def test_dashboard_networking() -> None:
     assert NUM_ENDPOINTS > 0
     log: Log = set()
 

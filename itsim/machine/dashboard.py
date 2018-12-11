@@ -7,7 +7,7 @@ from itsim.simulator import Simulator
 from itsim.types import Protocol, PortRepr, Address
 
 
-class API(ITObject):
+class Dashboard(ITObject):
 
     def __init__(self, thread: _Thread, sim: Simulator) -> None:
         super().__init__()
