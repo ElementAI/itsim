@@ -1,5 +1,6 @@
 from .__init__ import _Process, _Thread
 
+from itsim.machine.dashboard import Dashboard
 from itsim.simulator import Simulator
 from itsim.utils import assert_list
 
@@ -29,7 +30,7 @@ class Thread(_Thread):
     def clone_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
         # Convenient object for putting in the tracking set
         def func() -> None:
-            f(self, *args, **kwargs)  # type: ignore
+            f(Dashboard(self, self._sim), *args, **kwargs)  # type: ignore
 
         # Run the function as requested in arguments, then call back home
         def call_and_callback() -> None:

@@ -1,3 +1,4 @@
+from itsim.machine.dashboard import Dashboard
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
 from itsim.simulator import Simulator
@@ -119,8 +120,8 @@ def test_callback_args(mock_proc):
     class AdHocError(Exception):
         pass
 
-    def f(thread, arg, kwarg):
-        if arg == 0 and kwarg == 1:
+    def f(dashboard, arg, kwarg):
+        if isinstance(dashboard, Dashboard) and arg == 0 and kwarg == 1:
             raise AdHocError()
 
     thread.clone(f, 0, kwarg=1)
