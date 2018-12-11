@@ -1,7 +1,7 @@
 from .__init__ import _Process
 
 from itsim.machine import _Node
-from itsim.simulator import Simulator
+from itsim.simulator import Simulator, Event
 from itsim.machine.process_management.thread import Thread
 from itsim.types import Interrupt
 from itsim.utils import assert_list
@@ -17,16 +17,22 @@ class Process(_Process):
     """
     def __init__(self, n: int, node: _Node, parent: Optional[_Process] = None) -> None:
         super().__init__()
-        self._children: Set[_Process] = set()
-        self._parent: Optional[_Process] = parent
-        self._threads: Set[Thread] = set()
         self._n: int = n
         self._node: _Node = node
+        self._parent: Optional[_Process] = parent
+        if parent is not None:
+            parent._add_child(self)
+        self._children: Set[_Process] = set()
+        self._threads: Set[Thread] = set()
         self._thread_counter: int = 0
+        self._event_dead = Event()
 
     @property
     def children(self) -> Set[_Process]:
         return self._children
+
+    def _add_child(self, child: _Process) -> None:
+        self._children.add(child)
 
     @property
     def node(self) -> _Node:
@@ -50,6 +56,7 @@ class Process(_Process):
     def thread_complete(self, t: Thread):
         self._threads -= set([t])
         if self._threads == set():
+            self._event_dead.fire()
             if self._parent is not None:
                 self._parent.child_complete(self)
             self._node.proc_exit(self)
@@ -63,11 +70,8 @@ class Process(_Process):
     def kill(self) -> int:
         pass
 
-    def fork_exec(self, f: Callable[[Thread], None], *args, **kwargs) -> _Process:
-        kid = self._node.fork_exec(f, *args, **kwargs)
-        kid._parent = self
-        self._children |= set([kid])
-        return kid
+    def wait(self, timeout: Optional[float] = None) -> None:
+        self._event_dead.wait(timeout)
 
     def __eq__(self, other: Any) -> bool:
         # NB: MagicMock overrides the type definition and makes this check fail if _Process is replaced with Process

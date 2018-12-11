@@ -34,7 +34,7 @@ def seth(d: Dashboard, cemetary: Cemetary, child: Name2Child) -> None:
     cemetary.add("seth")
 
 
-def humanity(d: Dashboard) -> None:
+def humanity(d: Dashboard, *_) -> None:
     advance(100000)  # Will not end.
 
 

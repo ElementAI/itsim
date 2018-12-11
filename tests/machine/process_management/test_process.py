@@ -1,7 +1,9 @@
+from itsim.machine.dashboard import Dashboard
 from itsim.machine.node import Node
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
-from itsim.simulator import Simulator
+from itsim.simulator import Simulator, advance
+from itsim.types import Timeout
 from itsim.utils import assert_list
 
 from pytest import fixture
@@ -107,36 +109,63 @@ def test_thread_complete(mock_sim, mock_node, mock_proc):
 
 
 @patch("itsim.machine.node.Node")
-def test_fork_exec(mock_node):
-    proc = Process(0, mock_node)
-
-    def f():
-        pass
-
-    kid = proc.fork_exec(f)
-    mock_node.fork_exec.assert_called_with(f)
-    assert proc == kid._parent
-    assert set([kid]) == proc._children
-
-
-@patch("itsim.machine.node.Node")
-def test_fork_exec_args(mock_node):
-    proc = Process(0, mock_node)
-
-    def f():
-        pass
-
-    args = (1, 2, 3)
-    kwargs = {"a": 0, "b": 1}
-    kid = proc.fork_exec(f, *args, **kwargs)
-    mock_node.fork_exec.assert_called_with(f, *args, **kwargs)
-    assert proc == kid._parent
-    assert set([kid]) == proc._children
+def test_parent_child_relationship(mock_node):
+    parent = Process(0, mock_node)
+    kid = Process(1, mock_node, parent)
+    assert parent._parent is None
+    assert kid._parent is parent
+    assert parent._children == {kid}
+    assert len(kid._children) == 0
 
 
 @patch("itsim.machine.node.Node")
 def test_child_complete(mock_node):
-    proc = Process(0, mock_node)
-    kid = proc.fork_exec(lambda: 0)
-    proc.child_complete(kid)
-    assert set() == proc._children
+    parent = Process(0, mock_node)
+    kid = Process(1, mock_node, parent)
+    parent.child_complete(kid)
+    assert set() == parent._children
+
+
+def run_process_wait_test(timeout, expected, has_thread = True, delay_before_wait = 0):
+    with patch("itsim.machine.node.Node") as mock_node:
+        def thread_behaviour(dashboard: Dashboard):
+            advance(10)
+
+        sim = Simulator()
+        proc = Process(1234, mock_node)
+        if has_thread:
+            proc.exc(sim, thread_behaviour)
+        log = []
+
+        def wait_for_proc():
+            advance(delay_before_wait)
+            try:
+                proc.wait(timeout)
+                log.append("complete")
+            except Timeout:
+                log.append("timeout")
+
+        sim.add(wait_for_proc)
+        sim.run()
+
+        assert log == [expected]
+
+
+def test_process_wait_no_more_thread():
+    run_process_wait_test(None, "complete", True, 20)
+
+
+def test_process_wait_complete_no_timeout():
+    run_process_wait_test(None, "complete")
+
+
+def test_process_wait_complete_with_timeout():
+    run_process_wait_test(20, "complete")
+
+
+def test_process_wait_timeout():
+    run_process_wait_test(5, "timeout")
+
+
+def test_process_wait_no_thread_not_started():
+    run_process_wait_test(100, "timeout", False)
