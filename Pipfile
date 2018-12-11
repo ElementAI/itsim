@@ -16,6 +16,7 @@ ipykernel= "*"
 itsim = {editable = true, path = "."}
 jupyter = "*"
 mypy = "*"
+numpy = "*"
 plotly = "*"
 pudb = "*"
 pytest = {version = ">=3.8.2", index = "pypi"}
