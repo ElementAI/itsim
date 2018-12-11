@@ -1,7 +1,5 @@
 from enum import Enum, unique
-from uuid import UUID, uuid4
 
-from itsim.types import Address
 from itsim.units import B, S
 
 

@@ -1,11 +1,11 @@
 from itertools import cycle
 from typing import Any, cast, Mapping, MutableMapping, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from greensim.random import normal, VarRandom
 
-from .__init__ import _AddressAllocation, DHCP, DHCP_CLIENT_PORT, DHCP_HEADER_SIZE, DHCP_SIZE_MEAN, DHCP_SIZE_STDEV, \
-    Field, LEASE_DURATION, RESERVATION_TIME
+from .__init__ import DHCP, DHCP_CLIENT_PORT, DHCP_HEADER_SIZE, DHCP_SIZE_MEAN, DHCP_SIZE_STDEV, Field, \
+    LEASE_DURATION, RESERVATION_TIME
 
 from itsim.network.packet import Packet
 from itsim.machine.process_management import _Thread
@@ -14,6 +14,7 @@ from itsim.machine.socket import Socket
 from itsim.random import num_bytes
 from itsim.simulator import advance
 from itsim.types import Address, as_address, Cidr, Payload
+
 
 # Represents a reservation of a particular address in a DHCPServer
 class _AddressAllocation:
@@ -41,6 +42,7 @@ class _AddressAllocation:
 
     def __repr__(self) -> str:
         return f"AA[{self.address}, {str(self.unique)[0:3]}, {self.is_confirmed}]"
+
 
 class DHCPServer(Daemon):
     """
@@ -76,6 +78,7 @@ class DHCPServer(Daemon):
         if num_host_first <= 0:
             raise ValueError(f"num_host first >= 1 (here {num_host_first})")
         self._address_allocation: MutableMapping[UUID, _AddressAllocation] = {}
+        self._reserved: MutableMapping[Address, bool] = {}
         self._cidr = cidr
         upper_num_host = int(self._cidr.hostmask)
         if num_host_first >= upper_num_host:
@@ -145,13 +148,14 @@ class DHCPServer(Daemon):
         else:
             for _ in range(self._num_hosts_max):
                 suggestion = next(self._seq_num_hosts)
-                if suggestion not in self._address_allocation:
+                if suggestion not in self._reserved:
                     break
             else:
                 # Decline to allocate as per https://tools.ietf.org/html/rfc2131#section-4.3.1
                 return
 
         self._address_allocation[node_id] = _AddressAllocation(suggestion)
+        self._reserved[suggestion] = True
         socket.send(
             (self._cidr.broadcast_address, self._dhcp_client_port),
             next(self._size_packet_dhcp),
@@ -168,6 +172,7 @@ class DHCPServer(Daemon):
         unique = self._address_allocation[node_id].unique
         advance(self._reservation_time)
         if not self._address_allocation[node_id].is_confirmed and self._address_allocation[node_id].unique == unique:
+            del self._reserved[self._address_allocation[node_id].address]
             del self._address_allocation[node_id]
 
     def _handle_request(self, socket: Socket, node_id: UUID, address: Address) -> None:
