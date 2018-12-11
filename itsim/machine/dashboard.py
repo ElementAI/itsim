@@ -23,9 +23,6 @@ class Dashboard(ITObject):
     def run_proc_in(self, delay: float, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Process:
         return self.node.run_proc_in(self._sim, delay, fn, *args, **kwargs)
 
-    def wait_proc(self, timeout: Optional[float] = None) -> _Process:
-        raise NotImplementedError()
-
     def run_thread(self, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Thread:
         return self.run_thread_in(0, fn, *args, **kwargs)
 

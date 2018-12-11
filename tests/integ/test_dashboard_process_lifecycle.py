@@ -12,7 +12,7 @@ Cemetary = Set[str]
 Name2Child = Mapping[str, Process]
 
 
-def cain(d: Dashboard, cemetary: Cemetary, child: Name2Child):
+def cain(d: Dashboard, cemetary: Cemetary, child: Name2Child) -> None:
     advance(130)
     assert d.process is child["cain"]
     child["abel"].kill()
@@ -20,7 +20,7 @@ def cain(d: Dashboard, cemetary: Cemetary, child: Name2Child):
     cemetary.add("cain")
 
 
-def abel(d: Dashboard, cemetary: Cemetary, child: Name2Child):
+def abel(d: Dashboard, cemetary: Cemetary, child: Name2Child) -> None:
     assert d.process is child["abel"]
     try:
         advance(1000)
@@ -28,26 +28,30 @@ def abel(d: Dashboard, cemetary: Cemetary, child: Name2Child):
         cemetary.add("abel")
 
 
-def seth(d: Dashboard, cemetary: Cemetary, child: Name2Child):
+def seth(d: Dashboard, cemetary: Cemetary, child: Name2Child) -> None:
     assert d.process is child["seth"]
     advance(912)
     cemetary.add("seth")
 
 
-def adameve(d: Dashboard, cemetary: Cemetary):
+def humanity(d: Dashboard) -> None:
+    advance(100000)  # Will not end.
+
+
+def adameve(d: Dashboard, cemetary: Cemetary) -> None:
     child: Name2Child = {}
-    for name, moment in [(cain, 0), (abel, 0), (seth, 122)]:
-        child[name] = d.run_proc_in(moment, name, cemetary, child)
+    for name, moment in [(cain, 0), (abel, 0), (seth, 122), (humanity, 0)]:
+        child[name.__name__] = d.run_proc_in(moment, name, cemetary, child)
 
     for name_expected, moment in [("abel", 130), ("cain", 730), ("seth", 130 + 912)]:
-        proc_dead = d.wait_proc()
+        child[name_expected].wait()
         assert d.now() == pytest.approx(moment)
-        for name, proc in child.items():
-            if proc.pid == proc_dead.pid:
-                assert name == name_expected
-                break
-        else:
-            pytest.fail("Death of an unexpected process.")
+
+    try:
+        child["humanity"].wait(2000)
+        pytest.fail("Humanity has yet to start killing itself with CO2.")
+    except Timeout:
+        pass
 
     cemetary.add("adameve")
 
@@ -55,6 +59,6 @@ def adameve(d: Dashboard, cemetary: Cemetary):
 def test_dashboard_process_lifecycle():
     sim = Simulator()
     cemetary = set()
-    Endpoint().with_proc_in(sim, 0, adameve, cemetary)
-    sim.run()
+    Endpoint().with_proc(sim, adameve, cemetary)
+    sim.run(4000)
     assert cemetary == {"adameve", "cain", "abel", "seth"}
