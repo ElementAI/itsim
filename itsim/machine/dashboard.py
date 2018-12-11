@@ -27,28 +27,28 @@ class Dashboard(ITObject):
         raise NotImplementedError()
 
     def run_thread(self, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Thread:
-        raise NotImplementedError()
+        return self.run_thread_in(0, fn, *args, **kwargs)
 
     def run_thread_in(self, delay: float, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Thread:
-        raise NotImplementedError()
+        return self.process.exc_in(self._sim, delay, fn, *args, **kwargs)
 
     def now(self) -> float:
         return self._sim.now()
 
     def bind(self, protocol: Protocol = Protocol.NONE, pr: PortRepr = 0) -> _Socket:
-        raise NotImplementedError()
+        return self.local_node.bind(protocol, pr, self.process.pid)
 
     def addresses(self) -> Generator[Address, None, None]:
         raise NotImplementedError()
 
     @property
-    def current_thread(self) -> _Thread:
-        raise NotImplementedError()
+    def thread(self) -> _Thread:
+        return self._thread
 
     @property
-    def current_process(self) -> _Process:
-        raise NotImplementedError()
+    def process(self) -> _Process:
+        return self.thread.process
 
     @property
     def local_node(self) -> _Node:
-        raise NotImplementedError()
+        return self.process.node

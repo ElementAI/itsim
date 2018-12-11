@@ -1,5 +1,5 @@
+from itsim.machine.dashboard import Dashboard
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.process_management import _Thread
 from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.socket import Socket
 from itsim.network.location import Location
@@ -15,7 +15,7 @@ port_list = [80, 123, 321, 433]
 
 
 @end.networking_daemon(sim, Protocol.TCP, 80, 433)
-def net_a(thread: _Thread, packet: Packet, socket: Socket) -> None:
+def net_a(dashboard: Dashboard, packet: Packet, socket: Socket) -> None:
     global packet_count
 
     if packet.dest.port in packet_count:
@@ -24,7 +24,7 @@ def net_a(thread: _Thread, packet: Packet, socket: Socket) -> None:
         packet_count[packet.dest.port] = 1
 
     # Exactly one additional Thread should be available for more incoming packets
-    assert len(thread._process._threads) == 2
+    assert len(dashboard.process._threads) == 2
 
 
 @end.networking_daemon(sim, Protocol.UDP, 123, 321)

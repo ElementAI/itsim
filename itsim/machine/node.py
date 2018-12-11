@@ -9,6 +9,7 @@ from itsim.network.link import Link, Loopback
 from itsim.network.location import Location
 from itsim.network.packet import Packet
 from itsim.machine import _Node
+from itsim.machine.dashboard import Dashboard
 from itsim.machine.file_system import File
 from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.process_management.process import Process
@@ -280,10 +281,10 @@ class Node(_Node):
         for port in ports:
             new_sock = self.bind(protocol, port)
 
-            def forward_recv(thread: Thread, socket: Socket):
-                pack = socket.recv()
-                thread._process.exc(sim, forward_recv, socket)
-                daemon.trigger(thread, pack, socket)
+            def forward_recv(dashboard: Dashboard, socket: Socket):
+                packet = socket.recv()
+                dashboard.run_thread(forward_recv, socket)
+                daemon.trigger(dashboard, packet, socket)
 
             self.run_proc(sim, forward_recv, new_sock)
 

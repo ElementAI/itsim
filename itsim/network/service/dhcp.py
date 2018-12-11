@@ -1,7 +1,8 @@
 from greensim.random import normal
 
 from itsim.network import _Packet
-from itsim.machine.node import Socket
+from itsim.machine.dashboard import Dashboard
+from itsim.machine.socket import Socket
 from itsim.machine.process_management import _Thread
 from itsim.machine.process_management.daemon import Daemon
 from itsim.random import num_bytes
@@ -15,7 +16,7 @@ class DHCPDaemon(Daemon):
     def __init__(self) -> None:
         pass
 
-    def _trigger_event(self, thread: _Thread, packet: _Packet, socket: Socket) -> None:
+    def _trigger_event(self, dashboard: Dashboard, packet: _Packet, socket: Socket) -> None:
         type_msg = packet.payload["content"]
         if type_msg in self.responses:
             socket.send(packet.source,

@@ -2,8 +2,8 @@ from typing import Set
 
 from greensim.random import uniform, constant
 
+from itsim.machine.dashboard import Dashboard
 from itsim.machine.endpoint import Endpoint
-from itsim.machine.process_management.thread import Thread
 from itsim.network.link import Link
 from itsim.simulator import Simulator, advance
 from itsim.types import Address, as_address
@@ -23,14 +23,14 @@ class EndpointChattering(Endpoint):
         self.run_proc(sim, self.server)
         self.run_proc(sim, self.client)
 
-    def server(self, thread: Thread):
-        with thread.process.node.bind(Protocol.UDP, 10000) as socket:
+    def server(self, dashboard: Dashboard):
+        with dashboard.bind(Protocol.UDP, 10000) as socket:
             while True:
                 packet = socket.recv()
                 self._peers.add(packet.source.hostname_as_address())
 
-    def client(self, thread: Thread):
-        with thread.process.node.bind(Protocol.UDP) as socket:
+    def client(self, dashboard: Dashboard):
+        with dashboard.bind(Protocol.UDP) as socket:
             while True:
                 advance(next(self._interval_broadcast))
                 for interface in self.interfaces():
