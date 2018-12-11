@@ -2,7 +2,7 @@ from typing import Set, Mapping
 
 import pytest
 
-from itsim.machine.dashboard import Dashboard
+from itsim.machine.dashboard import Dashboard, Timeout
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.process_management.process import Process
 from itsim.simulator import Simulator, advance
@@ -17,27 +17,27 @@ def watcher(d: Dashboard, cemetary: Cemetary, proc_parent: Process) -> None:
 
 
 def grandchild(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
-    assert d.current_process.pid == pid_expected
+    assert d.process.pid == pid_expected
     advance(20)
     cemetary.add("grandchild")
 
 
 def elder(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
-    assert d.current_process.pid == pid_expected
+    assert d.process.pid == pid_expected
     thread_grandchild = d.run_thread(grandchild, pid_expected, cemetary)
     thread_grandchild.join()
     cemetary.add("elder")
 
 
 def cadet(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
-    assert d.current_process.pid == pid_expected
+    assert d.process.pid == pid_expected
     advance(5)
     cemetary.add("cadet")
 
 
 def super_long(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
     try:
-        assert d.current_process.pid == pid_expected
+        assert d.process.pid == pid_expected
         advance(10000)
         pytest.fail("Supposed to bail out!")
     except ProcessExit:
@@ -49,10 +49,10 @@ def super_long(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
 
 
 def parent(d: Dashboard, cemetary: Cemetary) -> None:
-    d.run_proc(watcher, cemetary, d.current_process)
-    thread_elder = d.run_thread(elder, d.current_process.pid, cemetary)
-    thread_cadet = d.run_thread(cadet, d.current_process.pid, cemetary)
-    thread_super_long = d.run_thread(super_long, d.current_process.pid, cemetary)
+    d.run_proc(watcher, cemetary, d.process)
+    thread_elder = d.run_thread(elder, d.process.pid, cemetary)
+    thread_cadet = d.run_thread(cadet, d.process.pid, cemetary)
+    thread_super_long = d.run_thread(super_long, d.process.pid, cemetary)
 
     try:
         thread_elder.join()

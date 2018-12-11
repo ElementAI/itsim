@@ -14,14 +14,14 @@ Name2Child = Mapping[str, Process]
 
 def cain(d: Dashboard, cemetary: Cemetary, child: Name2Child):
     advance(130)
-    assert d.current_process == child["cain"]
+    assert d.process is child["cain"]
     child["abel"].kill()
     advance(730 - 130)
     cemetary.add("cain")
 
 
 def abel(d: Dashboard, cemetary: Cemetary, child: Name2Child):
-    assert d.current_process == child["abel"]
+    assert d.process is child["abel"]
     try:
         advance(1000)
     finally:
@@ -29,7 +29,7 @@ def abel(d: Dashboard, cemetary: Cemetary, child: Name2Child):
 
 
 def seth(d: Dashboard, cemetary: Cemetary, child: Name2Child):
-    assert d.current_process == child["seth"]
+    assert d.process is child["seth"]
     advance(912)
     cemetary.add("seth")
 
