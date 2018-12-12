@@ -1,7 +1,3 @@
-# Refs:
-# https://www.blog.pythonlibrary.org/2016/05/24/python-101-an-intro-to-benchmarking-your-code/
-# https://medium.freecodecamp.org/how-to-get-embarrassingly-fast-random-subset-sampling-with-python-da9b27d494d9
-
 import time
 from statistics import mean, variance
 
@@ -21,13 +17,7 @@ class ContextTimer():
 # ex: @benchmarker(100)
 def benchmarker(iterations):
     def real_benchmarker(func):
-        """
-        A timer decorator
-        """
         def function_timer(*args, **kwargs):
-            """
-            A nested function for timing other functions
-            """
             results = []
             for i in range(iterations):
                 start = time.time()
