@@ -27,6 +27,7 @@ setuptools = "*"
 sphinx = "*"
 twine = "*"
 wheel = "*"
+texttable  = "*"
 
 [requires]
 python_version = "3.6"
