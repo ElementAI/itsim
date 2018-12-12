@@ -90,12 +90,13 @@ class DHCPClient(Daemon):
             try:
                 time_before_recv = now()
                 packet = socket.recv(time_remaining)
-                time_remaining -= (now() - time_before_recv)
-                if packet.payload.get(cast(str, Field.MESSAGE)) == message and \
-                   packet.payload.get(cast(str, Field.NODE_ID)) == node_id:
-                    yield packet
             except Timeout:
                 return
+
+            time_remaining -= (now() - time_before_recv)
+            if packet.payload.get(cast(str, Field.MESSAGE)) == message and \
+               packet.payload.get(cast(str, Field.NODE_ID)) == node_id:
+                yield packet
 
     def _dhcp_discover(self, socket: Socket, node_id: UUID) -> Optional[Address]:
         """

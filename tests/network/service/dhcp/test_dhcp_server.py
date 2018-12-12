@@ -58,7 +58,8 @@ def feed_on_packet(payload,
     def run():
         nonlocal flag
         flag = 1
-        server.on_packet(mock_thread, mock_pack, mock_sock)
+        # Trigger must be made available as the daemon interface to on_packet
+        server.trigger(mock_thread, mock_pack, mock_sock)
 
     sim = Simulator()
     sim.add(run)
