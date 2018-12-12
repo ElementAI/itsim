@@ -81,8 +81,6 @@ class Link(_Link):
 
         packet_latency = next(self._latency)
         packet_bandwidth = next(self._bandwidth)
-
-
         duration = packet_latency + 8 * packet.byte_size / packet_bandwidth
         for node in recipients:
             add_in(duration, node._receive_packet, packet)
