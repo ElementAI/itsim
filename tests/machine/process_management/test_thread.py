@@ -1,7 +1,8 @@
 from itsim.machine.dashboard import Dashboard
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
-from itsim.simulator import Simulator
+from itsim.simulator import Simulator, advance
+from itsim.types import Timeout
 from itsim.utils import assert_list
 
 from pytest import fixture, raises
@@ -127,3 +128,96 @@ def test_callback_args(mock_proc):
     thread.clone(f, 0, kwarg=1)
     with raises(AdHocError):
         sim.run()
+
+
+@patch("itsim.machine.process_management.process.Process")
+def test_is_alive_cycle(mock_proc):
+    DELAY = 20
+    is_running = False
+
+    def f(_):
+        nonlocal is_running
+        is_running = True
+        advance(DELAY)
+
+    sim = Simulator()
+    thread = Thread(sim, mock_proc, 0)
+    assert thread.is_alive()
+    thread.clone(f)
+    assert thread.is_alive()
+    sim.run(DELAY / 2)
+    assert is_running
+    assert thread.is_alive()
+    sim.run()
+    assert not thread.is_alive()
+
+
+def run_test_join(delay, timeout, expected_log):
+    with patch("itsim.machine.process_management.process.Process") as mock_proc:
+        log = []
+
+        def f(_, delay):
+            advance(delay)
+
+        def joiner(t):
+            try:
+                t.join(timeout)
+                assert not thread.is_alive()
+                log.append("complete")
+            except Timeout:
+                log.append("timeout")
+
+        sim = Simulator()
+        thread = Thread(sim, mock_proc, 0)
+        thread.clone(f, 20)
+        sim.add(joiner, thread)
+        sim.run()
+        assert log == [expected_log]
+
+
+def test_join_complete():
+    run_test_join(10, 100, "complete")
+
+
+def test_join_timeout():
+    run_test_join(10, 5, "timeout")
+
+
+def run_test_kill(delay_thread, delay_kill, delay_join, expect_alive_after_kill):
+    with patch("itsim.machine.process_management.process.Process") as mock_proc:
+        log = []
+
+        def f(_, delay):
+            advance(delay_thread)
+
+        def joiner(t):
+            advance(delay_join)
+            t.join()
+            assert not t.is_alive()
+            log.append("joiner")
+
+        def killer(t):
+            advance(delay_kill)
+            t.kill()
+            assert t.is_alive() == expect_alive_after_kill
+            log.append("killer")
+
+        sim = Simulator()
+        thread = Thread(sim, mock_proc, 0)
+        thread.clone(f, 20)
+        sim.add(joiner, thread)
+        sim.add(killer, thread)
+        sim.run()
+        assert log == ["killer", "joiner"]
+
+
+def test_kill_live_trigger_join():
+    run_test_kill(100, 10, 0, True)
+
+
+def test_kill_live_join_after():
+    run_test_kill(100, 10, 20, True)
+
+
+def test_kill_dead():
+    run_test_kill(10, 20, 30, False)

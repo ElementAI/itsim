@@ -16,6 +16,14 @@ class Simulator(greensim.Simulator):
         return str(self.uuid)
 
 
+class _Process(greensim.Process):
+    pass
+
+
+class Interrupt(greensim.Interrupt):
+    pass
+
+
 class Event:
     """
     Models an unrealized event in the simulation, which can then be fired to enact its realization.
@@ -30,6 +38,12 @@ class Event:
         Enacts the realization of the event, resuming all processes :py:meth:`wait` ing on it.
         """
         self._signal.turn_on()
+
+    def has_fired(self) -> bool:
+        """
+        Tells whether the signal has fired or not.
+        """
+        return self._signal.is_on
 
     def wait(self, timeout: Optional[float] = None) -> None:
         """

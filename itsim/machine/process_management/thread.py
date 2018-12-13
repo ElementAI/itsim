@@ -1,10 +1,14 @@
 from .__init__ import _Process, _Thread
 
 from itsim.machine.dashboard import Dashboard
-from itsim.simulator import Simulator
+from itsim.simulator import Simulator, Event, _Process, Interrupt
 from itsim.utils import assert_list
 
-from typing import Any, Callable, Set, Tuple
+from typing import Any, Callable, Set, Tuple, Optional
+
+
+class ThreadExit(Interrupt):
+    pass
 
 
 class Thread(_Thread):
@@ -22,6 +26,8 @@ class Thread(_Thread):
         self._process: _Process = parent
         self._n: int = n
         self._scheduled: Set[Callable[[], None]] = set()
+        self._event_dead = Event()
+        self._sim_proc: Optional[_Process] = None
 
     @property
     def process(self) -> _Process:
@@ -37,7 +43,7 @@ class Thread(_Thread):
             func()
             self.exit_f(func)
 
-        self._sim.add_in(time, call_and_callback)
+        self._gproc = self._sim.add_in(time, call_and_callback)
         self._scheduled |= set([func])
         # Not generally useful. For unit tests
         return (func, call_and_callback)
@@ -53,6 +59,7 @@ class Thread(_Thread):
         self._scheduled -= set([f])
         if self._scheduled == set():
             self._process.thread_complete(self)
+            self._event_dead.fire()
 
     def __eq__(self, other: Any) -> bool:
         # NB: MagicMock overrides the type definition and makes this check fail if _Thread is replaced with Thread
@@ -65,6 +72,16 @@ class Thread(_Thread):
             self._sim == other._sim,
             self._process == other._process,
             self._n == other._n])
+
+    def is_alive(self) -> bool:
+        return not self._event_dead.has_fired()
+
+    def kill(self) -> None:
+        if self._sim_proc is not None:
+            self._sim_proc.interrupt(ThreadExit)
+
+    def join(self, timeout: Optional[float] = None) -> None:
+        self._event_dead.wait(timeout)
 
     def __str__(self):
         return "(%s)" % ", ".join([str(y) for y in [
