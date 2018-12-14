@@ -5,6 +5,7 @@ import pytest
 from itsim.machine.dashboard import Dashboard, Timeout
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.process_management.process import Process
+from itsim.machine.process_management.thread import ThreadKilled
 from itsim.simulator import Simulator, advance
 
 
@@ -39,11 +40,9 @@ def super_long(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
     try:
         assert d.process.pid == pid_expected
         advance(10000)
-        pytest.fail("Supposed to bail out!")
-    except ProcessExit:
-        raise
-    except:
         pytest.fail("Supposed to be killed as the process exits.")
+    except ThreadKilled:
+        raise
     finally:
         cemetary.add("super_long")
 
@@ -70,7 +69,7 @@ def parent(d: Dashboard, cemetary: Cemetary) -> None:
     d.exit()
 
 
-def test_dashboard_process_lifecycle():
+def test_dashboard_thread_lifecycle():
     sim = Simulator()
     cemetary = set()
     Endpoint().with_proc_in(sim, 0, parent, cemetary)

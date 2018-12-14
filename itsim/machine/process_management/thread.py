@@ -7,7 +7,7 @@ from itsim.utils import assert_list
 from typing import Any, Callable, Set, Tuple, Optional
 
 
-class ThreadExit(Interrupt):
+class ThreadKilled(Interrupt):
     pass
 
 
@@ -40,10 +40,12 @@ class Thread(_Thread):
 
         # Run the function as requested in arguments, then call back home
         def call_and_callback() -> None:
-            func()
-            self.exit_f(func)
+            try:
+                func()
+            finally:
+                self.exit_f(func)
 
-        self._gproc = self._sim.add_in(time, call_and_callback)
+        self._sim_proc = self._sim.add_in(time, call_and_callback)
         self._scheduled |= set([func])
         # Not generally useful. For unit tests
         return (func, call_and_callback)
@@ -78,7 +80,7 @@ class Thread(_Thread):
 
     def kill(self) -> None:
         if self._sim_proc is not None:
-            self._sim_proc.interrupt(ThreadExit)
+            self._sim_proc.interrupt(ThreadKilled())
 
     def join(self, timeout: Optional[float] = None) -> None:
         self._event_dead.wait(timeout)
