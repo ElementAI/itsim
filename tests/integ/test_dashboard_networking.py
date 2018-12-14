@@ -1,4 +1,4 @@
-from typing import Set, Mapping, Any
+from typing import Set
 
 import pytest
 
@@ -6,7 +6,7 @@ from greensim.random import constant
 from itsim.machine.dashboard import Dashboard
 from itsim.machine.endpoint import Endpoint
 from itsim.network.link import Link
-from itsim.simulator import Simulator, advance
+from itsim.simulator import Simulator
 from itsim.types import Address, as_cidr, as_address, Protocol
 from itsim.units import S, MS, KB
 
@@ -60,10 +60,10 @@ def test_dashboard_networking():
 
     sim = Simulator()
     link = Link(CIDR, constant(LATENCY), constant(BANDWIDTH))
-    endpoints = [
-        Endpoint().connected_to(link, n).with_proc(sim, server, log).with_proc_in(sim, 1 * S, client)
-        for n in range(NUM_ENDPOINTS)
-    ]
+    for n in range(NUM_ENDPOINTS):
+        Endpoint().connected_to(link, n) \
+            .with_proc(sim, server, log) \
+            .with_proc_in(sim, 1 * S, client)
     sim.run()
 
     assert log == {(as_address(n, CIDR), as_address(NUM_ENDPOINTS - n - 1, CIDR)) for n in range(NUM_ENDPOINTS)}

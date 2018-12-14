@@ -126,7 +126,7 @@ def test_child_complete(mock_node):
     assert set() == parent._children
 
 
-def run_process_wait_test(timeout, expected, has_thread = True, delay_before_wait = 0):
+def run_process_wait_test(timeout, expected, has_thread=True, delay_before_wait=0):
     with patch("itsim.machine.node.Node") as mock_node:
         def thread_behaviour(dashboard: Dashboard):
             advance(10)

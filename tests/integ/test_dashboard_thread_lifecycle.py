@@ -1,12 +1,13 @@
-from typing import Set, Mapping
+from typing import Set
 
 import pytest
 
-from itsim.machine.dashboard import Dashboard, Timeout
+from itsim.machine.dashboard import Dashboard
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import ThreadKilled
 from itsim.simulator import Simulator, advance
+from itsim.types import Timeout
 
 
 Cemetary = Set[str]

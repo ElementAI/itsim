@@ -1,4 +1,4 @@
-from .__init__ import _Process, _Thread
+from .__init__ import _Thread
 
 from itsim.machine.dashboard import Dashboard
 from itsim.simulator import Simulator, Event, _Process, Interrupt

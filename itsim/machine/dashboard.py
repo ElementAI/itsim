@@ -1,10 +1,10 @@
-from typing import Callable, Any, Optional, Generator
+from typing import Callable, Any, Generator
 
 from itsim import ITObject
 from itsim.machine import _Socket, _Node
 from itsim.machine.process_management import _Process, _Thread
 from itsim.simulator import Simulator
-from itsim.types import Protocol, PortRepr, Address, Timeout
+from itsim.types import Protocol, PortRepr, Address
 
 
 class Dashboard(ITObject):
