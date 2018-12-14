@@ -36,7 +36,7 @@ class Dashboard(ITObject):
         return self.node.bind(protocol, pr, self.process.pid)
 
     def addresses(self) -> Generator[Address, None, None]:
-        raise NotImplementedError()
+        yield from self.node.addresses()
 
     @property
     def thread(self) -> _Thread:

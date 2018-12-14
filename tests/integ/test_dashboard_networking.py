@@ -14,7 +14,7 @@ from itsim.units import S, MS, KB
 Log = Set[str]
 
 CIDR = as_cidr("10.10.0.0/16")
-NUM_ENDPOINTS = 1000
+NUM_ENDPOINTS = 50
 
 TIME_BIT_FIRST = 10 * MS
 TIME_BIT_LAST = 10 * MS
@@ -42,14 +42,19 @@ def client(d: Dashboard) -> None:
 
 
 def server(d: Dashboard, log: Log) -> None:
-    address = d.addresses()
+    for address in d.addresses():
+        if address in CIDR:
+            break
+    else:
+        pytest.fail("No address in CIDR?")
+
     with d.bind(Protocol.UDP, PORT_SERVICE) as socket:
         packet = socket.recv()
         assert address == packet.dest.hostname_as_address()
-        log.append((packet.src.hostname_as_address(), packet.dest.hostname_as_address()))
+        log.add((packet.source.hostname_as_address(), packet.dest.hostname_as_address()))
 
 
-def test_dashboard_networking() -> None:
+def test_dashboard_networking():
     assert NUM_ENDPOINTS > 0
     log: Log = set()
 
