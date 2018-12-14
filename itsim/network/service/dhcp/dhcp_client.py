@@ -86,7 +86,7 @@ class DHCPClient(Daemon):
             The type of message to wait on (e.g., offer)
         """
         time_remaining = self._reservation_time
-        while time_remaining >= 0.0:
+        while time_remaining > 0.0:
             try:
                 time_before_recv = now()
                 packet = socket.recv(time_remaining)
@@ -141,8 +141,8 @@ class DHCPClient(Daemon):
             cast(Payload, {Field.MESSAGE: DHCP.REQUEST, Field.NODE_ID: node_id, Field.ADDRESS: address_proposed})
         )
 
-        # Set the interface to the new address, in the expecation it will be confirmed
         address_orig = self._interface.address
+        # Set the interface to the new address, in the expectation it will be confirmed
         # NB this affects the action of socket.recv(), so it must come before that call
         self._interface.address = cast(Address, address_proposed)
         # Wait for our ACK.
