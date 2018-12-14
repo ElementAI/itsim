@@ -56,19 +56,29 @@ class Process(_Process):
     def thread_complete(self, t: Thread):
         self._threads -= set([t])
         if self._threads == set():
-            self._event_dead.fire()
-            if self._parent is not None:
-                self._parent.child_complete(self)
-            self._node.proc_exit(self)
+            self._die()
 
     def child_complete(self, p: _Process):
         self._children -= set([p])
 
     def signal(self, sig: Interrupt) -> None:
-        pass
+        raise NotImplementedError()
 
-    def kill(self) -> int:
-        pass
+    def is_alive(self) -> bool:
+        return not self._event_dead.has_fired()
+
+    def kill(self) -> None:
+        if len(self._threads) == 0:
+            self._die()
+        else:
+            for thread in self._threads:
+                thread.kill()
+
+    def _die(self) -> None:
+        self._event_dead.fire()
+        if self._parent is not None:
+            self._parent.child_complete(self)
+        self._node.proc_exit(self)
 
     def wait(self, timeout: Optional[float] = None) -> None:
         self._event_dead.wait(timeout)

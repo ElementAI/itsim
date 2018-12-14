@@ -15,7 +15,7 @@ class Dashboard(ITObject):
         self._sim = sim
 
     def exit(self) -> None:
-        raise NotImplementedError()
+        self.process.kill()
 
     def run_proc(self, fn: Callable[..., None], *args: Any, **kwargs: Any) -> _Process:
         return self.run_proc_in(0, fn, *args, **kwargs)

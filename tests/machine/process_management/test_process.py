@@ -169,3 +169,82 @@ def test_process_wait_timeout():
 
 def test_process_wait_no_thread_not_started():
     run_process_wait_test(100, "timeout", False)
+
+
+@patch("itsim.machine.node.Node")
+def test_process_is_alive(mock_node):
+    DELAY = 20
+    is_running = False
+
+    def f(_):
+        nonlocal is_running
+        is_running = True
+        advance(DELAY)
+
+    sim = Simulator()
+    proc = Process(1234, mock_node)
+    assert proc.is_alive()
+    thread = Thread(sim, proc, 0)
+    assert proc.is_alive()
+    thread.clone(f)
+    assert proc.is_alive()
+    sim.run(DELAY / 2)
+    assert is_running
+    assert proc.is_alive()
+    sim.run()
+    assert not proc.is_alive()
+
+
+def run_test_kill(delays_threads, delay_kill, delay_join, expect_alive_after_kill):
+    with patch("itsim.machine.node.Node") as mock_node:
+        log = []
+
+        def f(_, delay):
+            advance(delay)
+
+        def waiter(p):
+            advance(delay_join)
+            p.wait()
+            for thread in p._threads:
+                assert not thread.is_alive()
+            assert not p.is_alive()
+            log.append("waiter")
+
+        def killer(p):
+            advance(delay_kill)
+            p.kill()
+            assert p.is_alive() == expect_alive_after_kill
+            log.append("killer")
+
+        sim = Simulator()
+        proc = Process(1234, mock_node)
+        for delay in delays_threads:
+            proc.exc(sim, f, delay)
+        sim.add(waiter, proc)
+        sim.add(killer, proc)
+        sim.run()
+        assert log == ["killer", "waiter"]
+
+
+def test_kill_no_thread():
+    run_test_kill([], 10, 11, False)
+
+
+def test_kill_dead():
+    run_test_kill([10], 20, 30, False)
+
+
+def test_kill_live_trigger_wait():
+    run_test_kill([100], 10, 0, True)
+
+
+def test_kill_live_two_threads():
+    run_test_kill([100, 200], 10, 0, True)
+
+
+def test_kill_live_one_thread_done():
+    run_test_kill([10, 200], 20, 0, True)
+
+
+def test_kill_live_wait_after():
+    run_test_kill([100], 10, 20, True)

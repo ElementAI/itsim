@@ -6,6 +6,7 @@ from itsim.machine.dashboard import Dashboard
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.process_management.process import Process
 from itsim.simulator import Simulator, advance
+from itsim.types import Timeout
 
 
 Cemetary = Set[str]
@@ -40,7 +41,7 @@ def humanity(d: Dashboard, *_) -> None:
 
 def adameve(d: Dashboard, cemetary: Cemetary) -> None:
     child: Name2Child = {}
-    for name, moment in [(cain, 0), (abel, 0), (seth, 122), (humanity, 0)]:
+    for name, moment in [(cain, 0), (abel, 0), (seth, 130), (humanity, 0)]:
         child[name.__name__] = d.run_proc_in(moment, name, cemetary, child)
 
     for name_expected, moment in [("abel", 130), ("cain", 730), ("seth", 130 + 912)]:
