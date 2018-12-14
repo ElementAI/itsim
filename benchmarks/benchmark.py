@@ -15,7 +15,7 @@ class ContextTimer():
         print(f'The function {self._fct} took:\n{self._runtime} s')
 
 # ex: @benchmarker(100)
-def benchmarker(iterations):
+def benchmarker(iterations=1):
     def real_benchmarker(func):
         def function_timer(*args, **kwargs):
             results = []
@@ -25,7 +25,7 @@ def benchmarker(iterations):
                 results.append(time.time() - start)
 
             stat = {"mean": mean(results),
-                    "variance": variance(results),
+                    "variance": [variance(results) if iterations >1 else -1.0],
                     "min": min(results),
                     "max": max(results)}
 

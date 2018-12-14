@@ -1,3 +1,10 @@
+'''
+    !!!
+    Warning: those tests are biased; they don't perform exactly the same operations for accessing the generated
+    numbers. This has been proven to make a huge different in subsequent testing (random_generator_benchmark.py)
+    !!!
+'''
+
 
 This file contains sample results obtained from running "comparative_benchmark.py"
 
