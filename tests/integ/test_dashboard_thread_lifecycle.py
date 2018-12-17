@@ -2,7 +2,7 @@ from typing import Set
 
 import pytest
 
-from itsim.machine.dashboard import Dashboard
+from itsim.software.context import Context
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import ThreadKilled
@@ -13,31 +13,31 @@ from itsim.types import Timeout
 Cemetary = Set[str]
 
 
-def watcher(d: Dashboard, cemetary: Cemetary, proc_parent: Process) -> None:
+def watcher(d: Context, cemetary: Cemetary, proc_parent: Process) -> None:
     proc_parent.wait()
     cemetary.add("watcher")
 
 
-def grandchild(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
+def grandchild(d: Context, pid_expected: int, cemetary: Cemetary) -> None:
     assert d.process.pid == pid_expected
     advance(20)
     cemetary.add("grandchild")
 
 
-def elder(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
+def elder(d: Context, pid_expected: int, cemetary: Cemetary) -> None:
     assert d.process.pid == pid_expected
     thread_grandchild = d.run_thread(grandchild, pid_expected, cemetary)
     thread_grandchild.join()
     cemetary.add("elder")
 
 
-def cadet(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
+def cadet(d: Context, pid_expected: int, cemetary: Cemetary) -> None:
     assert d.process.pid == pid_expected
     advance(5)
     cemetary.add("cadet")
 
 
-def super_long(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
+def super_long(d: Context, pid_expected: int, cemetary: Cemetary) -> None:
     try:
         assert d.process.pid == pid_expected
         advance(10000)
@@ -48,7 +48,7 @@ def super_long(d: Dashboard, pid_expected: int, cemetary: Cemetary) -> None:
         cemetary.add("super_long")
 
 
-def parent(d: Dashboard, cemetary: Cemetary) -> None:
+def parent(d: Context, cemetary: Cemetary) -> None:
     d.run_proc(watcher, cemetary, d.process)
     thread_elder = d.run_thread(elder, d.process.pid, cemetary)
     thread_cadet = d.run_thread(cadet, d.process.pid, cemetary)
@@ -70,7 +70,7 @@ def parent(d: Dashboard, cemetary: Cemetary) -> None:
     d.exit()
 
 
-def test_dashboard_thread_lifecycle():
+def test_context_thread_lifecycle():
     sim = Simulator()
     cemetary = set()
     Endpoint().with_proc_in(sim, 0, parent, cemetary)

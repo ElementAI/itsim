@@ -2,7 +2,7 @@ from typing import Set, Mapping
 
 import pytest
 
-from itsim.machine.dashboard import Dashboard
+from itsim.software.context import Context
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.process_management.process import Process
 from itsim.simulator import Simulator, advance
@@ -13,7 +13,7 @@ Cemetary = Set[str]
 Name2Child = Mapping[str, Process]
 
 
-def cain(d: Dashboard, cemetary: Cemetary, child: Name2Child) -> None:
+def cain(d: Context, cemetary: Cemetary, child: Name2Child) -> None:
     advance(130)
     assert d.process is child["cain"]
     child["abel"].kill()
@@ -21,7 +21,7 @@ def cain(d: Dashboard, cemetary: Cemetary, child: Name2Child) -> None:
     cemetary.add("cain")
 
 
-def abel(d: Dashboard, cemetary: Cemetary, child: Name2Child) -> None:
+def abel(d: Context, cemetary: Cemetary, child: Name2Child) -> None:
     assert d.process is child["abel"]
     try:
         advance(1000)
@@ -29,17 +29,17 @@ def abel(d: Dashboard, cemetary: Cemetary, child: Name2Child) -> None:
         cemetary.add("abel")
 
 
-def seth(d: Dashboard, cemetary: Cemetary, child: Name2Child) -> None:
+def seth(d: Context, cemetary: Cemetary, child: Name2Child) -> None:
     assert d.process is child["seth"]
     advance(912)
     cemetary.add("seth")
 
 
-def humanity(d: Dashboard, *_) -> None:
+def humanity(d: Context, *_) -> None:
     advance(100000)  # Will not end.
 
 
-def adameve(d: Dashboard, cemetary: Cemetary) -> None:
+def adameve(d: Context, cemetary: Cemetary) -> None:
     child: Name2Child = {}
     for name, moment in [(cain, 0), (abel, 0), (seth, 130), (humanity, 0)]:
         child[name.__name__] = d.run_proc_in(moment, name, cemetary, child)
@@ -57,7 +57,7 @@ def adameve(d: Dashboard, cemetary: Cemetary) -> None:
     cemetary.add("adameve")
 
 
-def test_dashboard_process_lifecycle():
+def test_context_process_lifecycle():
     sim = Simulator()
     cemetary = set()
     Endpoint().with_proc(sim, adameve, cemetary)

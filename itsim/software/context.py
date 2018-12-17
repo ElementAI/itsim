@@ -7,7 +7,7 @@ from itsim.simulator import Simulator
 from itsim.types import Protocol, PortRepr, Address
 
 
-class Dashboard(ITObject):
+class Context(ITObject):
     """
     Context from which executes a function expressing the behaviour of a piece of software within the simulation. This
     context encompasses information queries regarding the surrounding thread, process and node, as well as common
@@ -35,7 +35,7 @@ class Dashboard(ITObject):
         Runs a computation into a new process on the current node.
 
         :param fn:
-            Function that implements this computation. Should take as first parameter a Dashboard instance (which will
+            Function that implements this computation. Should take as first parameter a Context instance (which will
             be distinct from this one).
 
         Arguments provided beyond ``fn`` will be passed as arguments when invoking the function.
@@ -53,7 +53,7 @@ class Dashboard(ITObject):
         Runs a computation in a new thread from the current process.
 
         :param fn:
-            Function that implements this computation. Should take as first parameter a Dashboard instance (which will
+            Function that implements this computation. Should take as first parameter a Context instance (which will
             be distinct from this one).
 
         Arguments provided beyond ``fn`` will be passed as arguments when invoking the function.

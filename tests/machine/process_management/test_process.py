@@ -1,4 +1,4 @@
-from itsim.machine.dashboard import Dashboard
+from itsim.software.context import Context
 from itsim.machine.node import Node
 from itsim.machine.process_management.process import Process
 from itsim.machine.process_management.thread import Thread
@@ -156,7 +156,7 @@ def test_child_complete(mock_node):
 
 def run_process_wait_test(timeout, expected, has_thread=True, delay_before_wait=0):
     with patch("itsim.machine.node.Node") as mock_node:
-        def thread_behaviour(dashboard: Dashboard):
+        def thread_behaviour(context: Context):
             advance(10)
 
         sim = Simulator()
