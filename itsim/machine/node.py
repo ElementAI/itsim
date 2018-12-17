@@ -8,6 +8,7 @@ from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
 from itsim.network.location import Location
 from itsim.network.packet import Packet
+from itsim.network.service.dhcp.dhcp_client import DHCPClient
 from itsim.machine import _Node
 from itsim.machine.file_system import File
 from itsim.machine.process_management.daemon import Daemon
@@ -83,7 +84,9 @@ class Node(_Node):
             self,
             link: Link,
             ar: AddressRepr = None,
-            routes: Optional[List[Route]] = None
+            routes: Optional[List[Route]] = None,
+            with_dhcp: bool = False,
+            sim: Optional[Simulator] = None
     ) -> "Node":
         """
         Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
@@ -96,13 +99,23 @@ class Node(_Node):
             provided, the address assumed is host number 0 within the CIDR associated to the link.
         :param routes:
             List of routes known by this node in order to exchange packets with other internetworking nodes.
+        :param with_dhcp:
+            Boolean value indicating whether a DHCPClient should be started on this Link. If this is true,
+            a simulator must be provided as the next argument
+        :param sim:
+            Simulator to run a potential DHCPClient. If with_dhcp is False, this is ignored
 
         :return: The node instance, so it can be further built.
         """
+
+        if with_dhcp and sim is None:
+            raise RuntimeError("A Simulator must be provided to run DHCP on a Node")
+
         link._connect(self)
         interface = Interface(link, as_address(ar, link.cidr), routes or [])
         self._interfaces[link.cidr] = interface
-
+        if with_dhcp:
+            self.schedule_daemon_in(cast(Simulator, sim), 0.0, DHCPClient(interface))
         return self
 
     def addresses(self) -> Iterator[Address]:

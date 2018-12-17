@@ -17,6 +17,7 @@ class Daemon(ITObject):
     """
 
     def __init__(self, trigger_event: Callable[..., None]):
+        super().__init__()
         self._trigger_event = trigger_event
 
     def trigger(self, *args, **kwargs) -> None:
@@ -39,6 +40,7 @@ class Service(_Service):
     """
 
     def __init__(self, call_event: Callable[[_Thread], object]):
+        super().__init__()
         self._call_event = call_event
 
     def call(self, sim: Simulator, node: _Node, *args, **kwargs) -> None:

@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import enum
 import gc
-from unittest.mock import patch, call
+from unittest.mock import call, Mock, patch
 
 import pytest
 
@@ -16,6 +16,7 @@ from itsim.network.route import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet
+from itsim.network.service.dhcp.dhcp_client import DHCPClient
 from itsim.simulator import Simulator
 from itsim.types import as_cidr, as_address, AddressRepr, as_hostname, Protocol
 
@@ -355,3 +356,24 @@ def test_socket_lost_should_be_closed(endpoint):
         gc.collect()
         assert endpoint.is_port_free(9887)
         assert FakeSocket.num_close == 1
+
+
+def test_connected_to_with_dhcp(endpoint, link_small):
+    endpoint.schedule_daemon_in = Mock()
+
+    endpoint.connected_to(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")])
+    endpoint.schedule_daemon_in.assert_not_called()
+
+    sim = Simulator()
+    endpoint.connected_to(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")], True, sim)
+    endpoint.schedule_daemon_in.assert_called_once()
+    _, args, _ = endpoint.schedule_daemon_in.mock_calls[0]
+    assert sim == args[0]
+    assert 0 == args[1]
+    # These are sufficient to prove that the DHCPClient was instantiated correctly. Anything more would require adding
+    # an __eq__ to the class
+    assert isinstance(args[2], DHCPClient)
+    assert link_small.cidr == args[2]._interface._link.cidr
+
+    with pytest.raises(RuntimeError):
+        endpoint.connected_to(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")], True)
