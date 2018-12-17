@@ -18,7 +18,6 @@ fi
 mkdir $TDOCS_MODULES
 # Build and compile the document tree
 sphinx-apidoc itsim -METf -o $TDOCS_MODULES --implicit-namespaces && make -C sphinx html
-# Compile the document tree
 # Check for and record a failure
 SUCCESS=$?
 # Delete the document tree

@@ -10,7 +10,6 @@ from itsim.simulator import Simulator, now
 from itsim.types import Protocol
 from itsim.units import S, MS, MbPS
 
-
 ledger = set()
 
 
@@ -29,8 +28,8 @@ def client(thread: Thread) -> None:
             pytest.fail()
         except Timeout:
             assert now() > 5.0
-
-        ledger.add("client")
+        finally:
+            ledger.add("client")
 
 
 def server(thread: Thread) -> None:
@@ -52,4 +51,5 @@ def test_packet_transfer():
     ponger.run_proc(sim, server)
 
     sim.run(10.0 * S)
+
     assert ledger == {"client", "server"}
