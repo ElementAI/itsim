@@ -15,7 +15,7 @@ ledger = set()
 
 
 def client(context: Context) -> None:
-    with context.bind(Protocol.UDP) as socket:
+    with context.node.bind(Protocol.UDP) as socket:
         socket.send(("10.11.12.20", 9887), 4, {"content": "ping"})
         try:
             packet = socket.recv(1 * S)
@@ -34,7 +34,7 @@ def client(context: Context) -> None:
 
 
 def server(context: Context) -> None:
-    with context.bind(Protocol.UDP, 9887) as socket:
+    with context.node.bind(Protocol.UDP, 9887) as socket:
         packet = socket.recv()
         assert packet.byte_size == 4
         assert packet.payload["content"] == "ping"

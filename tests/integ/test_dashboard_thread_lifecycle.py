@@ -13,33 +13,33 @@ from itsim.types import Timeout
 Cemetary = Set[str]
 
 
-def watcher(d: Context, cemetary: Cemetary, proc_parent: Process) -> None:
+def watcher(context: Context, cemetary: Cemetary, proc_parent: Process) -> None:
     proc_parent.wait()
     cemetary.add("watcher")
 
 
-def grandchild(d: Context, pid_expected: int, cemetary: Cemetary) -> None:
-    assert d.process.pid == pid_expected
+def grandchild(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
+    assert context.process.pid == pid_expected
     advance(20)
     cemetary.add("grandchild")
 
 
-def elder(d: Context, pid_expected: int, cemetary: Cemetary) -> None:
-    assert d.process.pid == pid_expected
-    thread_grandchild = d.run_thread(grandchild, pid_expected, cemetary)
+def elder(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
+    assert context.process.pid == pid_expected
+    thread_grandchild = context.process.exc(grandchild, pid_expected, cemetary)
     thread_grandchild.join()
     cemetary.add("elder")
 
 
-def cadet(d: Context, pid_expected: int, cemetary: Cemetary) -> None:
-    assert d.process.pid == pid_expected
+def cadet(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
+    assert context.process.pid == pid_expected
     advance(5)
     cemetary.add("cadet")
 
 
-def super_long(d: Context, pid_expected: int, cemetary: Cemetary) -> None:
+def super_long(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
     try:
-        assert d.process.pid == pid_expected
+        assert context.process.pid == pid_expected
         advance(10000)
         pytest.fail("Supposed to be killed as the process exits.")
     except ThreadKilled:
@@ -48,11 +48,11 @@ def super_long(d: Context, pid_expected: int, cemetary: Cemetary) -> None:
         cemetary.add("super_long")
 
 
-def parent(d: Context, cemetary: Cemetary) -> None:
-    d.run_proc(watcher, cemetary, d.process)
-    thread_elder = d.run_thread(elder, d.process.pid, cemetary)
-    thread_cadet = d.run_thread(cadet, d.process.pid, cemetary)
-    thread_super_long = d.run_thread(super_long, d.process.pid, cemetary)
+def parent(context: Context, cemetary: Cemetary) -> None:
+    context.node.run_proc(watcher, cemetary, context.process)
+    thread_elder = context.process.exc(elder, context.process.pid, cemetary)
+    thread_cadet = context.process.exc(cadet, context.process.pid, cemetary)
+    thread_super_long = context.process.exc(super_long, context.process.pid, cemetary)
 
     try:
         thread_elder.join()
@@ -67,7 +67,7 @@ def parent(d: Context, cemetary: Cemetary) -> None:
         pass
 
     cemetary.add("parent")
-    d.exit()
+    context.process.kill()
 
 
 def test_context_thread_lifecycle():

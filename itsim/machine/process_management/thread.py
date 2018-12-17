@@ -36,7 +36,7 @@ class Thread(_Thread):
     def clone_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
         # Convenient object for putting in the tracking set
         def func() -> None:
-            f(Context(self, self._sim), *args, **kwargs)  # type: ignore
+            f(Context(self), *args, **kwargs)  # type: ignore
 
         # Run the function as requested in arguments, then call back home
         def call_and_callback() -> None:

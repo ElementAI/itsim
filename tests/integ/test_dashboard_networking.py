@@ -26,29 +26,29 @@ TIME_TRANSFER = LATENCY + LEN_PACKET / BANDWIDTH
 PORT_SERVICE = 10987
 
 
-def get_my_address(d: Context) -> Address:
-    for addr in d.addresses():
+def get_my_address(context: Context) -> Address:
+    for addr in context.node.addresses():
         if addr in CIDR:
             return addr
     else:
         raise RuntimeError("Why does this node have no address?")
 
 
-def client(d: Context) -> None:
-    num = int(get_my_address(d)) - int(CIDR.network_address)
-    with d.bind(Protocol.UDP) as socket:
+def client(context: Context) -> None:
+    num = int(get_my_address(context)) - int(CIDR.network_address)
+    with context.node.bind(Protocol.UDP) as socket:
         assert socket.port != PORT_SERVICE
         socket.send((as_address(NUM_ENDPOINTS - num - 1, CIDR), PORT_SERVICE), LEN_PACKET)
 
 
-def server(d: Context, log: Log) -> None:
-    for address in d.addresses():
+def server(context: Context, log: Log) -> None:
+    for address in context.node.addresses():
         if address in CIDR:
             break
     else:
         pytest.fail("No address in CIDR?")
 
-    with d.bind(Protocol.UDP, PORT_SERVICE) as socket:
+    with context.node.bind(Protocol.UDP, PORT_SERVICE) as socket:
         packet = socket.recv()
         assert address == packet.dest.hostname_as_address()
         log.add((packet.source.hostname_as_address(), packet.dest.hostname_as_address()))

@@ -24,13 +24,13 @@ class EndpointChattering(Endpoint):
         self.run_proc(sim, self.client)
 
     def server(self, context: Context):
-        with context.bind(Protocol.UDP, 10000) as socket:
+        with context.node.bind(Protocol.UDP, 10000) as socket:
             while True:
                 packet = socket.recv()
                 self._peers.add(packet.source.hostname_as_address())
 
     def client(self, context: Context):
-        with context.bind(Protocol.UDP) as socket:
+        with context.node.bind(Protocol.UDP) as socket:
             while True:
                 advance(next(self._interval_broadcast))
                 for interface in self.interfaces():
