@@ -8,7 +8,7 @@ from itsim.network.interface import Interface
 from itsim.network.link import Link, Loopback
 from itsim.network.location import Location
 from itsim.network.packet import Packet
-from itsim.network.service.dhcp.dhcp_client import DHCPClient
+from itsim.network.service.dhcp.client import DHCPClient
 from itsim.machine import _Node
 from itsim.machine.file_system import File
 from itsim.machine.process_management.daemon import Daemon
@@ -267,16 +267,16 @@ class Node(_Node):
     def with_files(self, *files: File) -> None:
         pass
 
-    def schedule_daemon_in(self, sim: Simulator, time: float, daemon: Daemon) -> None:
+    def schedule_daemon_in(self, sim: Simulator, time: float, daemon: Daemon) -> Process:
         """
-        Schedules a :py:meth:`Daemon.trigger` to run after a particular time.
+        Schedules a :py:meth:`Daemon.trigger` to run once after a particular time.
         This is a convenience method for :py:meth:`Node.run_proc_in`
 
         :param sim: Simulator instance.
         :param time: Time in the future to schedule the trigger method
         :param daemon: Instance of :py:class:`Daemon` whose :py:meth:`Daemon.trigger` method will be scheduled
         """
-        self.run_proc_in(sim, time, daemon.trigger)
+        return self.run_proc_in(sim, time, daemon.trigger)
 
     def run_networking_daemon(self,
                               sim: Simulator,

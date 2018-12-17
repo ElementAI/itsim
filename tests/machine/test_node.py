@@ -16,7 +16,7 @@ from itsim.network.route import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet
-from itsim.network.service.dhcp.dhcp_client import DHCPClient
+from itsim.network.service.dhcp.client import DHCPClient
 from itsim.simulator import Simulator
 from itsim.types import as_cidr, as_address, AddressRepr, as_hostname, Protocol
 
