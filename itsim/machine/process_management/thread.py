@@ -33,7 +33,7 @@ class Thread(_Thread):
     def process(self) -> _Process:
         return self._process
 
-    def clone_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
+    def run_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
         # Convenient object for putting in the tracking set
         def func() -> None:
             f(Context(self), *args, **kwargs)  # type: ignore
@@ -50,8 +50,8 @@ class Thread(_Thread):
         # Not generally useful. For unit tests
         return (func, call_and_callback)
 
-    def clone(self, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable[[], None], Callable[[], None]]:
-        return self.clone_in(0, f, *args, **kwargs)
+    def run(self, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable[[], None], Callable[[], None]]:
+        return self.run_in(0, f, *args, **kwargs)
 
     def exit_f(self, f: Callable[[], None]) -> None:
         """

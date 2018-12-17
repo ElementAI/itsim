@@ -214,7 +214,7 @@ def test_process_is_alive(mock_node):
     assert proc.is_alive()
     thread = Thread(sim, proc, 0)
     assert proc.is_alive()
-    thread.clone(f)
+    thread.run(f)
     assert proc.is_alive()
     sim.run(DELAY / 2)
     assert is_running

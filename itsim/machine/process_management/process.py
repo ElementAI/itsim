@@ -45,7 +45,7 @@ class Process(_Process):
     def exc_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> Thread:
         t = Thread(sim, self, self._thread_counter)
         self._thread_counter += 1
-        t.clone_in(time, f, *args, **kwargs)
+        t.run_in(time, f, *args, **kwargs)
         self._threads |= set([t])
         # Not generally useful. For unit tests
         return t

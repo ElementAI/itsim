@@ -62,28 +62,28 @@ def test_hash(mock_proc, thread, proc):
 
 
 @patch("itsim.simulator.Simulator")
-def test_clone_in(mock_sim, proc):
+def test_run_in(mock_sim, proc):
     thread = Thread(mock_sim, proc, 0)
     t = 10
 
-    (f_a, ccb_a) = thread.clone_in(t, lambda: 0)
+    (f_a, ccb_a) = thread.run_in(t, lambda: 0)
     mock_sim.add_in.assert_called_with(t, ccb_a)
     assert thread._scheduled == set([f_a])
 
-    (f_b, ccb_b) = thread.clone_in(t, lambda: 1)
+    (f_b, ccb_b) = thread.run_in(t, lambda: 1)
     mock_sim.add_in.assert_called_with(t, ccb_b)
     assert thread._scheduled == set([f_a, f_b])
 
 
 @patch("itsim.simulator.Simulator")
-def test_clone(mock_sim, proc):
+def test_run(mock_sim, proc):
     thread = Thread(mock_sim, proc, 0)
 
-    (f_a, ccb_a) = thread.clone(lambda: 0)
+    (f_a, ccb_a) = thread.run(lambda: 0)
     mock_sim.add_in.assert_called_with(0, ccb_a)
     assert thread._scheduled == set([f_a])
 
-    (f_b, ccb_b) = thread.clone(lambda: 1)
+    (f_b, ccb_b) = thread.run(lambda: 1)
     mock_sim.add_in.assert_called_with(0, ccb_b)
     assert thread._scheduled == set([f_a, f_b])
 
@@ -93,7 +93,7 @@ def test_clone(mock_sim, proc):
 def test_exit_f(mock_sim, mock_proc):
     thread = Thread(mock_sim, mock_proc, 0)
 
-    (f_a, _) = thread.clone(lambda: 0)
+    (f_a, _) = thread.run(lambda: 0)
     thread.exit_f(f_a)
     assert thread._scheduled == set()
     mock_proc.thread_complete.assert_called_with(thread)
@@ -105,7 +105,7 @@ def test_callback(mock_proc):
     thread = Thread(sim, mock_proc, 0)
 
     # This lambda actually runs, so it needs to accept the Thread argument
-    thread.clone(lambda _: 0)
+    thread.run(lambda _: 0)
     sim.run()
 
     assert thread._scheduled == set()
@@ -125,7 +125,7 @@ def test_callback_args(mock_proc):
         if isinstance(context, Context) and arg == 0 and kwarg == 1:
             raise AdHocError()
 
-    thread.clone(f, 0, kwarg=1)
+    thread.run(f, 0, kwarg=1)
     with raises(AdHocError):
         sim.run()
 
@@ -143,7 +143,7 @@ def test_is_alive_cycle(mock_proc):
     sim = Simulator()
     thread = Thread(sim, mock_proc, 0)
     assert thread.is_alive()
-    thread.clone(f)
+    thread.run(f)
     assert thread.is_alive()
     sim.run(DELAY / 2)
     assert is_running
@@ -169,7 +169,7 @@ def run_test_join(delay, timeout, expected_log):
 
         sim = Simulator()
         thread = Thread(sim, mock_proc, 0)
-        thread.clone(f, 20)
+        thread.run(f, 20)
         sim.add(joiner, thread)
         sim.run()
         assert log == [expected_log]
@@ -204,7 +204,7 @@ def run_test_kill(delay_thread, delay_kill, delay_join, expect_alive_after_kill)
 
         sim = Simulator()
         thread = Thread(sim, mock_proc, 0)
-        thread.clone(f, 20)
+        thread.run(f, 20)
         sim.add(joiner, thread)
         sim.add(killer, thread)
         sim.run()
