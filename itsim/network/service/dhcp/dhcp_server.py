@@ -8,11 +8,11 @@ from .__init__ import DHCP, DHCP_CLIENT_PORT, DHCP_HEADER_SIZE, DHCP_SIZE_MEAN, 
     LEASE_DURATION, RESERVATION_TIME
 
 from itsim.network.packet import Packet
-from itsim.machine.process_management import _Thread
 from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.socket import Socket
 from itsim.random import num_bytes
 from itsim.simulator import advance
+from itsim.software.context import Context
 from itsim.types import Address, as_address, Cidr, Payload
 
 
@@ -94,7 +94,7 @@ class DHCPServer(Daemon):
         self._reservation_time = reservation_time
         self._size_packet_dhcp = size_packet_dhcp
 
-    def on_packet(self, thread: _Thread, packet: Packet, socket: Socket) -> None:
+    def on_packet(self, context: Context, packet: Packet, socket: Socket) -> None:
         """
         General-purpose method for handling all :py:class:`~itsim.network.packet.Packet` objects received.
         This is expected to be called as result of the call to
@@ -103,8 +103,8 @@ class DHCPServer(Daemon):
 
         NB In the DHCP process all packets except ACK are sent to the broadcast address
 
-        :param thread:
-            The :py:class:`~itsim.machine.process_management.thread.Thread` that this method is executing in
+        :param context:
+            :py:class:`~itsim.software.Context` for the computation inherent to handling this packet.
         :param packet:
             The :py:class:`~itsim.network.packet.Packet` that was received
         :param socket:

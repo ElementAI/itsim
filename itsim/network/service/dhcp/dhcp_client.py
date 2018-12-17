@@ -10,10 +10,10 @@ from .__init__ import DHCP, DHCP_CLIENT_PORT, DHCP_CLIENT_RETRIES, DHCP_HEADER_S
 from itsim.network.interface import Interface
 from itsim.network.packet import Packet
 from itsim.machine.process_management.daemon import Daemon
-from itsim.machine.process_management.thread import Thread
 from itsim.machine.socket import Socket, Timeout
 from itsim.random import num_bytes
 from itsim.simulator import now
+from itsim.software.context import Context
 from itsim.types import Address, Payload, Protocol
 
 
@@ -55,7 +55,7 @@ class DHCPClient(Daemon):
         self._reservation_time = reservation_time
         self._size_packet_dhcp = size_packet_dhcp
 
-    def run_client(self, thread: Thread) -> None:
+    def run_client(self, context: Context) -> None:
         """
         Attempt and, if necessary retry, to resolve an :py:class:`~itsim.types.Address` for the
         :py:class:`~itsim.network.interface.Interface` that this client is assigned to
@@ -64,12 +64,12 @@ class DHCPClient(Daemon):
         :py:meth:`~itsim.machine.process_management.daemon.Daemon.trigger`
         made by :py:meth:`~itsim.machine.Node.run_networking_daemon`
 
-        :param thread:
-            The :py:class:`~itsim.machine.process_management.thread.Thread` that this method is executing in
+        :param context:
+            :py:class:`~itsim.software.Context` for running this computation.
         """
         for _ in range(self._dhcp_client_retries):
             # Retry after each failure to get an address.
-            if self._dhcp_get_address(thread):
+            if self._dhcp_get_address(context):
                 break
 
     def _dhcp_iter_responses(self, socket: Socket, node_id: UUID, message: DHCP) -> Generator[Packet, None, None]:
@@ -153,17 +153,17 @@ class DHCPClient(Daemon):
         self._interface.address = address_orig
         return False
 
-    def _dhcp_get_address(self, thread: Thread) -> bool:
+    def _dhcp_get_address(self, context: Context) -> bool:
         """
         Make a single attempt to resolve an :py:class:`~itsim.types.Address` for the
         :py:class:`~itsim.network.interface.Interface` that this client is assigned to
 
-        :param thread:
-            The :py:class:`~itsim.machine.process_management.thread.Thread` that this method is executing in
+        :param context:
+            Computation :py:class:`~itsim.software.Context`.
         """
-        node_id = thread.process.node.uuid
+        node_id = context.process.node.uuid
         try:
-            with thread.process.node.bind(Protocol.UDP, self._dhcp_client_port, thread.process.pid) as socket:
+            with context.node.bind(Protocol.UDP, self._dhcp_client_port, context.process.pid) as socket:
                 address = self._dhcp_discover(socket, node_id)
                 if address is not None:
                     return self._dhcp_request(socket, node_id, address)
