@@ -71,6 +71,7 @@ class Process(_Process):
         if len(self._threads) == 0:
             self._die()
         else:
+            # Once all threads are dead, method _die() will be called to complete the closure of this process.
             for thread in self._threads:
                 thread.kill()
 
