@@ -1,11 +1,12 @@
+from .__init__ import _Packet
+
 from typing import Optional
 
-from itsim import ITObject
 from itsim.network.location import Location
 from itsim.types import Payload
 
 
-class Packet(ITObject):
+class Packet(_Packet):
     """
     Embodiment of a packet of data relayed over a link managed as a IP network.
 
@@ -68,7 +69,7 @@ class Packet(ITObject):
         if other is None:
             return False
 
-        if not isinstance(other, Packet):
+        if not isinstance(other, _Packet):
             return False
 
         return self.source == other.source \

@@ -76,16 +76,15 @@ class Node(_Node):
         self.connected_to(Loopback(), "127.0.0.1")
         self._sockets: MutableMapping[Port, weakref.ReferenceType] = OrderedDict()
         self._cycle_ports_ephemeral = cycle(range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER))
-
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
 
     def connected_to(
-        self,
-        link: Link,
-        ar: AddressRepr = None,
-        routes: Optional[List[Route]] = None
+            self,
+            link: Link,
+            ar: AddressRepr = None,
+            routes: Optional[List[Route]] = None
     ) -> "Node":
         """
         Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
@@ -105,7 +104,6 @@ class Node(_Node):
         interface = Interface(link, as_address(ar, link.cidr), routes or [])
         self._interfaces[link.cidr] = interface
 
-        # TODO -- Decide whether to set up DHCP client for this interface
         return self
 
     def addresses(self) -> Iterator[Address]:
@@ -260,7 +258,22 @@ class Node(_Node):
     def with_files(self, *files: File) -> None:
         pass
 
-    def run_networking_daemon(self, sim: Simulator, daemon: Daemon, protocol: Protocol, *ports: PortRepr) -> None:
+    def schedule_daemon_in(self, sim: Simulator, time: float, daemon: Daemon) -> None:
+        """
+        Schedules a :py:meth:`Daemon.trigger` to run after a particular time.
+        This is a convenience method for :py:meth:`Node.run_proc_in`
+
+        :param sim: Simulator instance.
+        :param time: Time in the future to schedule the trigger method
+        :param daemon: Instance of :py:class:`Daemon` whose :py:meth:`Daemon.trigger` method will be scheduled
+        """
+        self.run_proc_in(sim, time, daemon.trigger)
+
+    def run_networking_daemon(self,
+                              sim: Simulator,
+                              daemon: Daemon,
+                              protocol: Protocol,
+                              *ports: PortRepr) -> None:
         """
         This method contains the logic subscribing the daemon to network events
 
@@ -278,6 +291,7 @@ class Node(_Node):
             `trigger` method on `daemon`. After the packet receipt and before `trigger` is executed a new
             :py:class:`~itsim.machine.process_management.thread.Thread` is opened to wait for another packet in parallel
         """
+
         for port in ports:
             new_sock = self.bind(protocol, port)
 
