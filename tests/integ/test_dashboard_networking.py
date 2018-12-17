@@ -42,12 +42,7 @@ def client(context: Context) -> None:
 
 
 def server(context: Context, log: Log) -> None:
-    for address in context.node.addresses():
-        if address in CIDR:
-            break
-    else:
-        pytest.fail("No address in CIDR?")
-
+    address = get_my_address(context)
     with context.node.bind(Protocol.UDP, PORT_SERVICE) as socket:
         packet = socket.recv()
         assert address == packet.dest.hostname_as_address()
