@@ -83,6 +83,12 @@ class Process(_Process):
     def wait(self, timeout: Optional[float] = None) -> None:
         self._event_dead.wait(timeout)
 
+    def fork_exec(self, f: Callable[[Thread], None], *args, **kwargs) -> _Process:
+        kid = self._node.fork_exec(f, *args, **kwargs)
+        kid._parent = self
+        self._children |= set([kid])
+        return kid
+
     def __eq__(self, other: Any) -> bool:
         # NB: MagicMock overrides the type definition and makes this check fail if _Process is replaced with Process
         if not isinstance(other, _Process):

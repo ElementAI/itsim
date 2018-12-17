@@ -119,9 +119,37 @@ def test_parent_child_relationship(mock_node):
 
 
 @patch("itsim.machine.node.Node")
+def test_fork_exec(mock_node):
+    proc = Process(0, mock_node)
+
+    def f():
+        pass
+
+    kid = proc.fork_exec(f)
+    mock_node.fork_exec.assert_called_with(f)
+    assert proc == kid._parent
+    assert set([kid]) == proc._children
+
+
+@patch("itsim.machine.node.Node")
+def test_fork_exec_args(mock_node):
+    proc = Process(0, mock_node)
+
+    def f():
+        pass
+
+    args = (1, 2, 3)
+    kwargs = {"a": 0, "b": 1}
+    kid = proc.fork_exec(f, *args, **kwargs)
+    mock_node.fork_exec.assert_called_with(f, *args, **kwargs)
+    assert proc == kid._parent
+    assert set([kid]) == proc._children
+
+
+@patch("itsim.machine.node.Node")
 def test_child_complete(mock_node):
     parent = Process(0, mock_node)
-    kid = Process(1, mock_node, parent)
+    kid = parent.fork_exec(lambda: 0)
     parent.child_complete(kid)
     assert set() == parent._children
 
