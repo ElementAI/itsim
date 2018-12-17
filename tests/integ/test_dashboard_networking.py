@@ -31,7 +31,7 @@ def get_my_address(context: Context) -> Address:
         if addr in CIDR:
             return addr
     else:
-        raise RuntimeError("Why does this node have no address?")
+        pytest.fail("This node has no address.")
 
 
 def client(context: Context) -> None:
