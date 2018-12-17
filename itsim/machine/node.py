@@ -283,7 +283,7 @@ class Node(_Node):
 
             def forward_recv(context: Context, socket: Socket):
                 packet = socket.recv()
-                context.process.exc(forward_recv, socket)
+                context.thread.clone(forward_recv, socket)
                 daemon.trigger(context, packet, socket)
 
             self.run_proc(sim, forward_recv, new_sock)

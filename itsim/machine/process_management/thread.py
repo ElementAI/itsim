@@ -33,6 +33,12 @@ class Thread(_Thread):
     def process(self) -> _Process:
         return self._process
 
+    def clone_in(self, time: float, f: Callable[..., None], *args: Any, **kwargs: Any) -> "Thread":
+        return self.process.exc_in(self._sim, time, f, *args, **kwargs)
+
+    def clone(self, f: Callable[..., None], *args: Any, **kwargs: Any) -> "Thread":
+        return self.clone_in(0, f, *args, **kwargs)
+
     def run_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
         # Convenient object for putting in the tracking set
         def func() -> None:

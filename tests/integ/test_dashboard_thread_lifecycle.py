@@ -26,7 +26,7 @@ def grandchild(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
 
 def elder(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
     assert context.process.pid == pid_expected
-    thread_grandchild = context.process.exc(grandchild, pid_expected, cemetary)
+    thread_grandchild = context.thread.clone(grandchild, pid_expected, cemetary)
     thread_grandchild.join()
     cemetary.add("elder")
 
@@ -49,10 +49,10 @@ def super_long(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
 
 
 def parent(context: Context, cemetary: Cemetary) -> None:
-    context.node.run_proc(watcher, cemetary, context.process)
-    thread_elder = context.process.exc(elder, context.process.pid, cemetary)
-    thread_cadet = context.process.exc(cadet, context.process.pid, cemetary)
-    thread_super_long = context.process.exc(super_long, context.process.pid, cemetary)
+    context.process.fork_exec(watcher, cemetary, context.process)
+    thread_elder = context.thread.clone(elder, context.process.pid, cemetary)
+    thread_cadet = context.thread.clone(cadet, context.process.pid, cemetary)
+    thread_super_long = context.thread.clone(super_long, context.process.pid, cemetary)
 
     try:
         thread_elder.join()

@@ -42,7 +42,7 @@ def humanity(context: Context, *_) -> None:
 def adameve(context: Context, cemetary: Cemetary) -> None:
     child: Name2Child = {}
     for name, moment in [(cain, 0), (abel, 0), (seth, 130), (humanity, 0)]:
-        child[name.__name__] = context.node.run_proc_in(moment, name, cemetary, child)
+        child[name.__name__] = context.process.fork_exec_in(moment, name, cemetary, child)
 
     for name_expected, moment in [("abel", 130), ("cain", 730), ("seth", 130 + 912)]:
         child[name_expected].wait()

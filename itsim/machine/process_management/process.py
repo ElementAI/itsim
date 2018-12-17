@@ -83,11 +83,21 @@ class Process(_Process):
     def wait(self, timeout: Optional[float] = None) -> None:
         self._event_dead.wait(timeout)
 
-    def fork_exec(self, f: Callable[[Thread], None], *args, **kwargs) -> _Process:
-        kid = self._node.fork_exec(f, *args, **kwargs)
-        kid._parent = self
-        self._children |= set([kid])
-        return kid
+    def fork_exec_in(self, delay: float, f: Callable[..., None], *args, **kwargs) -> _Process:
+        for thread in self._threads:
+            if thread._sim is not None:
+                sim = thread._sim
+                break
+        else:
+            raise RuntimeError("Can only fork-exec processes with at least one running thread.")
+
+        child = self.node.run_proc_in(sim, delay, f, *args, **kwargs)
+        child._parent = self
+        self._children |= set([child])
+        return child
+
+    def fork_exec(self, f: Callable[..., None], *args, **kwargs) -> _Process:
+        return self.fork_exec_in(0, f, *args, **kwargs)
 
     def __eq__(self, other: Any) -> bool:
         # NB: MagicMock overrides the type definition and makes this check fail if _Process is replaced with Process
