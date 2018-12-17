@@ -80,14 +80,12 @@ class Node(_Node):
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
 
-    def connected_to(
+    def connect_to(
             self,
             link: Link,
             ar: AddressRepr = None,
-            routes: Optional[List[Route]] = None,
-            with_dhcp: bool = False,
-            sim: Optional[Simulator] = None
-    ) -> "Node":
+            routes: Optional[List[Route]] = None
+    ) -> Interface:
         """
         Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
         :py:class:`Interface` to the node.
@@ -108,14 +106,30 @@ class Node(_Node):
         :return: The node instance, so it can be further built.
         """
 
-        if with_dhcp and sim is None:
-            raise RuntimeError("A Simulator must be provided to run DHCP on a Node")
-
         link._connect(self)
         interface = Interface(link, as_address(ar, link.cidr), routes or [])
         self._interfaces[link.cidr] = interface
-        if with_dhcp:
-            self.schedule_daemon_in(cast(Simulator, sim), 0.0, DHCPClient(interface))
+
+        return interface
+
+    def connected_to(
+            self,
+            link: Link,
+            ar: AddressRepr = None,
+            routes: Optional[List[Route]] = None
+    ) -> "Node":
+        self.connect_to(link, ar, routes)
+        return self
+
+    def connected_with_dhcp(
+            self,
+            link: Link,
+            sim: Simulator,
+            ar: AddressRepr = None,
+            routes: Optional[List[Route]] = None,
+    ) -> "Node":
+        interface = self.connect_to(link, ar, routes)
+        self.schedule_daemon_in(cast(Simulator, sim), 0.0, DHCPClient(interface))
         return self
 
     def addresses(self) -> Iterator[Address]:

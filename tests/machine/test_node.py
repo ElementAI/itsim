@@ -365,7 +365,7 @@ def test_connected_to_with_dhcp(endpoint, link_small):
     endpoint.schedule_daemon_in.assert_not_called()
 
     sim = Simulator()
-    endpoint.connected_to(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")], True, sim)
+    endpoint.connected_with_dhcp(link_small, sim, 88, [Relay("192.168.1.2", "10.0.0.0/8")])
     endpoint.schedule_daemon_in.assert_called_once()
     _, args, _ = endpoint.schedule_daemon_in.mock_calls[0]
     assert sim == args[0]
@@ -374,6 +374,3 @@ def test_connected_to_with_dhcp(endpoint, link_small):
     # an __eq__ to the class
     assert isinstance(args[2], DHCPClient)
     assert link_small.cidr == args[2]._interface._link.cidr
-
-    with pytest.raises(RuntimeError):
-        endpoint.connected_to(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")], True)
