@@ -36,11 +36,19 @@ class DatastoreClient:
 
 class DatastoreRestClient(DatastoreClient):
 
-    def __init__(self, hostname: str = '0.0.0.0', port: int = 5000, sim_uuid: UUID = uuid4()) -> None:
+    def __init__(self,
+                 hostname: str = '0.0.0.0',
+                 port: int = 5000,
+                 sim_uuid: UUID = uuid4(),
+                 logger_name: str = 'itsim_logger',
+                 logger_level: int = logging.DEBUG,
+                 logger_en_console: bool = True,
+                 logger_en_datastore: bool = True) -> None:
         self._sim_uuid = sim_uuid
         self._headers = {'Accept': 'application/json'}
         self._url = f'http://{hostname}:{port}/'
         self._started_server = False
+        self._logger_name = 'itsim_logger'
 
         if not self.server_is_alive():
             _, self._db_file = tempfile.mkstemp(suffix=".sqlite")
@@ -48,6 +56,14 @@ class DatastoreRestClient(DatastoreClient):
             self._started_server = True
             self._url = f'http://{hostname}:{port}/'
             print(f"Couldn't find server, launching a local instance: {self._url}")
+
+        create_logger(logger_name,
+                      self._sim_uuid,
+                      self._url,
+                      logger_level,
+                      logger_en_console,
+                      logger_en_datastore)
+
 
     def __del__(self) -> None:
         """
@@ -96,17 +112,8 @@ class DatastoreRestClient(DatastoreClient):
             raise RuntimeError('Unable to start the datastore server')
         return port
 
-    # Creating the logger for console and datastore output
-    def create_logger(self,
-                      logger_name: str = __name__,
-                      console_level=logging.DEBUG,
-                      datastore_level=logging.DEBUG) -> Logger:
-
-        return create_logger(logger_name,
-                             self._sim_uuid,
-                             self._url,
-                             console_level,
-                             datastore_level)
+    def get_logger(self):
+        return logging.getLogger(self._logger_name)
 
     def load_item(self, item_type: str, uuid: UUID, from_time: Optional[str] = None,
                   to_time: Optional[str] = None) -> str:

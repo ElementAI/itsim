@@ -15,6 +15,7 @@ from itsim.machine.socket import Socket, Timeout
 from itsim.random import num_bytes
 from itsim.simulator import now
 from itsim.types import Address, Payload, Protocol
+from itsim.logging import get_logger
 
 
 class DHCPClient(Daemon):
@@ -54,6 +55,10 @@ class DHCPClient(Daemon):
         self._dhcp_client_retries = dhcp_client_retries
         self._reservation_time = reservation_time
         self._size_packet_dhcp = size_packet_dhcp
+        self._logger = get_logger()
+
+        self._logger.info(f"{self.__class__.__name__} __init__(): client initialized.")
+
 
     def run_client(self, thread: Thread) -> None:
         """
@@ -68,7 +73,8 @@ class DHCPClient(Daemon):
             The :py:class:`~itsim.machine.process_management.thread.Thread` that this method is executing in
         """
         for _ in range(self._dhcp_client_retries):
-            # Retry after each failure to get an address.
+            self._logger.debug(f"{self.__class__.__name__} run_client(): try after each failure to get an address.")
+
             if self._dhcp_get_address(thread):
                 break
 
@@ -115,7 +121,8 @@ class DHCPClient(Daemon):
             cast(Payload, {Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: node_id})
         )
 
-        # Wait for our OFFER.
+        self._logger.debug(f"{self.__class__.__name__} _dhcp_discover(): Wait for our OFFER.")
+
         for packet in self._dhcp_iter_responses(socket, node_id, DHCP.OFFER):
             if Field.ADDRESS in packet.payload:
                 return cast(Address, packet.payload[cast(str, Field.ADDRESS)])
@@ -142,14 +149,17 @@ class DHCPClient(Daemon):
         )
 
         address_orig = self._interface.address
-        # Set the interface to the new address, in the expectation it will be confirmed
+        self._logger.debug(f"{self.__class__.__name__} _dhcp_request(): Set the interface to the new address, in the "
+                           f"expectation it will be confirmed")
+
         # NB this affects the action of socket.recv(), so it must come before that call
         self._interface.address = cast(Address, address_proposed)
-        # Wait for our ACK.
+        self._logger.debug(f"{self.__class__.__name__} _dhcp_request(): Wait for our ACK")
         for packet in self._dhcp_iter_responses(socket, node_id, DHCP.ACK):
             if packet.dest.hostname_as_address() == address_proposed:
                 return True
-        # The address was not confirmed, fall back
+
+        self._logger.warning(f"{self.__class__.__name__} _dhcp_request(): The address was not confirmed, fall back")
         self._interface.address = address_orig
         return False
 

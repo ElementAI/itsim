@@ -11,7 +11,7 @@ from typing import Any
     ITSIM logging provides console and rest datastore handlers for outputting logs (an additional handler for a local
     datastore could be added if required).
 """
-
+global logger_name
 
 class DatastoreRestHandler(Handler):
 
@@ -68,33 +68,37 @@ class DatastoreFormatter(Formatter):
 def create_logger(name: str,
                   sim_uuid: UUID,
                   datastore_server: str,
-                  console_level: int = logging.CRITICAL,
-                  datastore_level: int = logging.INFO) -> Logger:
+                  logger_level: int = logging.DEBUG,
+                  enable_console: bool = True,
+                  enable_datastore: bool = True) -> None:
     """
     Function for setting up the itsim logger (avoids subclassing the Python logging class)
-
-    :param name: Python logger name
-    :param sim_uuid: simulation's uuid
-    :param console_level: log level for the console output
-    :param datastore_level: log level for the datastore output
-    :param datastore_server: datastore's url (ex: 'http://localhost:5000/')
-    :return: logger
     """
 
-    logger = logging.getLogger(name)
+    global logger_name
+    logger_name = name
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
 
-    if console_level is not None:
+    if enable_console is not None:
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(console_level)
+        console_handler.setLevel(logger_level)
         console_formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
 
-    if datastore_level is not None:
+    if enable_datastore is not None:
         datastore_formatter = DatastoreFormatter(sim_uuid)
         datastore_handler = DatastoreRestHandler(datastore_server)
-        datastore_handler.setLevel(datastore_level)
+        datastore_handler.setLevel(logger_level)
         datastore_handler.setFormatter(datastore_formatter)
         logger.addHandler(datastore_handler)
 
-    return logger
+
+def get_logger() -> Logger:
+    global logger_name
+
+    try:
+        return logging.getLogger(logger_name)
+    except NameError:
+        raise RuntimeError("A simulator needs to be created before getting the itsim logger using get_logger().")

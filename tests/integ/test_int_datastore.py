@@ -4,20 +4,19 @@ from itsim.schemas.items import create_json_node, create_json_network_event
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.time import now_iso8601
 from time import sleep
+from itsim.logging import get_logger
+from itsim.simulator import Simulator
 
 
 def test_datastore_logger():
+    sim = Simulator()
+    logger = get_logger()
+
     from_time = now_iso8601()
-    sim_uuid = uuid4()
-
-    datastore = DatastoreRestClient(sim_uuid=sim_uuid)
-    logger = datastore.create_logger()
-
     logger.error('This is an error')    # Logging to console and datastore log table
-
     to_time = now_iso8601()             # Retrieving the log from the datastore
-    log = datastore.load_item('log', uuid=None, from_time=from_time, to_time=to_time)
 
+    log = sim.datastore.load_item('log', uuid=None, from_time=from_time, to_time=to_time)
     assert log.content == 'This is an error'
 
 

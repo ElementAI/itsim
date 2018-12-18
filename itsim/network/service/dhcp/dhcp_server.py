@@ -14,6 +14,7 @@ from itsim.machine.socket import Socket
 from itsim.random import num_bytes
 from itsim.simulator import advance
 from itsim.types import Address, as_address, Cidr, Payload
+from itsim.logging import get_logger
 
 
 # Represents a reservation of a particular address in a DHCPServer
@@ -93,6 +94,9 @@ class DHCPServer(Daemon):
         self._dhcp_client_port = dhcp_client_port
         self._reservation_time = reservation_time
         self._size_packet_dhcp = size_packet_dhcp
+        self._logger = get_logger()
+
+        self._logger.info(f"{self.__class__.__name__} __init__(): server initialized.")
 
     def on_packet(self, thread: _Thread, packet: Packet, socket: Socket) -> None:
         """
@@ -113,7 +117,7 @@ class DHCPServer(Daemon):
         """
         payload = cast(Mapping[Field, Any], packet.payload)
         if Field.MESSAGE not in payload or Field.NODE_ID not in payload:
-            # Don't bother processing ill-formed messages.
+            self._logger.warning(f"{self.__class__.__name__} on_packet(): ill-formed message, not processing payload.")
             return
 
         message = payload[Field.MESSAGE]
@@ -128,7 +132,8 @@ class DHCPServer(Daemon):
         elif message == DHCP.REQUEST and address_maybe is not None:
             self._handle_request(socket, node_id, address_maybe)
         else:
-            # Can't do anything with this, drop.
+            self._logger.warning(f"{self.__class__.__name__} on_packet(): message isn't a DHCP.DISCOVER or DHCP.REQUEST,"
+                                 f" thus it's not handled and is getting dropped.")
             return
 
     def _handle_discover(self, socket: Socket, node_id: UUID, address_maybe: Optional[Address]) -> None:
@@ -151,7 +156,9 @@ class DHCPServer(Daemon):
                 if suggestion not in self._reserved:
                     break
             else:
-                # Decline to allocate as per https://tools.ietf.org/html/rfc2131#section-4.3.1
+                self._logger.warning(
+                    f"{self.__class__.__name__} _handle_discover(): Decline to allocate as per "
+                    f"https://tools.ietf.org/html/rfc2131#section-4.3.1.")
                 return
 
         self._address_allocation[node_id] = _AddressAllocation(suggestion)
@@ -167,11 +174,15 @@ class DHCPServer(Daemon):
             })
         )
 
-        # Reserve for 30 seconds -- a REQUEST for the address must have been received by then.
-        # Otherwise, drop the reservation.
+        self._logger.debug(
+            f"{self.__class__.__name__} _handle_discover(): Reserving address for 30 seconds -- a REQUEST for the "
+            f"address must have been received by then")
+
         unique = self._address_allocation[node_id].unique
         advance(self._reservation_time)
         if not self._address_allocation[node_id].is_confirmed and self._address_allocation[node_id].unique == unique:
+            self._logger.debug(
+                f"{self.__class__.__name__} _handle_discover(): Dropping the reservation.")
             del self._reserved[self._address_allocation[node_id].address]
             del self._address_allocation[node_id]
 
@@ -187,9 +198,10 @@ class DHCPServer(Daemon):
         :param address:
             The :py:class:`~itsim.types.Address` being confirmed.
         """
-
         if node_id in self._address_allocation and address == self._address_allocation[node_id].address:
-            # This REQUEST is proper, confirming the allocation of the address.
+            self._logger.debug(
+                f"{self.__class__.__name__} _handle_request(): This REQUEST is proper, confirming the allocation of "
+                f"the address.")
             self._address_allocation[node_id].is_confirmed = True
             socket.send(
                 (address, self._dhcp_client_port),
@@ -202,5 +214,6 @@ class DHCPServer(Daemon):
                 })
             )
         else:
-            # Spurious REQUEST! Drop.
+            self._logger.warning(
+                f"{self.__class__.__name__} _handle_discover(): Spurious REQUEST, drop.")
             return
