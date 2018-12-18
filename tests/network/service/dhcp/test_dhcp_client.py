@@ -181,7 +181,7 @@ def run_packets_discover(received_payloads, node_id):
             nonlocal out
             out = client._dhcp_discover(mock_sock, node_id)
             # Assert the server was called with the correct inputs
-            mock_sock.send.assert_called_once_with(
+            mock_sock.sendto.assert_called_once_with(
                 (client._interface.cidr.broadcast_address, client._dhcp_server_port),
                 1,
                 {Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: node_id})
@@ -209,7 +209,7 @@ def run_packets_request(received_payloads,
             nonlocal success
             success = client._dhcp_request(mock_sock, node_id, addr)
             # Assert the server was called with the correct inputs
-            mock_sock.send.assert_called_once_with(
+            mock_sock.sendto.assert_called_once_with(
                 (client._interface.cidr.broadcast_address, client._dhcp_server_port),
                 1,
                 {Field.MESSAGE: DHCP.REQUEST,

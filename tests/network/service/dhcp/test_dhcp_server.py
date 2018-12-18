@@ -88,11 +88,11 @@ def test_discover_relaxed(mock_sock, server):
     node_id = uuid4()
     address = as_address("192.168.1.2")
 
-    mock_sock.send = Mock()
+    mock_sock.sendto = Mock()
     feed_on_packet({Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: node_id},
                    server=server,
                    mock_sock=mock_sock)
-    mock_sock.send.assert_called_once_with((server._cidr.broadcast_address, server._dhcp_client_port),
+    mock_sock.sendto.assert_called_once_with((server._cidr.broadcast_address, server._dhcp_client_port),
                                            1,
                                            {Field.MESSAGE: DHCP.OFFER,
                                             Field.ADDRESS: address,
@@ -110,14 +110,14 @@ def test_discover_request(mock_sock, server):
     node_id = uuid4()
     request = as_address("192.168.1.4")
 
-    mock_sock.send = Mock()
+    mock_sock.sendto = Mock()
     feed_on_packet({Field.MESSAGE: DHCP.DISCOVER,
                     Field.NODE_ID: node_id,
                     Field.ADDRESS: request},
                    server,
                    mock_sock=mock_sock)
 
-    mock_sock.send.assert_called_once_with((server._cidr.broadcast_address, server._dhcp_client_port),
+    mock_sock.sendto.assert_called_once_with((server._cidr.broadcast_address, server._dhcp_client_port),
                                            1,
                                            {Field.MESSAGE: DHCP.OFFER,
                                             Field.ADDRESS: request,
@@ -135,7 +135,7 @@ def test_expiry(mock_sock, server):
     node_id = uuid4()
     request = as_address("192.168.1.4")
 
-    mock_sock.send = Mock()
+    mock_sock.sendto = Mock()
     feed_on_packet({Field.MESSAGE: DHCP.DISCOVER,
                     Field.NODE_ID: node_id,
                     Field.ADDRESS: request},
@@ -143,7 +143,7 @@ def test_expiry(mock_sock, server):
                    mock_sock=mock_sock,
                    sim_time=server._reservation_time + 1)
 
-    mock_sock.send.assert_called_once_with((server._cidr.broadcast_address, server._dhcp_client_port),
+    mock_sock.sendto.assert_called_once_with((server._cidr.broadcast_address, server._dhcp_client_port),
                                            1,
                                            {Field.MESSAGE: DHCP.OFFER,
                                             Field.ADDRESS: request,
@@ -161,14 +161,14 @@ def test_decline():
                         size_packet_dhcp=constant(1))
     for i in range(server._num_hosts_max + 1):
         with patch("itsim.machine.socket.Socket") as mock_sock:
-            mock_sock.send = Mock()
+            mock_sock.sendto = Mock()
             feed_on_packet({Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: uuid4()},
                            server=server,
                            mock_sock=mock_sock)
             if i < server._num_hosts_max:
-                mock_sock.send.assert_called_once()
+                mock_sock.sendto.assert_called_once()
             else:
-                mock_sock.send.assert_not_called()
+                mock_sock.sendto.assert_not_called()
 
 
 @patch("itsim.machine.socket.Socket")
@@ -183,7 +183,7 @@ def test_handle_request_drop(mock_sock, server):
                    mock_sock=mock_sock)
 
     # The Discover should trigger one response
-    mock_sock.send.assert_called_once()
+    mock_sock.sendto.assert_called_once()
 
     # A different UUID is supplied
     feed_on_packet({Field.MESSAGE: DHCP.REQUEST,
@@ -200,7 +200,7 @@ def test_handle_request_drop(mock_sock, server):
                    mock_sock=mock_sock)
 
     # Both Requests should be ignored
-    mock_sock.send.assert_called_once()
+    mock_sock.sendto.assert_called_once()
 
 
 def test_request(server):
@@ -219,7 +219,7 @@ def test_request(server):
                        server=server,
                        mock_sock=mock_sock)
 
-        mock_sock.send.assert_called_once_with((address, server._dhcp_client_port),
+        mock_sock.sendto.assert_called_once_with((address, server._dhcp_client_port),
                                                1,
                                                {Field.MESSAGE: DHCP.ACK,
                                                 Field.ADDRESS: address,

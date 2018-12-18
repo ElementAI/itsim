@@ -35,7 +35,7 @@ class EndpointChattering(Endpoint):
                 advance(next(self._interval_broadcast))
                 for interface in self.interfaces():
                     if not interface.address.is_loopback:
-                        socket.send((interface.cidr.broadcast_address, 10000), 128)
+                        socket.sendto((interface.cidr.broadcast_address, 10000), 128)
 
     def assert_seen_all_peers(self, expected: Set[Address]):
         assert self._peers == expected

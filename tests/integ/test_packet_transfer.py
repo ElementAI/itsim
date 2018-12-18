@@ -15,7 +15,8 @@ ledger = set()
 
 def client(thread: Thread) -> None:
     with thread.process.node.bind(Protocol.UDP) as socket:
-        socket.send(("10.11.12.20", 9887), 4, {"content": "ping"})
+        socket.peer = ("10.11.12.20", 9887)
+        socket.send(4, {"content": "ping"})
         try:
             packet = socket.recv(1 * S)
         except Timeout:
@@ -37,7 +38,7 @@ def server(thread: Thread) -> None:
         packet = socket.recv()
         assert packet.byte_size == 4
         assert packet.payload["content"] == "ping"
-        socket.send(packet.source, 8, {"content": "pong"})
+        socket.sendto(packet.source, 8, {"content": "pong"})
         ledger.add("server")
 
 

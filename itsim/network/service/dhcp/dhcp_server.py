@@ -156,7 +156,7 @@ class DHCPServer(Daemon):
 
         self._address_allocation[node_id] = _AddressAllocation(suggestion)
         self._reserved[suggestion] = True
-        socket.send(
+        socket.sendto(
             (self._cidr.broadcast_address, self._dhcp_client_port),
             next(self._size_packet_dhcp),
             cast(Payload, {
@@ -191,7 +191,7 @@ class DHCPServer(Daemon):
         if node_id in self._address_allocation and address == self._address_allocation[node_id].address:
             # This REQUEST is proper, confirming the allocation of the address.
             self._address_allocation[node_id].is_confirmed = True
-            socket.send(
+            socket.sendto(
                 (address, self._dhcp_client_port),
                 next(self._size_packet_dhcp),
                 cast(Payload, {

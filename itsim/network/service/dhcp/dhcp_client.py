@@ -109,7 +109,7 @@ class DHCPClient(Daemon):
             In practice, this is a stand-in for a MAC address
         """
 
-        socket.send(
+        socket.sendto(
             (self._interface.cidr.broadcast_address, self._dhcp_server_port),
             next(self._size_packet_dhcp),
             cast(Payload, {Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: node_id})
@@ -135,7 +135,7 @@ class DHCPClient(Daemon):
             The :py:class:`~itsim.types.Address` that was offered and should be confirmed
         """
 
-        socket.send(
+        socket.sendto(
             (self._interface.cidr.broadcast_address, self._dhcp_server_port),
             next(self._size_packet_dhcp),
             cast(Payload, {Field.MESSAGE: DHCP.REQUEST, Field.NODE_ID: node_id, Field.ADDRESS: address_proposed})
