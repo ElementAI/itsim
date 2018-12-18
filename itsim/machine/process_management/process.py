@@ -85,10 +85,8 @@ class Process(_Process):
         self._event_dead.wait(timeout)
 
     def fork_exec_in(self, delay: float, f: Callable[..., None], *args, **kwargs) -> _Process:
-        for thread in self._threads:
-            if thread._sim is not None:
-                sim = thread._sim
-                break
+        if len(self._threads) > 0:
+            sim = next(iter(self._threads))._sim
         else:
             raise RuntimeError("Can only fork-exec processes with at least one running thread.")
 
