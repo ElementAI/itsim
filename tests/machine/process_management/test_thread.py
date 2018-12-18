@@ -162,10 +162,11 @@ def run_test_join(delay, timeout, expected_log):
         def joiner(t):
             try:
                 t.join(timeout)
-                assert not thread.is_alive()
+                assert not t.is_alive()
                 log.append("complete")
             except Timeout:
                 log.append("timeout")
+                assert t.is_alive()
 
         sim = Simulator()
         thread = Thread(sim, mock_proc, 0)
