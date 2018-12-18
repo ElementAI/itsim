@@ -67,11 +67,11 @@ def test_run_in(mock_sim, proc):
     t = 10
 
     (f_a, ccb_a) = thread.run_in(t, lambda: 0)
-    mock_sim.add_in.assert_called_with(t, ccb_a)
+    mock_sim.add.assert_called_with(ccb_a, t)
     assert set(thread._computations.keys()) == {f_a}
 
     (f_b, ccb_b) = thread.run_in(t, lambda: 1)
-    mock_sim.add_in.assert_called_with(t, ccb_b)
+    mock_sim.add.assert_called_with(ccb_b, t)
     assert set(thread._computations.keys()) == {f_a, f_b}
 
 
@@ -80,11 +80,11 @@ def test_run(mock_sim, proc):
     thread = Thread(mock_sim, proc, 0)
 
     (f_a, ccb_a) = thread.run(lambda: 0)
-    mock_sim.add_in.assert_called_with(0, ccb_a)
+    mock_sim.add.assert_called_with(ccb_a, 0)
     assert set(thread._computations.keys()) == {f_a}
 
     (f_b, ccb_b) = thread.run(lambda: 1)
-    mock_sim.add_in.assert_called_with(0, ccb_b)
+    mock_sim.add.assert_called_with(ccb_b, 0)
     assert set(thread._computations.keys()) == {f_a, f_b}
 
 
@@ -188,7 +188,7 @@ def run_test_kill(delay_thread, delay_kill, delay_join, expect_alive_after_kill)
     with patch("itsim.machine.process_management.process.Process") as mock_proc:
         log = []
 
-        def f(_, delay):
+        def f(_):
             advance(delay_thread)
 
         def joiner(t):
@@ -205,7 +205,8 @@ def run_test_kill(delay_thread, delay_kill, delay_join, expect_alive_after_kill)
 
         sim = Simulator()
         thread = Thread(sim, mock_proc, 0)
-        thread.run(f, 20)
+        thread.run(f)
+        thread.run_in(delay_thread / 2, f)
         sim.add(joiner, thread)
         sim.add(killer, thread)
         sim.run()
@@ -217,7 +218,7 @@ def test_kill_live_trigger_join():
 
 
 def test_kill_live_join_after():
-    run_test_kill(100, 10, 20, True)
+    run_test_kill(100, 10, 30, True)
 
 
 def test_kill_dead():

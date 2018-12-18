@@ -1,10 +1,11 @@
 from .__init__ import _Thread
 
 from itsim.software.context import Context
-from itsim.simulator import Simulator, Event, SimulatedComputation, Interrupt
+from itsim.simulator import Simulator, Event, SimulatedComputation, Interrupt, advance
 from itsim.utils import assert_list
 
 from typing import Any, Callable, Dict, Tuple, Optional
+from uuid import uuid4
 
 
 class ThreadKilled(Interrupt):
@@ -38,31 +39,34 @@ class Thread(_Thread):
     def clone(self, f: Callable[..., None], *args: Any, **kwargs: Any) -> "Thread":
         return self.clone_in(0, f, *args, **kwargs)
 
-    def run_in(self, time: float, f: Callable[[_Thread], None], *args, **kwargs) -> Tuple[Callable, Callable]:
-        # Convenient object for putting in the tracking set
-        def func() -> None:
-            f(Context(self), *args, **kwargs)  # type: ignore
-
+    def run_in(self, time: float, f: Callable[..., None], *args, **kwargs) -> Tuple[str, Callable]:
         # Run the function as requested in arguments, then call back home
-        def call_and_callback() -> None:
+        def wrap_computation(delay) -> None:
             try:
-                func()
+                # We use advance() here instead of using the simulator's add_in() method. This enables starting the
+                # computation right away. Thereby, killing it raises the exception late enough in the execution of this
+                # function to trigger the finally block.
+                advance(delay)
+                f(Context(self), *args, **kwargs)  # type: ignore
             finally:
-                self.exit_f(func)
+                self.exit_f(SimulatedComputation.current().local.name)
 
-        self._computations[func] = self._sim.add_in(time, call_and_callback)
+        sim_comp = self._sim.add(wrap_computation, time)
+        sim_comp.local.name = str(uuid4())
+        self._computations[sim_comp.local.name] = sim_comp
+
         # Not generally useful. For unit tests
-        return (func, call_and_callback)
+        return (sim_comp.local.name, wrap_computation)
 
     def run(self, f: Callable[..., None], *args, **kwargs) -> Tuple[Callable[[], None], Callable[[], None]]:
         return self.run_in(0, f, *args, **kwargs)
 
-    def exit_f(self, f: Callable[..., None]) -> None:
+    def exit_f(self, name_sim_proc: str) -> None:
         """
         Callback for functions that have completed. This drops them from the tracking set and,
         if the set is empty, calls back to the owning Process that this Thread is exiting
         """
-        del self._computations[f]
+        del self._computations[name_sim_proc]
         if len(self._computations) == 0:
             self._process.thread_complete(self)
             self._event_dead.fire()
