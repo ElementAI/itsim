@@ -1,4 +1,4 @@
-from typing import Set
+from typing import List
 
 import pytest
 
@@ -10,7 +10,7 @@ from itsim.simulator import Simulator, advance
 from itsim.types import Timeout
 
 
-Cemetary = Set[str]
+Cemetary = List[str]
 
 
 DELAY_GRANDCHILD = 20
@@ -20,37 +20,37 @@ TIMEOUT_SUPERLONG = 100
 
 def watcher(context: Context, cemetary: Cemetary, proc_parent: Process) -> None:
     proc_parent.wait()
-    cemetary.add("watcher")
+    cemetary.append("watcher")
 
 
 def grandchild(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
     assert context.process.pid == pid_expected
     advance(DELAY_GRANDCHILD)
-    cemetary.add("grandchild")
+    cemetary.append("grandchild")
 
 
 def elder(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
     assert context.process.pid == pid_expected
     thread_grandchild = context.thread.clone(grandchild, pid_expected, cemetary)
     thread_grandchild.join()
-    cemetary.add("elder")
+    cemetary.append("elder")
 
 
 def cadet(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
     assert context.process.pid == pid_expected
     advance(DELAY_CADET)
-    cemetary.add("cadet")
+    cemetary.append("cadet")
 
 
 def super_long(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
     try:
         assert context.process.pid == pid_expected
-        advance(10000)
+        advance(TIMEOUT_SUPERLONG * 10)
         pytest.fail("Supposed to be killed as the process exits.")
     except ThreadKilled:
         raise
     finally:
-        cemetary.add("super_long")
+        cemetary.append("super_long")
 
 
 def parent(context: Context, cemetary: Cemetary) -> None:
@@ -71,14 +71,14 @@ def parent(context: Context, cemetary: Cemetary) -> None:
     except Timeout:
         pass
 
-    cemetary.add("parent")
+    cemetary.append("parent")
     context.process.kill()
 
 
 def test_context_thread_lifecycle():
     sim = Simulator()
-    cemetary = set()
+    cemetary = []
     Endpoint().with_proc_in(sim, 0, parent, cemetary)
     sim.run()
     assert sim.now() <= TIMEOUT_SUPERLONG + max(DELAY_GRANDCHILD, DELAY_CADET)
-    assert cemetary == {"parent", "elder", "cadet", "grandchild", "watcher", "super_long"}
+    assert cemetary == ["cadet", "grandchild", "elder", "parent", "super_long", "watcher"]
