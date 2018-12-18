@@ -29,7 +29,7 @@ def test_init(proc):
         sim == thread._sim,
         proc == thread._process,
         n == thread._n,
-        set() == thread._scheduled],
+        {} == thread._computations],
         throw=True)
 
 
@@ -68,11 +68,11 @@ def test_run_in(mock_sim, proc):
 
     (f_a, ccb_a) = thread.run_in(t, lambda: 0)
     mock_sim.add_in.assert_called_with(t, ccb_a)
-    assert thread._scheduled == set([f_a])
+    assert set(thread._computations.keys()) == {f_a}
 
     (f_b, ccb_b) = thread.run_in(t, lambda: 1)
     mock_sim.add_in.assert_called_with(t, ccb_b)
-    assert thread._scheduled == set([f_a, f_b])
+    assert set(thread._computations.keys()) == {f_a, f_b}
 
 
 @patch("itsim.simulator.Simulator")
@@ -81,11 +81,11 @@ def test_run(mock_sim, proc):
 
     (f_a, ccb_a) = thread.run(lambda: 0)
     mock_sim.add_in.assert_called_with(0, ccb_a)
-    assert thread._scheduled == set([f_a])
+    assert set(thread._computations.keys()) == {f_a}
 
     (f_b, ccb_b) = thread.run(lambda: 1)
     mock_sim.add_in.assert_called_with(0, ccb_b)
-    assert thread._scheduled == set([f_a, f_b])
+    assert set(thread._computations.keys()) == {f_a, f_b}
 
 
 @patch("itsim.simulator.Simulator")
@@ -95,7 +95,7 @@ def test_exit_f(mock_sim, mock_proc):
 
     (f_a, _) = thread.run(lambda: 0)
     thread.exit_f(f_a)
-    assert thread._scheduled == set()
+    assert thread._computations == {}
     mock_proc.thread_complete.assert_called_with(thread)
 
 
@@ -108,7 +108,7 @@ def test_callback(mock_proc):
     thread.run(lambda _: 0)
     sim.run()
 
-    assert thread._scheduled == set()
+    assert thread._computations == {}
     mock_proc.thread_complete.assert_called_with(thread)
 
 

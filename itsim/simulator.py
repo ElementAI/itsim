@@ -16,8 +16,11 @@ class Simulator(greensim.Simulator):
         return str(self.uuid)
 
 
-class _Process(greensim.Process):
-    pass
+class SimulatedComputation(greensim.Process):
+
+    @staticmethod
+    def current():
+        return greensim.Process.current()
 
 
 class Interrupt(greensim.Interrupt):
