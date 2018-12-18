@@ -80,5 +80,5 @@ def test_context_thread_lifecycle():
     cemetary = []
     Endpoint().with_proc_in(sim, 0, parent, cemetary)
     sim.run()
-    assert sim.now() <= TIMEOUT_SUPERLONG + max(DELAY_GRANDCHILD, DELAY_CADET)
+    assert sim.now() == pytest.approx(TIMEOUT_SUPERLONG + max(DELAY_GRANDCHILD, DELAY_CADET))
     assert cemetary == ["cadet", "grandchild", "elder", "parent", "super_long", "watcher"]
