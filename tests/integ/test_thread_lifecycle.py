@@ -13,6 +13,11 @@ from itsim.types import Timeout
 Cemetary = Set[str]
 
 
+DELAY_GRANDCHILD = 20
+DELAY_CADET = 5
+TIMEOUT_SUPERLONG = 100
+
+
 def watcher(context: Context, cemetary: Cemetary, proc_parent: Process) -> None:
     proc_parent.wait()
     cemetary.add("watcher")
@@ -20,7 +25,7 @@ def watcher(context: Context, cemetary: Cemetary, proc_parent: Process) -> None:
 
 def grandchild(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
     assert context.process.pid == pid_expected
-    advance(20)
+    advance(DELAY_GRANDCHILD)
     cemetary.add("grandchild")
 
 
@@ -33,7 +38,7 @@ def elder(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
 
 def cadet(context: Context, pid_expected: int, cemetary: Cemetary) -> None:
     assert context.process.pid == pid_expected
-    advance(5)
+    advance(DELAY_CADET)
     cemetary.add("cadet")
 
 
@@ -61,7 +66,7 @@ def parent(context: Context, cemetary: Cemetary) -> None:
         pytest.fail("Not supposed to time out while waiting for these threads.")
 
     try:
-        thread_super_long.join(100)
+        thread_super_long.join(TIMEOUT_SUPERLONG)
         pytest.fail("Supposed to time out while waiting for super long.")
     except Timeout:
         pass
@@ -75,5 +80,5 @@ def test_context_thread_lifecycle():
     cemetary = set()
     Endpoint().with_proc_in(sim, 0, parent, cemetary)
     sim.run()
-    assert sim.now() < 200
+    assert sim.now() <= TIMEOUT_SUPERLONG + max(DELAY_GRANDCHILD, DELAY_CADET)
     assert cemetary == {"parent", "elder", "cadet", "grandchild", "watcher", "super_long"}
