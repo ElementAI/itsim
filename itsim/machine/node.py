@@ -73,37 +73,33 @@ class Node(_Node):
     def __init__(self):
         super().__init__()
         self._interfaces: MutableMapping[Cidr, Interface] = OrderedDict()
-        self.connected_to(Loopback(), "127.0.0.1")
+        self._connect_to(Loopback(), "127.0.0.1")
         self._sockets: MutableMapping[Port, weakref.ReferenceType] = OrderedDict()
         self._cycle_ports_ephemeral = cycle(range(PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER))
         self._proc_set: Set[Process] = set()
         self._process_counter: int = 0
         self._default_process_parent = Process(-1, self)
 
-    def connect_to(
+    def _connect_to(
             self,
             link: Link,
             ar: AddressRepr = None,
             routes: Optional[List[Route]] = None
     ) -> Interface:
         """
-        Configures a Node to be connected to a given :py:class:`Link`. This thereby adds an
-        :py:class:`Interface` to the node.
+        Configures a Node to be connected to a given :py:class:`~itsim.network.link.Link`. This thereby adds an
+        :py:class:`~itsim.network.interface.Interface` to the node.
 
         :param link:
-            Link instance to connect this node to.
+            :py:class:`~itsim.network.link.Link` instance to connect this node to.
         :param ar:
-            Optional address to assume as participant to the network embodied by the given link. If this is not
-            provided, the address assumed is host number 0 within the CIDR associated to the link.
+            Optional address to assume as participant to the network embodied by the given
+            :py:class:`~itsim.network.link.Link`. If this is not provided, the address assumed is host number 0 within
+            the CIDR associated to the :py:class:`~itsim.network.link.Link`.
         :param routes:
             List of routes known by this node in order to exchange packets with other internetworking nodes.
-        :param with_dhcp:
-            Boolean value indicating whether a DHCPClient should be started on this Link. If this is true,
-            a simulator must be provided as the next argument
-        :param sim:
-            Simulator to run a potential DHCPClient. If with_dhcp is False, this is ignored
 
-        :return: The node instance, so it can be further built.
+        :return: The new :py:class:`~itsim.network.interface.Interface`
         """
 
         link._connect(self)
@@ -112,23 +108,47 @@ class Node(_Node):
 
         return interface
 
-    def connected_to(
+    def connected_to_static(
             self,
             link: Link,
-            ar: AddressRepr = None,
+            ar: AddressRepr,
             routes: Optional[List[Route]] = None
     ) -> "Node":
-        self.connect_to(link, ar, routes)
+        """
+        Configures a Node to be connected to a given :py:class:`~itsim.network.link.Link` at the specified address.
+        This thereby adds an :py:class:`~itsim.network.interface.Interface` to the node. Then returns the Node itself
+
+        :param link:
+           :py:class:`~itsim.network.link.Link` instance to connect this node to.
+        :param ar:
+            Optional address to assume as participant to the network embodied by the given link. If this is not
+            provided, the address assumed is host number 0 within the CIDR associated to the link.
+        :param routes:
+            List of routes known by this node in order to exchange packets with other internetworking nodes.
+
+        :return: The Node's self, now with a new :py:class:`~itsim.network.interface.Interface` on the specified link
+        """
+        self._connect_to(link, ar, routes)
         return self
 
-    def connected_with_dhcp(
+    def connected_to_dynamic(
             self,
             link: Link,
-            sim: Simulator,
-            ar: AddressRepr = None,
-            routes: Optional[List[Route]] = None,
+            sim: Simulator
     ) -> "Node":
-        interface = self.connect_to(link, ar, routes)
+        """
+        Configures a Node to be connected to a given :py:class:`~itsim.network.link.Link` and start a
+        :py:class:`~itsim.network.service.dhcp.client import DHCPClient` to
+        find an address. This thereby adds an :py:class:`Interface` to the node. Then returns the Node itself
+
+        :param link:
+            :py:class:`~itsim.network.link.Link` instance to connect this node to.
+        :param sim:
+            The :py:class:`~itsim.simulator.Simulator` in which to run the simulated DHCP process
+
+        :return: The Node's self, now with a new :py:class:`~itsim.network.interface.Interface` on the specified link
+        """
+        interface = self._connect_to(link)
         self.schedule_daemon_in(cast(Simulator, sim), 0.0, DHCPClient(interface))
         return self
 

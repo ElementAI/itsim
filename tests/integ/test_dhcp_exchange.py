@@ -18,10 +18,10 @@ def test_dhcp_exchange():
     sim = Simulator()
 
     link = Link("10.1.128.0/18", uniform(100 * MS, 200 * MS), constant(100 * MbPS))
-    router = Router().connected_to(link, "10.1.128.1")
+    router = Router().connected_to_static(link, "10.1.128.1")
     router.networking_daemon(sim, Protocol.UDP, 67)(DHCPServer(100, link.cidr, as_address("10.1.128.1")))
 
-    endpoints = [Endpoint().connected_to(link) for n in range(3)]
+    endpoints = [Endpoint().connected_to_static(link, as_address(None)) for n in range(3)]
     for endpoint in endpoints:
         endpoint.schedule_daemon_in(sim, 0.0, DHCPClient(endpoint._interfaces[link.cidr]))
         assert set(endpoint.addresses()) == set_addresses("127.0.0.1", link.cidr.network_address)
