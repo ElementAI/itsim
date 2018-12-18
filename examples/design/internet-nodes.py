@@ -102,7 +102,7 @@ for hostname in ["mother.ru", "77.88.55.66"]:
     @cnc_host.networking_daemon(sim, Protocol.TCP, 80, 433)
     def command_and_control(peer: Location, socket: Socket) -> None:
         socket.recv()
-        socket.send(
+        socket.sendto(
             peer,
             next(len_response),
             {"content": ("exploit" if next(decision_exploit) < 0.05 else "pong")}
@@ -124,9 +124,9 @@ class C2(Daemon):
         self._num_beacons.setdefault(client_uuid, 0)
         self._num_beacons[client_uuid] += 1
         if self._num_beacons[client_uuid] == 10:
-            socket.send(peer, next(self._len_response) + 1 * KB, {"content": "exploit"})
+            socket.sendto(peer, next(self._len_response) + 1 * KB, {"content": "exploit"})
         else:
-            socket.send(peer, next(self._len_response), {"content": "pong"})
+            socket.sendto(peer, next(self._len_response), {"content": "pong"})
 
     def trigger(self, *args, **kwargs) -> None:
         self.handle_tcp_connection(*args, **kwargs)

@@ -92,12 +92,16 @@ def test_discover_relaxed(mock_sock, server):
     feed_on_packet({Field.MESSAGE: DHCP.DISCOVER, Field.NODE_ID: node_id},
                    server=server,
                    mock_sock=mock_sock)
-    mock_sock.sendto.assert_called_once_with((server._cidr.broadcast_address, server._dhcp_client_port),
-                                           1,
-                                           {Field.MESSAGE: DHCP.OFFER,
-                                            Field.ADDRESS: address,
-                                            Field.SERVER: server._gateway_address,
-                                            Field.NODE_ID: node_id})
+    mock_sock.sendto.assert_called_once_with(
+        (server._cidr.broadcast_address, server._dhcp_client_port),
+        1,
+        {
+            Field.MESSAGE: DHCP.OFFER,
+            Field.ADDRESS: address,
+            Field.SERVER: server._gateway_address,
+            Field.NODE_ID: node_id
+        }
+    )
 
     assert node_id in server._address_allocation
     assert not server._address_allocation[node_id].is_confirmed
@@ -118,11 +122,11 @@ def test_discover_request(mock_sock, server):
                    mock_sock=mock_sock)
 
     mock_sock.sendto.assert_called_once_with((server._cidr.broadcast_address, server._dhcp_client_port),
-                                           1,
-                                           {Field.MESSAGE: DHCP.OFFER,
-                                            Field.ADDRESS: request,
-                                            Field.SERVER: server._gateway_address,
-                                            Field.NODE_ID: node_id})
+                                             1,
+                                             {Field.MESSAGE: DHCP.OFFER,
+                                              Field.ADDRESS: request,
+                                              Field.SERVER: server._gateway_address,
+                                              Field.NODE_ID: node_id})
 
     assert node_id in server._address_allocation
     assert not server._address_allocation[node_id].is_confirmed
@@ -144,11 +148,11 @@ def test_expiry(mock_sock, server):
                    sim_time=server._reservation_time + 1)
 
     mock_sock.sendto.assert_called_once_with((server._cidr.broadcast_address, server._dhcp_client_port),
-                                           1,
-                                           {Field.MESSAGE: DHCP.OFFER,
-                                            Field.ADDRESS: request,
-                                            Field.SERVER: server._gateway_address,
-                                            Field.NODE_ID: node_id})
+                                             1,
+                                             {Field.MESSAGE: DHCP.OFFER,
+                                              Field.ADDRESS: request,
+                                              Field.SERVER: server._gateway_address,
+                                              Field.NODE_ID: node_id})
 
     assert node_id not in server._address_allocation
     assert request not in server._reserved
@@ -220,11 +224,11 @@ def test_request(server):
                        mock_sock=mock_sock)
 
         mock_sock.sendto.assert_called_once_with((address, server._dhcp_client_port),
-                                               1,
-                                               {Field.MESSAGE: DHCP.ACK,
-                                                Field.ADDRESS: address,
-                                                Field.NODE_ID: node_id,
-                                                Field.LEASE_DURATION: server._lease_duration})
+                                                 1,
+                                                 {Field.MESSAGE: DHCP.ACK,
+                                                  Field.ADDRESS: address,
+                                                  Field.NODE_ID: node_id,
+                                                  Field.LEASE_DURATION: server._lease_duration})
 
     assert node_id in server._address_allocation
     assert server._address_allocation[node_id].is_confirmed

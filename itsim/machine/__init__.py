@@ -37,7 +37,10 @@ class _Socket(AbstractITObject):
     def pid(self) -> int:
         pass
 
-    def send(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
+    def sendto(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
+        pass
+
+    def send(self, size: int, payload: Optional[Payload] = None) -> None:
         pass
 
     def recv(self, timeout: Optional[float] = None) -> Packet:
