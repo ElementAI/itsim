@@ -83,10 +83,24 @@ class Thread(_Thread):
         return not self._event_dead.has_fired()
 
     def kill(self) -> None:
+        """
+        Kills a thread. :py:meth:`join` it to wait for its complete termination.
+
+        Killing a thread causes all of its computations to be interrupted using the :py:class:`ThreadKilled` interrupt,
+        which can be caught by computations as an exception, and discarded altogether. It is thus good style to avoid
+        causing undue delay in computations thus embedded into a :py:class:`Thread` -- any other thread waiting on its
+        termination is blocked until such computations have completed. Only *then* is the thread considered dead, and
+        any other thread waiting on its termination (through method :py:meth:`join`) is resumed.
+        """
         for sim_comp in self._computations.values():
             sim_comp.interrupt(ThreadKilled())
 
     def join(self, timeout: Optional[float] = None) -> None:
+        """
+        Blocks until this thread has terminated, either naturally or from being :py:meth:`kill` ed. If a timeout is
+        provided, failure of the thread to terminate before this timeout has elapsed (in simulator time) results in
+        exception :py:class:`~itsim.types.Timeout` being raised.
+        """
         self._event_dead.wait(timeout)
 
     def __str__(self):
