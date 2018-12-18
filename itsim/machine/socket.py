@@ -10,7 +10,14 @@ from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol, 
 
 class Timeout(Exception):
     """
-    Raised when the reception of a :py:class:`Packet` through a :py:class:`Socket` times out.
+    Raised when a packet reception times out.
+    """
+    pass
+
+
+class PeerNotSet(Exception):
+    """
+    Raised when try to send packets to a socket's peer but that peer has not yet been set.
     """
     pass
 
@@ -38,6 +45,7 @@ class Socket(_Socket):
         self._protocol = protocol
         self._node: _Node = node
         self._pid: int = pid
+        self._peer: Optional[Location] = None
         self._packet_queue: Queue[Packet] = Queue()
         self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
         self._close_signal: greensim.Signal = greensim.Signal().turn_off()
@@ -62,6 +70,21 @@ class Socket(_Socket):
         if self.is_closed:
             raise ValueError("Socket is closed")
         return self._pid
+
+    @property
+    def peer(self) -> Optional[Location]:
+        """
+        When a socket is used to speak to a single location, it may be set through this attribute. Packet expedition can
+        then be shortcut by using the :py:meth:`send` method.
+        """
+        return self._peer
+
+    @peer.setter
+    def peer(self, value: Optional[LocationRepr]):
+        if value is None:
+            self._peer = None
+        else:
+            self._peer = Location.from_repr(value)
 
     def __del__(self):
         """
@@ -95,7 +118,7 @@ class Socket(_Socket):
         """
         return self._close_signal.is_on
 
-    def send(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
+    def sendto(self, dr: LocationRepr, size: int, payload: Optional[Payload] = None) -> None:
         """
         Sends information to a certain destination, in the form of a :py:class:`Packet`. The source address of the
         packet will be determined depending on its destination.
@@ -114,6 +137,20 @@ class Socket(_Socket):
         dest = Location.from_repr(dr)
         address_dest = self._resolve_destination(dest.hostname)
         self._node._send_packet(self.port, Location(address_dest, dest.port), size, payload or {})
+
+    def send(self, size: int, payload: Optional[Payload] = None) -> None:
+        """
+        Sends information to the socket's peer, in the form of a :py:class:`Packet`.
+
+        :param size:
+            Number of bytes to send.
+        :param payload:
+            Optional information payload added to the :py:class:`Packet` instance, which may be useful for simulating
+            the server-side part of the transaction or session.
+        """
+        if self.peer is None:
+            raise PeerNotSet()
+        self.sendto(self.peer, size, payload)
 
     def _resolve_destination(self, hostname_dest: Hostname) -> Address:
         if is_ip_address(hostname_dest):

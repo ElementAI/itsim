@@ -11,7 +11,7 @@ from greensim.random import constant
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.node import PortAlreadyInUse, PORT_EPHEMERAL_MIN, PORT_EPHEMERAL_UPPER, PORT_MAX, PORT_NULL, \
     EphemeralPortsAllInUse, NoRouteToHost
-from itsim.machine.socket import Timeout, Socket
+from itsim.machine.socket import Timeout, Socket, PeerNotSet
 from itsim.network.route import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
@@ -141,9 +141,9 @@ def test_bind_port_used(endpoint, socket80):
 def test_send_packet_address(endpoint):
     with patch.object(endpoint, "_send_packet") as mock:
         with endpoint.bind(Protocol.TCP, 9887) as socket:
-            socket.send(("172.99.80.23", 80), 45666)
+            socket.sendto(("172.99.80.23", 80), 45666)
         with endpoint.bind(Protocol.UDP, 53) as socket:
-            socket.send(("8.8.8.8", 53), 652, {"content": "google.ca"})
+            socket.sendto(("8.8.8.8", 53), 652, {"content": "google.ca"})
         mock.assert_has_calls(
             [
                 call(9887, Location("172.99.80.23", 80), 45666, {}),
@@ -161,7 +161,7 @@ def test_send_packet_hostname(endpoint):
     with patch.object(endpoint, "resolve_name", return_value="172.99.0.2"), \
             patch.object(endpoint, "_send_packet") as mock:
         with endpoint.bind(Protocol.TCP, 9887) as socket:
-            socket.send(("google.ca", 443), 3398)
+            socket.sendto(("google.ca", 443), 3398)
         mock.assert_called_once_with(9887, Location("172.99.0.2", 443), 3398, {})
 
 
@@ -328,7 +328,7 @@ def test_packet_broadcast_alone_on_link(endpoint, link_small):
     endpoint.connected_to(link_small, "192.168.1.100")
     with patch.object(link_small, "_transfer_packet") as mock:
         with endpoint.bind() as socket:
-            socket.send(("192.168.1.255", 9887), 1234)
+            socket.sendto(("192.168.1.255", 9887), 1234)
             mock.assert_called_with(
                 Packet(Location("192.168.1.100", socket.port), Location("192.168.1.255", 9887), 1234),
                 as_address("192.168.1.255")
@@ -355,3 +355,24 @@ def test_socket_lost_should_be_closed(endpoint):
         gc.collect()
         assert endpoint.is_port_free(9887)
         assert FakeSocket.num_close == 1
+
+
+def test_socket_peer(endpoint):
+    with endpoint.bind(9887) as socket:
+        assert socket.peer is None
+        socket.peer = Location("google.ca", 443)
+        assert socket.peer == Location("google.ca", 443)
+        socket.peer = ("192.168.3.89", 12345)
+        assert socket.peer == Location("192.168.3.89", 12345)
+
+
+def test_socket_send(socket9887):
+    with socket9887, patch.object(socket9887, "sendto") as mock:
+        socket9887.peer = ("172.99.0.2", 443)
+        socket9887.send(567, {"asdf": 1234})
+        mock.assert_called_with(Location("172.99.0.2", 443), 567, {"asdf": 1234})
+
+
+def test_socket_send_no_peer(socket9887):
+    with socket9887, pytest.raises(PeerNotSet):
+        socket9887.send(567, {"asdf": 1234})
