@@ -44,7 +44,7 @@ class Thread(_Thread):
         def wrap_computation(delay) -> None:
             try:
                 # We use advance() here instead of using the simulator's add_in() method. This enables starting the
-                # computation right away. Thereby, killing it raises the exception late enough in the execution of this
+                # computation right away. Thereby, killing it raises the exception during the execution of this
                 # function to trigger the finally block.
                 advance(delay)
                 f(Context(self), *args, **kwargs)  # type: ignore
