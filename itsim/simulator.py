@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Optional, Any
 from uuid import UUID
 
 import greensim
+from itsim import ITObject, Tag
 from itsim.types import Timeout
 
 
@@ -16,11 +17,29 @@ class Simulator(greensim.Simulator):
         return str(self.uuid)
 
 
-class SimulatedComputation(greensim.Process):
+class SimulatedComputation(ITObject):
 
-    @staticmethod
-    def current():
-        return greensim.Process.current()
+    def __init__(self, *tags: Tag) -> None:
+        super().__init__(*tags)
+        self._gp: Optional[greensim.Process] = None
+
+    @property
+    def gp(self) -> greensim.Process:
+        if self._gp is None:
+            raise RuntimeError("Must set the greensim process before accessing it.")
+        return self._gp
+
+    @gp.setter
+    def gp(self, v: greensim.Process) -> None:
+        self._gp = v
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, SimulatedComputation):
+            return self.uuid == other.uuid
+        return False
+
+    def __hash__(self) -> int:
+        return hash(self.uuid)
 
 
 class Interrupt(greensim.Interrupt):
