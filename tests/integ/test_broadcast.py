@@ -44,7 +44,7 @@ class EndpointChattering(Endpoint):
 def test_broadcast():
     sim = Simulator()
     link = Link("10.11.0.0/16", uniform(100 * MS, 200 * MS), constant(100 * MbPS))
-    endpoints = [EndpointChattering(sim).connected_to(link, as_address(n, link.cidr)) for n in NUMS_HOST]
+    endpoints = [EndpointChattering(sim).connected_to_static(link, as_address(n, link.cidr)) for n in NUMS_HOST]
     all_addresses = set(as_address(n, link.cidr) for n in NUMS_HOST)
 
     sim.run(10 * S)

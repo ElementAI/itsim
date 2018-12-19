@@ -3,7 +3,7 @@ from greensim.random import constant
 # this file no longer meets the == condition with the one in DHCPServer
 # This is a quirk of Python imports that warrants investigation
 from itsim.network.service.dhcp.__init__ import DHCP, DHCP_CLIENT_PORT, Field, LEASE_DURATION, RESERVATION_TIME
-from itsim.network.service.dhcp.dhcp_server import DHCPServer
+from itsim.network.service.dhcp.server import DHCPServer
 from itsim.simulator import Simulator
 from itsim.types import as_address, as_cidr
 
