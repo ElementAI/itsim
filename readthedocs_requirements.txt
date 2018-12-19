@@ -31,7 +31,7 @@ ipython==7.2.0
 ipython-genutils==0.2.0
 ipywidgets==7.4.2
 itsdangerous==1.1.0
--e git+https://github.com/ElementAI/itsim.git@6425605c7d8fefe56e51a60e8fe63908733511ce#egg=itsim
+-e git+https://github.com/ElementAI/itsim.git@89be29b19f8aaddc36265dabbca3103f1a178453#egg=itsim
 jedi==0.13.1
 Jinja2==2.10
 jsonpatch==1.23
