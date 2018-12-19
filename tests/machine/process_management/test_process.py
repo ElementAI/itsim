@@ -1,12 +1,12 @@
 from itsim.software.context import Context
 from itsim.machine.node import Node
 from itsim.machine.process_management.process import Process
-from itsim.machine.process_management.thread import Thread
+from itsim.machine.process_management.thread import Thread, ThreadKilled
 from itsim.simulator import Simulator, advance
 from itsim.types import Timeout
 from itsim.utils import assert_list
 
-from pytest import fixture
+from pytest import fixture, fail
 from unittest.mock import patch
 
 
@@ -233,7 +233,12 @@ def run_test_kill(delays_threads, delay_kill, delay_join, expect_alive_after_kil
         log = []
 
         def f(_, delay):
-            advance(delay)
+            try:
+                advance(delay)
+            except ThreadKilled:
+                raise
+            except Exception:
+                fail("Thread ended with other interrupt than ThreadKilled.")
 
         def waiter(p):
             advance(delay_join)
