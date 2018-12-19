@@ -132,8 +132,8 @@ class DHCPServer(Daemon):
         elif message == DHCP.REQUEST and address_maybe is not None:
             self._handle_request(socket, node_id, address_maybe)
         else:
-            self._logger.warning(f"{self.__class__.__name__} on_packet(): message isn't a DHCP.DISCOVER or DHCP.REQUEST,"
-                                 f" thus it's not handled and is getting dropped.")
+            self._logger.warning(f"{self.__class__.__name__} on_packet(): message isn't a DHCP.DISCOVER or "
+                                 f"DHCP.REQUEST, thus it's not handled and is getting dropped.")
             return
 
     def _handle_discover(self, socket: Socket, node_id: UUID, address_maybe: Optional[Address]) -> None:

@@ -3,7 +3,6 @@ import requests
 import json
 import os
 import logging
-from logging import Logger
 from collections import namedtuple
 from typing import Any, Optional
 from queue import Queue
@@ -63,7 +62,6 @@ class DatastoreRestClient(DatastoreClient):
                       logger_level,
                       logger_en_console,
                       logger_en_datastore)
-
 
     def __del__(self) -> None:
         """

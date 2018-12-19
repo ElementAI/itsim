@@ -59,7 +59,6 @@ class DHCPClient(Daemon):
 
         self._logger.info(f"{self.__class__.__name__} __init__(): client initialized.")
 
-
     def run_client(self, thread: Thread) -> None:
         """
         Attempt and, if necessary retry, to resolve an :py:class:`~itsim.types.Address` for the

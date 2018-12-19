@@ -11,7 +11,8 @@ from typing import Any
     ITSIM logging provides console and rest datastore handlers for outputting logs (an additional handler for a local
     datastore could be added if required).
 """
-global logger_name
+logger_name = 'itsim_logger'
+
 
 class DatastoreRestHandler(Handler):
 
@@ -75,7 +76,6 @@ def create_logger(name: str,
     Function for setting up the itsim logger (avoids subclassing the Python logging class)
     """
 
-    global logger_name
     logger_name = name
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
@@ -96,7 +96,6 @@ def create_logger(name: str,
 
 
 def get_logger() -> Logger:
-    global logger_name
 
     try:
         return logging.getLogger(logger_name)
