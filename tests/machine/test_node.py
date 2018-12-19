@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import enum
 import gc
-from unittest.mock import patch, call
+from unittest.mock import call, Mock, patch
 
 import pytest
 
@@ -16,6 +16,7 @@ from itsim.network.route import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet
+from itsim.network.service.dhcp.client import DHCPClient
 from itsim.simulator import Simulator
 from itsim.types import as_cidr, as_address, AddressRepr, as_hostname, Protocol
 
@@ -53,7 +54,8 @@ ADDRESS_LARGE = as_address("10.10.192.54")
 
 @pytest.fixture
 def endpoint_2links(endpoint, link_small, link_large):
-    return endpoint.connected_to(link_small, 4).connected_to(link_large, ADDRESS_LARGE, [Relay("10.10.128.1")])
+    return endpoint.connected_to_static(link_small, 4) \
+                   .connected_to_static(link_large, ADDRESS_LARGE, [Relay("10.10.128.1")])
 
 
 def test_node_addresses(endpoint_2links):
@@ -283,7 +285,7 @@ def test_solve_transfer_beyond(endpoint_2links):
 
 
 def test_solve_transfer_no_route(endpoint, link_small):
-    endpoint.connected_to(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")])
+    endpoint.connected_to_static(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")])
     with pytest.raises(NoRouteToHost):
         endpoint._solve_transfer(as_address("172.99.0.2"))
 
@@ -325,7 +327,7 @@ def test_receive_packet_in_transit(endpoint_2links, socket9887):
 
 
 def test_packet_broadcast_alone_on_link(endpoint, link_small):
-    endpoint.connected_to(link_small, "192.168.1.100")
+    endpoint.connected_to_static(link_small, "192.168.1.100")
     with patch.object(link_small, "_transfer_packet") as mock:
         with endpoint.bind() as socket:
             socket.send(("192.168.1.255", 9887), 1234)
@@ -355,3 +357,21 @@ def test_socket_lost_should_be_closed(endpoint):
         gc.collect()
         assert endpoint.is_port_free(9887)
         assert FakeSocket.num_close == 1
+
+
+def test_connected_to_with_dhcp(endpoint, link_small):
+    endpoint.schedule_daemon_in = Mock()
+
+    endpoint.connected_to_static(link_small, 88, [Relay("192.168.1.2", "10.0.0.0/8")])
+    endpoint.schedule_daemon_in.assert_not_called()
+
+    sim = Simulator()
+    endpoint.connected_to_dynamic(link_small, sim)
+    endpoint.schedule_daemon_in.assert_called_once()
+    _, args, _ = endpoint.schedule_daemon_in.mock_calls[0]
+    assert sim == args[0]
+    assert 0 == args[1]
+    # These are sufficient to prove that the DHCPClient was instantiated correctly. Anything more would require adding
+    # an __eq__ to the class
+    assert isinstance(args[2], DHCPClient)
+    assert link_small.cidr == args[2]._interface._link.cidr

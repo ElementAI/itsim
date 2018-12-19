@@ -8,7 +8,7 @@ from itsim.network.packet import Packet
 # This is a quirk of Python imports that warrants investigation
 from itsim.network.service.dhcp.__init__ import DHCP, DHCP_CLIENT_PORT, DHCP_CLIENT_RETRIES, DHCP_SERVER_PORT, Field, \
     RESERVATION_TIME
-from itsim.network.service.dhcp.dhcp_client import DHCPClient
+from itsim.network.service.dhcp.client import DHCPClient
 from itsim.simulator import advance, Simulator
 from itsim.types import as_address, as_cidr
 
@@ -78,7 +78,7 @@ def test_get_address_returned(mock_thread, client):
 
 
 # This handles the complications of delivering streams of packets to _dhcp_iter_responses() through recv()
-# It is generalized to be useful for any function that relies on recv() by deffering all assertion logic to f_run
+# It is generalized to be useful for any function that relies on recv() by deferring all assertion logic to f_run
 def run_packets(received_payloads,
                 f_run,  # A function that handles calling the right method on DHCPClient and making assertions
                 sim_time=RESERVATION_TIME + 1,
@@ -105,6 +105,7 @@ def run_packets(received_payloads,
             def next(self, *args):
                 if self.i < len(received_packets):
                     self.i += 1
+                    # Force the passage of time so that test_recv_time_expired can test the reservation expiration
                     advance(1)
                     return received_packets[self.i - 1]
                 # This is what recv() eventually does, which leads to the termination of _dhcp_iter_responses()

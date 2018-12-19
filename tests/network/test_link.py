@@ -29,12 +29,12 @@ def link():
 
 @pytest.fixture
 def laurel(link):
-    return Endpoint().connected_to(link, "192.168.1.4")
+    return Endpoint().connected_to_static(link, "192.168.1.4")
 
 
 @pytest.fixture
 def hardy(link):
-    return Endpoint().connected_to(link, "192.168.1.78")
+    return Endpoint().connected_to_static(link, "192.168.1.78")
 
 
 @pytest.fixture
