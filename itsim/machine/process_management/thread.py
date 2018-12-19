@@ -26,7 +26,7 @@ class Thread(_Thread):
         self._sim: Simulator = sim
         self._process: SimulatedComputation = parent
         self._n: int = n
-        self._computations: Dict[Callable[..., None], SimulatedComputation] = {}
+        self._computations: Dict[str, SimulatedComputation] = {}
         self._event_dead = Event()
 
     @property
@@ -58,7 +58,7 @@ class Thread(_Thread):
         # Not generally useful. For unit tests
         return (sim_comp.local.name, wrap_computation)
 
-    def run(self, f: Callable[..., None], *args, **kwargs) -> Tuple[Callable[[], None], Callable[[], None]]:
+    def run(self, f: Callable[..., None], *args, **kwargs) -> Tuple[str, Callable]:
         return self.run_in(0, f, *args, **kwargs)
 
     def exit_f(self, name_sim_proc: str) -> None:
