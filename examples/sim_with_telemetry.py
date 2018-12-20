@@ -26,7 +26,7 @@ def ask_ping(context: Context) -> None:
     # import pdb; pdb.set_trace()
     with context.node.bind(Protocol.UDP) as socket:
         socket.send((CIDR.network_address + 1, PORT), 4, {"what": "ping"})
-        response = socket.recv()
+        socket.recv()
 
 
 def control(sim, pings):
@@ -34,6 +34,7 @@ def control(sim, pings):
     for proc_pinger in pings:
         proc_pinger.wait(NUM_CLIENTS * S)
     sim.stop()
+
 
 def test_endpoint_telemetry():
     with Simulator() as sim:
