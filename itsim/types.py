@@ -215,3 +215,10 @@ class Interrupt(Enum):
     """
     SIGINT = 0
     SIGKILL = 1
+
+
+class Timeout(Exception):
+    """
+    Raised when a blocking operation times out.
+    """
+    pass

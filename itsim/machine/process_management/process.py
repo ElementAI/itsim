@@ -1,7 +1,7 @@
 from .__init__ import _Process
 
 from itsim.machine import _Node
-from itsim.simulator import Simulator
+from itsim.simulator import Simulator, Event
 from itsim.machine.process_management.thread import Thread
 from itsim.types import Interrupt
 from itsim.utils import assert_list
@@ -17,16 +17,22 @@ class Process(_Process):
     """
     def __init__(self, n: int, node: _Node, parent: Optional[_Process] = None) -> None:
         super().__init__()
-        self._children: Set[_Process] = set()
-        self._parent: Optional[_Process] = parent
-        self._threads: Set[Thread] = set()
         self._n: int = n
         self._node: _Node = node
+        self._parent: Optional[_Process] = parent
+        if parent is not None:
+            parent._add_child(self)
+        self._children: Set[_Process] = set()
+        self._threads: Set[Thread] = set()
         self._thread_counter: int = 0
+        self._event_dead = Event()
 
     @property
     def children(self) -> Set[_Process]:
         return self._children
+
+    def _add_child(self, child: _Process) -> None:
+        self._children.add(child)
 
     @property
     def node(self) -> _Node:
@@ -39,7 +45,7 @@ class Process(_Process):
     def exc_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> Thread:
         t = Thread(sim, self, self._thread_counter)
         self._thread_counter += 1
-        t.clone_in(time, f, *args, **kwargs)
+        t.run_in(time, f, *args, **kwargs)
         self._threads |= set([t])
         # Not generally useful. For unit tests
         return t
@@ -50,24 +56,47 @@ class Process(_Process):
     def thread_complete(self, t: Thread):
         self._threads -= set([t])
         if self._threads == set():
-            if self._parent is not None:
-                self._parent.child_complete(self)
-            self._node.proc_exit(self)
+            self._die()
 
     def child_complete(self, p: _Process):
         self._children -= set([p])
 
     def signal(self, sig: Interrupt) -> None:
-        pass
+        raise NotImplementedError()
 
-    def kill(self) -> int:
-        pass
+    def is_alive(self) -> bool:
+        return not self._event_dead.has_fired()
 
-    def fork_exec(self, f: Callable[[Thread], None], *args, **kwargs) -> _Process:
-        kid = self._node.fork_exec(f, *args, **kwargs)
-        kid._parent = self
-        self._children |= set([kid])
-        return kid
+    def kill(self) -> None:
+        if len(self._threads) == 0:
+            self._die()
+        else:
+            # Once all threads are dead, method _die() will be called to complete the closure of this process.
+            for thread in self._threads:
+                thread.kill()
+
+    def _die(self) -> None:
+        self._event_dead.fire()
+        if self._parent is not None:
+            self._parent.child_complete(self)
+        self._node.proc_exit(self)
+
+    def wait(self, timeout: Optional[float] = None) -> None:
+        self._event_dead.wait(timeout)
+
+    def fork_exec_in(self, delay: float, f: Callable[..., None], *args, **kwargs) -> _Process:
+        if len(self._threads) > 0:
+            sim = next(iter(self._threads))._sim
+        else:
+            raise RuntimeError("Can only fork-exec processes with at least one running thread.")
+
+        child = self.node.run_proc_in(sim, delay, f, *args, **kwargs)
+        child._parent = self
+        self._children |= set([child])
+        return child
+
+    def fork_exec(self, f: Callable[..., None], *args, **kwargs) -> _Process:
+        return self.fork_exec_in(0, f, *args, **kwargs)
 
     def __eq__(self, other: Any) -> bool:
         # NB: MagicMock overrides the type definition and makes this check fail if _Process is replaced with Process
@@ -82,11 +111,11 @@ class Process(_Process):
 
     def __str__(self):
         return "(%s)" % ", ".join([str(y) for y in [
-            self._children,
-            self._parent,
+            [c.pid for c in self._children],
+            self._parent.pid if self._parent is not None else "<no parent>",
             self._threads,
             self._n,
-            self._node,
+            f'Node({", ".join(str(addr) for addr in self._node.addresses())})',
             self._thread_counter
         ]])
 

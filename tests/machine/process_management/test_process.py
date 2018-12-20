@@ -1,10 +1,12 @@
+from itsim.software.context import Context
 from itsim.machine.node import Node
 from itsim.machine.process_management.process import Process
-from itsim.machine.process_management.thread import Thread
-from itsim.simulator import Simulator
+from itsim.machine.process_management.thread import Thread, ThreadKilled
+from itsim.simulator import Simulator, advance
+from itsim.types import Timeout
 from itsim.utils import assert_list
 
-from pytest import fixture
+from pytest import fixture, fail
 from unittest.mock import patch
 
 
@@ -107,21 +109,35 @@ def test_thread_complete(mock_sim, mock_node, mock_proc):
 
 
 @patch("itsim.machine.node.Node")
+def test_parent_child_relationship(mock_node):
+    parent = Process(0, mock_node)
+    kid = Process(1, mock_node, parent)
+    assert parent._parent is None
+    assert kid._parent is parent
+    assert parent._children == {kid}
+    assert len(kid._children) == 0
+
+
+@patch("itsim.machine.node.Node")
 def test_fork_exec(mock_node):
     proc = Process(0, mock_node)
+    sim = Simulator()
+    proc.exc(sim, lambda: None)
 
     def f():
         pass
 
     kid = proc.fork_exec(f)
-    mock_node.fork_exec.assert_called_with(f)
+    mock_node.run_proc_in.assert_called_with(sim, 0, f)
     assert proc == kid._parent
-    assert set([kid]) == proc._children
+    assert {kid} == proc._children
 
 
 @patch("itsim.machine.node.Node")
 def test_fork_exec_args(mock_node):
     proc = Process(0, mock_node)
+    sim = Simulator()
+    proc.exc(sim, lambda: None)
 
     def f():
         pass
@@ -129,14 +145,144 @@ def test_fork_exec_args(mock_node):
     args = (1, 2, 3)
     kwargs = {"a": 0, "b": 1}
     kid = proc.fork_exec(f, *args, **kwargs)
-    mock_node.fork_exec.assert_called_with(f, *args, **kwargs)
+    mock_node.run_proc_in.assert_called_with(sim, 0, f, *args, **kwargs)
     assert proc == kid._parent
-    assert set([kid]) == proc._children
+    assert {kid} == proc._children
 
 
 @patch("itsim.machine.node.Node")
 def test_child_complete(mock_node):
-    proc = Process(0, mock_node)
-    kid = proc.fork_exec(lambda: 0)
-    proc.child_complete(kid)
-    assert set() == proc._children
+    parent = Process(0, mock_node)
+    parent.exc(Simulator(), lambda: 0)
+    kid = parent.fork_exec(lambda: 0)
+    parent.child_complete(kid)
+    assert set() == parent._children
+
+
+def run_process_wait_test(timeout, expected, has_thread=True, delay_before_wait=0):
+    with patch("itsim.machine.node.Node") as mock_node:
+        def thread_behaviour(context: Context):
+            advance(10)
+
+        sim = Simulator()
+        proc = Process(1234, mock_node)
+        if has_thread:
+            proc.exc(sim, thread_behaviour)
+        log = []
+
+        def wait_for_proc():
+            advance(delay_before_wait)
+            try:
+                proc.wait(timeout)
+                log.append("complete")
+            except Timeout:
+                log.append("timeout")
+
+        sim.add(wait_for_proc)
+        sim.run()
+
+        assert log == [expected]
+
+
+def test_process_wait_no_more_thread():
+    run_process_wait_test(None, "complete", True, 20)
+
+
+def test_process_wait_complete_no_timeout():
+    run_process_wait_test(None, "complete")
+
+
+def test_process_wait_complete_with_timeout():
+    run_process_wait_test(20, "complete")
+
+
+def test_process_wait_timeout():
+    run_process_wait_test(5, "timeout")
+
+
+def test_process_wait_no_thread_not_started():
+    run_process_wait_test(100, "timeout", False)
+
+
+@patch("itsim.machine.node.Node")
+def test_process_is_alive(mock_node):
+    DELAY = 20
+    is_running = False
+
+    def f(_):
+        nonlocal is_running
+        is_running = True
+        advance(DELAY)
+
+    sim = Simulator()
+    proc = Process(1234, mock_node)
+    assert proc.is_alive()
+    thread = Thread(sim, proc, 0)
+    assert proc.is_alive()
+    thread.run(f)
+    assert proc.is_alive()
+    sim.run(DELAY / 2)
+    assert is_running
+    assert proc.is_alive()
+    sim.run()
+    assert not proc.is_alive()
+
+
+def run_test_kill(delays_threads, delay_kill, delay_join, expect_alive_after_kill):
+    with patch("itsim.machine.node.Node") as mock_node:
+        log = []
+
+        def f(_, delay):
+            try:
+                advance(delay)
+            except ThreadKilled:
+                raise
+            except Exception:
+                fail("Thread ended with other interrupt than ThreadKilled.")
+
+        def waiter(p):
+            advance(delay_join)
+            p.wait()
+            for thread in p._threads:
+                assert not thread.is_alive()
+            assert not p.is_alive()
+            log.append("waiter")
+
+        def killer(p):
+            advance(delay_kill)
+            p.kill()
+            assert p.is_alive() == expect_alive_after_kill
+            log.append("killer")
+
+        sim = Simulator()
+        proc = Process(1234, mock_node)
+        for delay in delays_threads:
+            proc.exc(sim, f, delay)
+        sim.add(waiter, proc)
+        sim.add(killer, proc)
+        sim.run()
+        assert log == ["killer", "waiter"]
+
+
+def test_kill_no_thread():
+    run_test_kill([], 10, 11, False)
+
+
+def test_kill_dead():
+    run_test_kill([10], 20, 30, False)
+
+
+def test_kill_live_trigger_wait():
+    run_test_kill([100], 10, 0, True)
+
+
+def test_kill_live_two_threads():
+    run_test_kill([100, 200], 10, 0, True)
+
+
+def test_kill_live_one_thread_done():
+    run_test_kill([10, 200], 20, 0, True)
+
+
+def test_kill_live_wait_after():
+    run_test_kill([100], 10, 20, True)

@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from itertools import cycle
-from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union, Tuple
+from typing import Callable, cast, Iterator, List, MutableMapping, Optional, Set, Union, Tuple, Any
 import weakref
 
 from itsim.network.route import Route
@@ -10,6 +10,7 @@ from itsim.network.location import Location
 from itsim.network.packet import Packet
 from itsim.network.service.dhcp.client import DHCPClient
 from itsim.machine import _Node
+from itsim.software.context import Context
 from itsim.machine.file_system import File
 from itsim.machine.process_management.daemon import Daemon
 from itsim.machine.process_management.process import Process
@@ -294,6 +295,9 @@ class Node(_Node):
     def proc_exit(self, p: Process) -> None:
         self._proc_set -= set([p])
 
+    def with_proc(self, sim: Simulator, f: Callable[..., None], *args: Any, **kwargs: Any) -> _Node:
+        return self.with_proc_in(sim, 0, f, *args, **kwargs)
+
     def with_proc_in(self, sim: Simulator, time: float, f: Callable[[Thread], None], *args, **kwargs) -> _Node:
         self.run_proc_in(sim, time, f, *args, **kwargs)
         return self
@@ -338,10 +342,10 @@ class Node(_Node):
         for port in ports:
             new_sock = self.bind(protocol, port)
 
-            def forward_recv(thread: Thread, socket: Socket):
-                pack = socket.recv()
-                thread._process.exc(sim, forward_recv, socket)
-                daemon.trigger(thread, pack, socket)
+            def forward_recv(context: Context, socket: Socket):
+                packet = socket.recv()
+                context.thread.clone(forward_recv, socket)
+                daemon.trigger(context, packet, socket)
 
             self.run_proc(sim, forward_recv, new_sock)
 

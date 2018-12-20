@@ -5,14 +5,7 @@ import greensim
 from itsim.machine.__init__ import _Socket, _Node
 from itsim.network.location import LocationRepr, Location
 from itsim.network.packet import Packet
-from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol, is_ip_address
-
-
-class Timeout(Exception):
-    """
-    Raised when the reception of a :py:class:`Packet` through a :py:class:`Socket` times out.
-    """
-    pass
+from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol, is_ip_address, Timeout
 
 
 class Socket(_Socket):
