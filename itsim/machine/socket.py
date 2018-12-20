@@ -1,10 +1,15 @@
+from datetime import timedelta
 from queue import Queue
-from typing import Optional
+from typing import Optional, cast
+from uuid import uuid4, UUID
 
 import greensim
+from itsim.datastore.datastore import DatastoreClientFactory, DatastoreClient
 from itsim.machine.__init__ import _Socket, _Node
 from itsim.network.location import LocationRepr, Location
 from itsim.network.packet import Packet
+from itsim.schemas.items import create_json_network_event
+from itsim.simulator import now
 from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol, is_ip_address, Timeout
 
 
@@ -34,6 +39,29 @@ class Socket(_Socket):
         self._packet_queue: Queue[Packet] = Queue()
         self._packet_signal: greensim.Signal = greensim.Signal().turn_off()
         self._close_signal: greensim.Signal = greensim.Signal().turn_off()
+        self._num_bytes_sent = 0
+        self._num_bytes_received = 0
+        factory = DatastoreClientFactory()
+        self._sim_uuid = factory.sim_uuid
+        self._time_start = factory.time_start
+        self._client_ds: Optional[DatastoreClient] = factory.get_client()
+        self._record("open", None, None)
+
+    def _record(self, network_event_type: str, address_src: Optional[Address], dest: Optional[Location]) -> None:
+        if self._client_ds is not None:
+            self._client_ds.store_item(
+                create_json_network_event(
+                    sim_uuid=cast(UUID, self._sim_uuid),
+                    timestamp=(self._time_start + timedelta(0, now())).isoformat(),
+                    uuid=uuid4(),
+                    uuid_node=self.node.uuid,
+                    network_event_type=network_event_type,
+                    protocol=str(self.protocol),
+                    pid=self._pid,
+                    src=(str(address_src) if address_src is not None else "", self.port),
+                    dst=(str(dest.hostname), dest.port) if dest is not None else ("", 0)
+                )
+            )
 
     @property
     def protocol(self) -> Protocol:
@@ -78,6 +106,7 @@ class Socket(_Socket):
         Closes the socket, relinquishing the resources it reserves on the :py:class:`Node` that instantiated it.
         """
         if not self.is_closed:
+            self._record("close", None, None)
             self._node._deallocate_socket(self)
             self._close_signal.turn_on()
 
@@ -106,7 +135,9 @@ class Socket(_Socket):
             raise ValueError("Socket is closed")
         dest = Location.from_repr(dr)
         address_dest = self._resolve_destination(dest.hostname)
-        self._node._send_packet(self.port, Location(address_dest, dest.port), size, payload or {})
+        dest_resolved = Location(address_dest, dest.port)
+        address_src = self._node._send_packet(self.port, dest_resolved, size, payload or {})
+        self._record("send", address_src, dest_resolved)
 
     def _resolve_destination(self, hostname_dest: Hostname) -> Address:
         if is_ip_address(hostname_dest):
@@ -142,4 +173,5 @@ class Socket(_Socket):
         if self._packet_queue.empty():
             self._packet_signal.turn_off()
 
+        self._record("recv", output.dest.hostname_as_address(), output.source)
         return output
