@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from datetime import datetime
 import requests
 import json
 import os
@@ -145,9 +146,18 @@ class DatastoreClientFactory:
     def __init__(self):
         self.__dict__ = DatastoreClientFactory._shared
         if len(DatastoreClientFactory._shared) == 0:
-            self._hostname: str = "localhost"
+            self._sim_uuid: Optional[UUID] = None
+            self._hostname: str = "0.0.0.0"
             self._port: int = 5000
-            self._sim_uuid: UUID = uuid4()
+            self._time_start: datetime = datetime.now()
+
+    @property
+    def sim_uuid(self) -> Optional[UUID]:
+        return self._sim_uuid
+
+    @sim_uuid.setter
+    def sim_uuid(self, uuid: UUID) -> None:
+        self._sim_uuid = uuid
 
     @property
     def hostname(self) -> str:
@@ -170,12 +180,14 @@ class DatastoreClientFactory:
         self._port = port
 
     @property
-    def sim_uuid(self) -> UUID:
-        return self._sim_uuid
+    def time_start(self) -> datetime:
+        return self._time_start
 
-    @sim_uuid.setter
-    def sim_uuid(self, uuid: UUID) -> None:
-        self._sim_uuid = uuid
+    @time_start.setter
+    def time_start(self, dt: datetime) -> None:
+        self._time_start = dt
 
-    def get_client(self, sim_uuid: Optional[UUID] = None):
-        return DatastoreRestClient(self.hostname, self.port, sim_uuid or self.sim_uuid)
+    def get_client(self) -> Optional[DatastoreClient]:
+        if self.sim_uuid is None:
+            return None
+        return DatastoreRestClient(self.hostname, self.port, self.sim_uuid)
