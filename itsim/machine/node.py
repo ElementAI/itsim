@@ -383,7 +383,8 @@ class Node(_Node):
                 daemon = Daemon(cast(Callable, server_behaviour))
             else:
                 raise TypeError("Daemon must have trigger() or be of type Callable")
-            self.run_networking_daemon(sim, daemon, protocol, *ports)
+
+            sim.add(self.run_networking_daemon, sim, daemon, protocol, *ports)
             return server_behaviour
 
         return _decorator
