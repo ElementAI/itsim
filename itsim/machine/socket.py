@@ -54,6 +54,7 @@ class Socket(_Socket):
                     sim_uuid=cast(UUID, self._sim_uuid),
                     timestamp=(self._time_start + timedelta(0, now())).isoformat(),
                     uuid=uuid4(),
+                    tags=["HOHO"],
                     uuid_node=self._node.uuid,
                     network_event_type=network_event_type,
                     protocol=str(self.protocol),
