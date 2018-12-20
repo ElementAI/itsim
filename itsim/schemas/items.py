@@ -77,7 +77,9 @@ LOG_SCHEMA = {
 
 network_event_types = [
     "open",
-    "close"
+    "close",
+    "send",
+    "recv"
 ]
 
 NETWORK_EVENT_SCHEMA = {
@@ -183,7 +185,7 @@ def create_json_network_event(sim_uuid: UUID,
                         network_event_type=network_event_type,
                         protocol=protocol,
                         pid=pid,
-                        src=src,
-                        dst=dst)
+                        src=list(src),
+                        dst=list(dst))
     check_validity(json_item, NETWORK_EVENT_SCHEMA)
     return json_item
