@@ -5,7 +5,7 @@ import os
 import logging
 from logging import Logger
 from collections import namedtuple
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 from queue import Queue
 from threading import Thread, Timer
 from itsim.datastore.datastore_server import DatastoreRestServer
@@ -140,7 +140,7 @@ class DatastoreRestClient(DatastoreClient):
 
 class DatastoreClientFactory:
 
-    _shared = {}
+    _shared: Dict[str, Any] = {}
 
     def __init__(self):
         self.__dict__ = DatastoreClientFactory._shared
