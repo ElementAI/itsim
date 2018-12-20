@@ -1,6 +1,6 @@
 import pytest
 
-from greensim.random import uniform, constant
+from greensim.random import constant, normal, uniform
 
 from itsim import malware
 from itsim.software.context import Context
@@ -12,20 +12,20 @@ from itsim.network.router import Router
 from itsim.network.route import Relay
 from itsim.simulator import Simulator, now
 from itsim.types import Protocol
-from itsim.units import S, MS, MbPS
+from itsim.units import B, S, MS, MbPS
 
 ledger = set()
+size_dist = normal(100 * B, 300 * B)
 
 
 @malware
 def client(context: Context, router: Router) -> None:
     with context.node.bind(Protocol.UDP) as socket:
-        socket.send(Location("10.11.12.20", 9887), 4, {"content": "ping"})
+        socket.send(Location("10.11.12.20", 9887), next(size_dist), {"content": "ping"})
         try:
             packet = socket.recv(1 * S)
         except Timeout:
             pytest.fail("Supposed to receive the packet before timeout.")
-        assert packet.byte_size == 8
         assert packet.payload["content"] == "pong"
 
         try:
@@ -41,7 +41,6 @@ def client(context: Context, router: Router) -> None:
 def server(context: Context) -> None:
     with context.node.bind(Protocol.UDP, 9887) as socket:
         packet = socket.recv()
-        assert packet.byte_size == 4
         assert packet.payload["content"] == "ping"
         socket.send(packet.source, 8, {"content": "pong"})
         ledger.add("server")
