@@ -136,3 +136,46 @@ class DatastoreRestClient(DatastoreClient):
 
     def delete(self, item_type: str, uuid: UUID) -> None:
         pass
+
+
+class DatastoreClientFactory:
+
+    _shared = {}
+
+    def __init__(self):
+        self.__dict__ = DatastoreClientFactory._shared
+        if len(DatastoreClientFactory._shared) == 0:
+            self._hostname: str = "localhost"
+            self._port: int = 5000
+            self._sim_uuid: UUID = uuid4()
+
+    @property
+    def hostname(self) -> str:
+        return self._hostname
+
+    @hostname.setter
+    def hostname(self, hostname: str) -> None:
+        if len(hostname) == 0:
+            raise ValueError("Empty string forbidden")
+        self._hostname = hostname
+
+    @property
+    def port(self) -> int:
+        return self._port
+
+    @port.setter
+    def port(self, port: int) -> None:
+        if port <= 0 or port >= 2 ** 16:
+            raise ValueError("Port out of useful range")
+        self._port = port
+
+    @property
+    def sim_uuid(self) -> UUID:
+        return self._sim_uuid
+
+    @sim_uuid.setter
+    def sim_uuid(self, uuid: UUID) -> None:
+        self._sim_uuid = uuid
+
+    def get_client(self, sim_uuid: Optional[UUID] = None):
+        return DatastoreRestClient(self.hostname, self.port, sim_uuid or self.sim_uuid)
