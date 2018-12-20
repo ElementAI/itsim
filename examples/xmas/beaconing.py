@@ -9,6 +9,7 @@ from itsim.machine.socket import Timeout
 from itsim.network.location import Location
 from itsim.network.link import Link
 from itsim.network.router import Router
+from itsim.network.route import Relay
 from itsim.simulator import Simulator, now
 from itsim.types import Protocol
 from itsim.units import S, MS, MbPS
@@ -19,9 +20,7 @@ ledger = set()
 @malware
 def client(context: Context, router: Router) -> None:
     with context.node.bind(Protocol.UDP) as socket:
-        socket.send(router.location, 4, {"content": "ping",
-                                         Router.FINAL_DEST_FIELD: Location("10.11.12.20", 9887),
-                                         Router.MAC_FIELD: context.node.uuid})
+        socket.send(Location("10.11.12.20", 9887), 4, {"content": "ping"})
         try:
             packet = socket.recv(1 * S)
         except Timeout:
@@ -44,20 +43,21 @@ def server(context: Context) -> None:
         packet = socket.recv()
         assert packet.byte_size == 4
         assert packet.payload["content"] == "ping"
-        socket.send(packet.source, 8, {"content": "pong", Router.MAC_FIELD: packet.payload[Router.MAC_FIELD]})
+        socket.send(packet.source, 8, {"content": "pong"})
         ledger.add("server")
 
 
 def test_packet_transfer():
     sim = Simulator()
 
-    link = Link("10.11.12.0/24", latency=uniform(100 * MS, 200 * MS), bandwidth=constant(100 * MbPS))
+    link = Link("10.11.12.0/24", latency=uniform(100 * MS, 10 * MS), bandwidth=constant(100 * MbPS))
     router = Router(sim, link)
+    route = Relay(router.addr, "0.0.0.0/0")
 
-    pinger = Endpoint().connected_to_static(link, "10.11.12.10")
+    pinger = Endpoint().connected_to_static(link, "10.11.12.10", [route])
     pinger.run_proc_in(sim, 0.1, client, router)
 
-    ponger = Endpoint().connected_to_static(link, "10.11.12.20")
+    ponger = Endpoint().connected_to_static(link, "10.11.12.20", [route])
     ponger.run_proc(sim, server)
 
     sim.run(10.0 * S)

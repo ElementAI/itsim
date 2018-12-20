@@ -1,6 +1,6 @@
 from typing import List
 
-from itsim.network.route import Route, Local
+from itsim.network.route import Route
 from itsim.network.link import Link
 from itsim.types import AddressRepr, Address, as_address, Cidr
 
@@ -61,7 +61,7 @@ class Interface:
         List of :py:class:`Route`s for this interface. A :py:class:`Local` route to the CIDR of the associated
         :py:class:`Link` is always present, even though it has not been explicitly specified.
         """
-        return [Local(self.cidr)] + self._routes
+        return self._routes
 
     @routes.setter
     def routes(self, fs: List[Route]):

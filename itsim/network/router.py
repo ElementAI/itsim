@@ -4,10 +4,9 @@ from itsim.machine.socket import Socket
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet
-from itsim.network.route import Relay
+from itsim.network.route import Local
 from itsim.simulator import Simulator
 from itsim.software.context import Context
-from itsim.types import Protocol
 
 from typing import cast, MutableMapping
 
@@ -50,8 +49,10 @@ class Router(Node):
 
     def __init__(self, sim: Simulator, link: Link) -> None:
         super().__init__()
-        addr = next(link.cidr.hosts())
-        port = 53
-        self._connect_to(link, addr, [Relay(addr, link.cidr)])
-        self.run_networking_daemon(sim, _PassThroughRoutingDaemon(), Protocol.UDP, port)
-        self.location = Location(addr, port)
+        self.addr = next(link.cidr.hosts())
+        self._port = 53
+        self._connect_to(link, self.addr, [Local("0.0.0.0/0")])
+
+    def handle_packet_transit(self, packet: Packet) -> None:
+        interface, address_hop = self._solve_transfer(packet.dest.hostname_as_address())
+        interface.link._transfer_packet(packet, address_hop)

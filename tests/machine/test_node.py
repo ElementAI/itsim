@@ -16,6 +16,7 @@ from itsim.network.route import Relay
 from itsim.network.link import Link
 from itsim.network.location import Location
 from itsim.network.packet import Packet
+from itsim.network.route import Local
 from itsim.network.service.dhcp.client import DHCPClient
 from itsim.simulator import Simulator
 from itsim.types import as_cidr, as_address, AddressRepr, as_hostname, Protocol
@@ -55,7 +56,8 @@ ADDRESS_LARGE = as_address("10.10.192.54")
 @pytest.fixture
 def endpoint_2links(endpoint, link_small, link_large):
     return endpoint.connected_to_static(link_small, 4) \
-                   .connected_to_static(link_large, ADDRESS_LARGE, [Relay("10.10.128.1")])
+                   .connected_to_static(link_large, ADDRESS_LARGE, [Relay("10.10.192.78", CIDR_LARGE)]) \
+                   .connected_to_static(link_small, ADDRESS_SMALL, [Relay("192.168.1.23", CIDR_SMALL)])
 
 
 def test_node_addresses(endpoint_2links):
@@ -260,9 +262,8 @@ def test_recv_socket_timeout_fired(socket80):
 
 def test_send_packet(endpoint_2links, link_small, link_large):
     for source, dest, link, relay in [
-        (ADDRESS_SMALL, "192.168.1.67", link_small, "192.168.1.67"),
-        (ADDRESS_LARGE, "10.10.192.245", link_large, "10.10.192.245"),
-        (ADDRESS_LARGE, "172.92.0.2", link_large, "10.10.128.1")
+        (ADDRESS_SMALL, "192.168.1.67", link_small, "192.168.1.23"),
+        (ADDRESS_LARGE, "10.10.192.245", link_large, "10.10.192.78")
     ]:
         with patch.object(link, "_transfer_packet") as mock:
             loc_dest = Location(dest, 443)
@@ -276,12 +277,6 @@ def test_solve_transfer_local(endpoint_2links):
         interface, hop = endpoint_2links._solve_transfer(address)
         assert interface.cidr == as_cidr(cidr_r)
         assert hop == address
-
-
-def test_solve_transfer_beyond(endpoint_2links):
-    interface, hop = endpoint_2links._solve_transfer(as_address("172.99.0.2"))
-    assert interface.cidr == as_cidr("10.10.128.0/17")
-    assert hop == as_address("10.10.128.1")
 
 
 def test_solve_transfer_no_route(endpoint, link_small):
@@ -327,7 +322,7 @@ def test_receive_packet_in_transit(endpoint_2links, socket9887):
 
 
 def test_packet_broadcast_alone_on_link(endpoint, link_small):
-    endpoint.connected_to_static(link_small, "192.168.1.100")
+    endpoint.connected_to_static(link_small, "192.168.1.100", [Local("0.0.0.0/0")])
     with patch.object(link_small, "_transfer_packet") as mock:
         with endpoint.bind() as socket:
             socket.send(("192.168.1.255", 9887), 1234)
