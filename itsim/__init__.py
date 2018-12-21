@@ -1,4 +1,5 @@
 from abc import ABC
+from enum import auto
 from typing import Callable
 from uuid import uuid4, UUID
 
@@ -7,8 +8,8 @@ from greensim.tags import Tags, TaggedObject
 
 
 class Tag(Tags):
-    MALWARE = 0
-    VULNERABLE = 1
+    MALWARE = auto()
+    VULNERABLE = auto()
 
 
 class ITObject(TaggedObject):

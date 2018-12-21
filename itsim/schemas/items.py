@@ -31,6 +31,14 @@ ITSIM_OBJECT_TYPE_SCHEMA = {
     "enum": itsim_object_types
 }
 
+
+TAGS_SCHEMA = {
+    "description": "Tags passed from a computation to telemetry",
+    "type": "array",
+    "items": {"type": "string"}
+}
+
+
 NODE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-06/schema#",
     "description": "A node object",
@@ -77,7 +85,9 @@ LOG_SCHEMA = {
 
 network_event_types = [
     "open",
-    "close"
+    "close",
+    "send",
+    "recv"
 ]
 
 NETWORK_EVENT_SCHEMA = {
@@ -92,6 +102,7 @@ NETWORK_EVENT_SCHEMA = {
         },
         "type": ITSIM_OBJECT_TYPE_SCHEMA,
         "uuid": UUID_SCHEMA,
+        "tags": TAGS_SCHEMA,
         "uuid_node": UUID_SCHEMA,
         "network_event_type": {
             "description": "Network event type",
@@ -169,21 +180,23 @@ def create_json_log(sim_uuid: UUID, timestamp: str, uuid: UUID, content: str, le
 def create_json_network_event(sim_uuid: UUID,
                               timestamp: str,
                               uuid: UUID,
+                              tags: List[str],
                               uuid_node: UUID,
                               network_event_type: str,
                               protocol: str,
                               pid: int,
-                              src: List[Tuple[str, int]],
-                              dst: List[Tuple[str, int]]) -> Any:
+                              src: Tuple[str, int],
+                              dst: Tuple[str, int]) -> Any:
 
     creator = warlock.model_factory(NETWORK_EVENT_SCHEMA)
     json_item = creator(sim_uuid=str(sim_uuid), timestamp=timestamp, type="network_event",
                         uuid=str(uuid),
+                        tags=list(tags),
                         uuid_node=str(uuid_node),
                         network_event_type=network_event_type,
                         protocol=protocol,
                         pid=pid,
-                        src=src,
-                        dst=dst)
+                        src=list(src),
+                        dst=list(dst))
     check_validity(json_item, NETWORK_EVENT_SCHEMA)
     return json_item

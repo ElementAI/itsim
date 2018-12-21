@@ -1,7 +1,7 @@
 from .__init__ import _Thread, _Process
 
 from itsim.software.context import Context
-from itsim.simulator import Simulator, Event, SimulatedComputation, Interrupt, advance
+from itsim.simulator import Simulator, Event, SimulatedComputation, Interrupt, advance, get_tags
 from itsim.utils import assert_list
 
 from typing import Any, Callable, Set, Tuple, Optional
@@ -49,7 +49,7 @@ class Thread(_Thread):
             finally:
                 self.exit_f(sim_comp)
 
-        sim_comp = SimulatedComputation()
+        sim_comp = SimulatedComputation(*get_tags(f))
         sim_comp.gp = self._sim.add(wrap_computation, sim_comp, time)
         self._computations.add(sim_comp)
 
