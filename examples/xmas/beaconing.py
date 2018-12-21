@@ -3,6 +3,7 @@ import pytest
 from greensim.random import constant, normal, uniform
 
 from itsim import malware
+from itsim.datastore.datastore import DatastoreClientFactory
 from itsim.software.context import Context
 from itsim.machine.endpoint import Endpoint
 from itsim.machine.socket import Timeout
@@ -51,6 +52,7 @@ def server(context: Context) -> None:
 
 def test_packet_transfer():
     sim = Simulator()
+    DatastoreClientFactory().sim_uuid = sim.uuid
 
     local_cidr = as_cidr("10.11.12.0/24")
     internet_cidr = as_cidr("0.0.0.0/0")
@@ -73,3 +75,4 @@ def test_packet_transfer():
     sim.run(600.0 * S)
 
     assert ledger == {"client", "server"}
+    DatastoreClientFactory().sim_uuid = None
