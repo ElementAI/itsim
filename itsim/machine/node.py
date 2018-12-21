@@ -239,7 +239,7 @@ class Node(_Node):
             if packet.dest.port in self._sockets:
                 cast(Socket, self._sockets[packet.dest.port]())._enqueue(packet)
             else:
-                self.drop_packet(packet)
+                self.handle_packet_transit(packet)
         else:
             self.handle_packet_transit(packet)
 
