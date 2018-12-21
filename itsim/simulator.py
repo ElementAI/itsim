@@ -1,8 +1,7 @@
-from typing import Optional, Any, cast, Callable, List
+from typing import Optional, Any, Callable, List
 from uuid import UUID
 
 import greensim
-from greensim.tags import TaggedObject
 from itsim import ITObject, Tag
 from itsim.types import Timeout
 
