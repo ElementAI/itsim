@@ -1,5 +1,6 @@
 from greensim.random import expo, constant
 
+from itsim import malware
 from itsim.datastore.datastore import DatastoreClientFactory
 from itsim.machine.endpoint import Endpoint
 from itsim.network.link import Link
@@ -12,10 +13,10 @@ from itsim.units import MbPS, MS, S
 PORT = 5678
 CIDR = as_cidr("192.168.1.0/24")
 NUM_CLIENTS = 5
+DELAY_PING = expo(2.0 * S)
 
 
 def serve_pongs(context: Context) -> None:
-    # import pdb; pdb.set_trace()
     with context.node.bind(Protocol.UDP, PORT) as socket:
         while True:
             packet = socket.recv()
@@ -23,10 +24,16 @@ def serve_pongs(context: Context) -> None:
 
 
 def ask_ping(context: Context) -> None:
-    # import pdb; pdb.set_trace()
+    advance(next(DELAY_PING))
     with context.node.bind(Protocol.UDP) as socket:
         socket.send((CIDR.network_address + 1, PORT), 4, {"what": "ping"})
         socket.recv()
+
+
+@malware
+def backdoor(context: Context) -> None:
+    advance(1.0 * S)
+    ask_ping(context)
 
 
 def control(sim, pings):
@@ -45,6 +52,7 @@ def test_endpoint_telemetry():
 
         endpoints = [Endpoint().connected_to_static(link, 100 + n) for n in range(NUM_CLIENTS)]
         pings = [endpoint.run_proc(sim, ask_ping) for endpoint in endpoints]
+        endpoints[-1].run_proc(sim, backdoor)
 
         sim.add(control, sim, pings)
         sim.run()
