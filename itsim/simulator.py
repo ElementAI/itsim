@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional, Any, Callable, List
 from uuid import UUID
 
 import greensim
@@ -17,6 +17,14 @@ class Simulator(greensim.Simulator):
         return str(self.uuid)
 
 
+def get_tags(tag_bearer: Optional[Callable] = None) -> List[Tag]:
+    if tag_bearer is None:
+        return list(greensim.Process.current().iter_tags())
+    elif hasattr(tag_bearer, greensim.GREENSIM_TAG_ATTRIBUTE):
+        return list(getattr(tag_bearer, greensim.GREENSIM_TAG_ATTRIBUTE))
+    return []
+
+
 class SimulatedComputation(ITObject):
 
     def __init__(self, *tags: Tag) -> None:
@@ -32,6 +40,7 @@ class SimulatedComputation(ITObject):
     @gp.setter
     def gp(self, v: greensim.Process) -> None:
         self._gp = v
+        self._gp.tag_with(*list(self.iter_tags()))
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, SimulatedComputation):

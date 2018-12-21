@@ -9,7 +9,7 @@ from itsim.machine.__init__ import _Socket, _Node
 from itsim.network.location import LocationRepr, Location
 from itsim.network.packet import Packet
 from itsim.schemas.items import create_json_network_event
-from itsim.simulator import now
+from itsim.simulator import now, get_tags
 from itsim.types import Port, Address, as_address, Payload, Hostname, Protocol, is_ip_address, Timeout
 
 
@@ -54,6 +54,7 @@ class Socket(_Socket):
                     sim_uuid=cast(UUID, self._sim_uuid),
                     timestamp=(self._time_start + timedelta(0, now())).isoformat(),
                     uuid=uuid4(),
+                    tags=[tag.name for tag in get_tags()],
                     uuid_node=self._node.uuid,
                     network_event_type=network_event_type,
                     protocol=str(self.protocol),

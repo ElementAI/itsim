@@ -63,6 +63,7 @@ def test_datastore_store_load_network_event():
                 sim_uuid=sim_uuid,
                 timestamp=now_iso8601(),
                 uuid=uuid,
+                tags=["heyhey", "hoho"],
                 uuid_node=uuid_node,
                 network_event_type=network_event_type,
                 protocol='UDP',
