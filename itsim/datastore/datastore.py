@@ -1,11 +1,12 @@
 from abc import abstractmethod
+from datetime import datetime
 import requests
 import json
 import os
 import logging
 from logging import Logger
 from collections import namedtuple
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 from queue import Queue
 from threading import Thread, Timer
 from itsim.datastore.datastore_server import DatastoreRestServer
@@ -136,3 +137,57 @@ class DatastoreRestClient(DatastoreClient):
 
     def delete(self, item_type: str, uuid: UUID) -> None:
         pass
+
+
+class DatastoreClientFactory:
+
+    _shared: Dict[str, Any] = {}
+
+    def __init__(self):
+        self.__dict__ = DatastoreClientFactory._shared
+        if len(DatastoreClientFactory._shared) == 0:
+            self._sim_uuid: Optional[UUID] = None
+            self._hostname: str = "0.0.0.0"
+            self._port: int = 5000
+            self._time_start: datetime = datetime.now()
+
+    @property
+    def sim_uuid(self) -> Optional[UUID]:
+        return self._sim_uuid
+
+    @sim_uuid.setter
+    def sim_uuid(self, uuid: UUID) -> None:
+        self._sim_uuid = uuid
+
+    @property
+    def hostname(self) -> str:
+        return self._hostname
+
+    @hostname.setter
+    def hostname(self, hostname: str) -> None:
+        if len(hostname) == 0:
+            raise ValueError("Empty string forbidden")
+        self._hostname = hostname
+
+    @property
+    def port(self) -> int:
+        return self._port
+
+    @port.setter
+    def port(self, port: int) -> None:
+        if port <= 0 or port >= 2 ** 16:
+            raise ValueError("Port out of useful range")
+        self._port = port
+
+    @property
+    def time_start(self) -> datetime:
+        return self._time_start
+
+    @time_start.setter
+    def time_start(self, dt: datetime) -> None:
+        self._time_start = dt
+
+    def get_client(self) -> Optional[DatastoreClient]:
+        if self.sim_uuid is None:
+            return None
+        return DatastoreRestClient(self.hostname, self.port, self.sim_uuid)

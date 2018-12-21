@@ -36,6 +36,7 @@ def test_store_load_network_event():
     network_event = create_json_network_event(sim_uuid=sim_uuid,
                                               timestamp=now_iso8601(),
                                               uuid=network_uuid,
+                                              tags=["asdf", "qwer", "zxcv"],
                                               uuid_node=uuid4(),
                                               network_event_type='open',
                                               protocol='UDP',

@@ -64,7 +64,7 @@ def test_insert_node():
         database.insert_items(node)
 
 
-def test_insert_nework_event():
+def test_insert_network_event():
     """
         Insert a network event into the database table.
     :return:
@@ -75,6 +75,7 @@ def test_insert_nework_event():
         network_event = create_json_network_event(sim_uuid=sim_uuid,
                                                   timestamp=now_iso8601(),
                                                   uuid=uuid4(),
+                                                  tags=[],
                                                   uuid_node=uuid4(),
                                                   network_event_type='open',
                                                   protocol='UDP',
@@ -141,6 +142,7 @@ def test_select_network_event():
         network_event = create_json_network_event(sim_uuid=sim_uuid,
                                                   timestamp=now_iso8601(),
                                                   uuid=network_uuid,
+                                                  tags=[],
                                                   uuid_node=uuid4(),
                                                   network_event_type='open',
                                                   protocol='UDP',
@@ -187,6 +189,7 @@ def test_select_items_timerange():
         return create_json_network_event(sim_uuid=sim_uuid,
                                          timestamp=timestamp,
                                          uuid=network_uuid,
+                                         tags=[],
                                          uuid_node=uuid4(),
                                          network_event_type='open',
                                          protocol='UDP',
