@@ -16,6 +16,7 @@ ipykernel= "*"
 itsim = {editable = true, path = "."}
 jupyter = "*"
 mypy = "*"
+pandas = "*"
 plotly = "*"
 pudb = "*"
 pytest = {version = ">=3.8.2", index = "pypi"}
@@ -24,8 +25,10 @@ pytest-xprocess = "*"
 requests = "*"
 setuptools = "*"
 sphinx = "*"
+texttable="*"
 twine = "*"
 wheel = "*"
+v = {version = "*", editable = true}
 
 [requires]
 python_version = "3.6"
