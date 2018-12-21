@@ -9,6 +9,7 @@ warlock = "*"
 flask="*"
 flask-restful="*"
 jsonschema="*"
+pandas="*"
 
 [dev-packages]
 flake8 = "*"
