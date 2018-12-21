@@ -1,6 +1,6 @@
 from typing import List
 
-from itsim.network.route import Route, Local
+from itsim.network.route import Local, Route
 from itsim.network.link import Link
 from itsim.types import AddressRepr, Address, as_address, Cidr
 

@@ -1,4 +1,5 @@
 from itsim.machine.node import Node
+from itsim.network.packet import Packet
 
 
 class Router(Node):
@@ -13,3 +14,7 @@ class Router(Node):
 
     def __init__(self) -> None:
         super().__init__()
+
+    def handle_packet_transit(self, packet: Packet) -> None:
+        interface, address_hop = self._solve_transfer(packet.dest.hostname_as_address())
+        interface.link._transfer_packet(packet, address_hop)
