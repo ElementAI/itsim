@@ -77,7 +77,9 @@ LOG_SCHEMA = {
 
 network_event_types = [
     "open",
-    "close"
+    "close",
+    "send",
+    "recv"
 ]
 
 NETWORK_EVENT_SCHEMA = {
@@ -173,8 +175,8 @@ def create_json_network_event(sim_uuid: UUID,
                               network_event_type: str,
                               protocol: str,
                               pid: int,
-                              src: List[Tuple[str, int]],
-                              dst: List[Tuple[str, int]]) -> Any:
+                              src: Tuple[str, int],
+                              dst: Tuple[str, int]) -> Any:
 
     creator = warlock.model_factory(NETWORK_EVENT_SCHEMA)
     json_item = creator(sim_uuid=str(sim_uuid), timestamp=timestamp, type="network_event",
@@ -183,7 +185,7 @@ def create_json_network_event(sim_uuid: UUID,
                         network_event_type=network_event_type,
                         protocol=protocol,
                         pid=pid,
-                        src=src,
-                        dst=dst)
+                        src=list(src),
+                        dst=list(dst))
     check_validity(json_item, NETWORK_EVENT_SCHEMA)
     return json_item

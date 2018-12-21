@@ -224,10 +224,11 @@ class Node(_Node):
 
         return cast(Interface, interface_best), cast(Route, route_best).get_hop(address_dest)
 
-    def _send_packet(self, port_source: int, dest: Location, num_bytes: int, payload: Payload) -> None:
+    def _send_packet(self, port_source: int, dest: Location, num_bytes: int, payload: Payload) -> Address:
         interface, address_hop = self._solve_transfer(dest.hostname_as_address())
         packet = Packet(Location(interface.address, port_source), dest, num_bytes, payload)
         interface.link._transfer_packet(packet, address_hop)
+        return interface.address
 
     def _receive_packet(self, packet: Packet) -> None:
         address_dest = packet.dest.hostname_as_address()
@@ -383,7 +384,8 @@ class Node(_Node):
                 daemon = Daemon(cast(Callable, server_behaviour))
             else:
                 raise TypeError("Daemon must have trigger() or be of type Callable")
-            self.run_networking_daemon(sim, daemon, protocol, *ports)
+
+            sim.add(self.run_networking_daemon, sim, daemon, protocol, *ports)
             return server_behaviour
 
         return _decorator
