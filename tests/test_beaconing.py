@@ -1,1 +1,0 @@
-../examples/xmas/beaconing.py
