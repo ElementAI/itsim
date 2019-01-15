@@ -58,8 +58,13 @@ T = TypeVar('T')
 #
 # This implementation was adapted from https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
 class Singleton(type):
+    """
+    Metaclass to define an arbitrary class as singleton. Any class with "metaclass=Singleton" in the header
+    will show singleton behavior in its constructor. I.e., all calls to the constructor will return the same
+    instance, until `reset` is called
+    """
     # Global map of Singleton types to their single instances (or lack thereof)
-    # NB This can be accessed through Singleton._instances or type(obj)._instances where obj has Singleton
+    # N.B. This can be accessed through Singleton._instances or type(obj)._instances where obj has Singleton
     # as a metaclass. This fact is used in this implementation to aid typechecking
     _instances: MutableMapping[type, object] = {}
 
@@ -75,9 +80,21 @@ class Singleton(type):
 
     # Drop the Singleton instance of cls
     def reset(cls: "Singleton") -> None:
+        """
+        Remove the Singleton metaclass reference to cls, if it exists. N.B. this does not guaruntee that there will be
+        no references to the instance of cls, if it existed. This only drops the reference in Singleton, meaning the
+        next call to the constructor of cls will call __init__ and return a new object
+
+        :param cls: The type to reset
+        """
         del cls._instances[cls]
 
     def has_instance(cls: "Singleton") -> bool:
+        """
+        Check for the existance of an instance of cls
+
+        :param cls: The type to check
+        """
         return cls in cls._instances
 
 

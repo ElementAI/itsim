@@ -55,7 +55,9 @@ class DatastoreRestClient(DatastoreClient, metaclass=Singleton):
 
     def close(self) -> None:
         """
-            Shuts down the datastore server if it was created by constructor
+        Shuts down the datastore server if it was created by constructor, then removes the singleton instance
+        from the Singleton metaclass. The next call to DatastoreRestClient() will repeat the full instantiation,
+        including creating a new connection
         """
         timeout_thr_join = 5.0
 
