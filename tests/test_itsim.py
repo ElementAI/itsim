@@ -34,6 +34,11 @@ def test_singleton_reset():
     assert Test2() is b
 
 
+def test_reset_graceful():
+    # Show that no errors result from reseting something with no instance
+    Singleton.reset(object)
+
+
 def test_has():
     class Test1(metaclass=Singleton):
         pass

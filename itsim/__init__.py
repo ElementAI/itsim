@@ -87,7 +87,8 @@ class Singleton(type):
 
         :param cls: The type to reset
         """
-        del cls._instances[cls]
+        if cls in Singleton._instances:
+            del Singleton._instances[cls]
 
     def has_instance(cls: "Singleton") -> bool:
         """
