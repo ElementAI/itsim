@@ -7,8 +7,8 @@ from itsim.time import now_iso8601
 from pytest import fixture
 
 
-# Explicitly close the client at the end of the tests to prevent hanging
-@fixture(autouse=True, scope='session')
+# Explicitly close the client at the end of each test to isolate and prevent hanging
+@fixture(autouse=True)
 def close_db():
     yield
     DatastoreRestClient().close()

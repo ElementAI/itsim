@@ -1,9 +1,17 @@
 import random
-from uuid import uuid4
 from itsim.schemas.items import create_json_node, create_json_network_event
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.time import now_iso8601
 from time import sleep
+from uuid import uuid4
+from pytest import fixture
+
+
+# Explicitly close the client at the end of each test to isolate and prevent hanging
+@fixture(autouse=True)
+def close_db():
+    yield
+    DatastoreRestClient().close()
 
 
 def test_datastore_logger():
