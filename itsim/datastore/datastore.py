@@ -1,17 +1,21 @@
-from abc import abstractmethod
-import requests
 import json
-import os
 import logging
-from logging import Logger
+import os
+import requests
+import tempfile
+
+
+from abc import abstractmethod
 from collections import namedtuple
-from typing import Any, Optional
+from logging import Logger
 from queue import Queue
 from threading import Thread, Timer
+from typing import Any, Optional
+from uuid import uuid4, UUID
+
+from itsim import Singleton
 from itsim.datastore.datastore_server import DatastoreRestServer
 from itsim.logging import create_logger
-from uuid import uuid4, UUID
-import tempfile
 
 
 class DatastoreClient:
@@ -34,7 +38,7 @@ class DatastoreClient:
         pass
 
 
-class DatastoreRestClient(DatastoreClient):
+class DatastoreRestClient(DatastoreClient, metaclass=Singleton):
 
     def __init__(self, hostname: str = '0.0.0.0', port: int = 5000, sim_uuid: UUID = uuid4()) -> None:
         self._sim_uuid = sim_uuid
@@ -49,7 +53,7 @@ class DatastoreRestClient(DatastoreClient):
             self._url = f'http://{hostname}:{port}/'
             print(f"Couldn't find server, launching a local instance: {self._url}")
 
-    def __del__(self) -> None:
+    def close(self) -> None:
         """
             Shuts down the datastore server if it was created by constructor
         """
@@ -62,6 +66,8 @@ class DatastoreRestClient(DatastoreClient):
             self._thr.join(timeout=timeout_thr_join)
             if os.path.isfile(self._db_file):
                 os.remove(self._db_file)
+
+        Singleton.reset(DatastoreRestClient)
 
     def server_is_alive(self) -> bool:
         try:

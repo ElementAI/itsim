@@ -1,7 +1,17 @@
 from uuid import uuid4
+from itsim import Singleton
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.schemas.items import create_json_node, create_json_network_event, create_json_log
 from itsim.time import now_iso8601
+
+from pytest import fixture
+
+
+# Explicitly close the client at the end of the tests to prevent hanging
+@fixture(autouse=True, scope='session')
+def close_db():
+    yield
+    DatastoreRestClient().close()
 
 
 def test_store_load_node():
@@ -69,3 +79,18 @@ def test_store_load_log():
     datastore.store_item(log)
     result = datastore.load_item('log', log_uuid)
     assert result.uuid == str(log_uuid)
+
+
+def test_client_is_singleton():
+    a = DatastoreRestClient()
+    b = DatastoreRestClient()
+    assert a is b
+
+
+def test_close():
+    client = DatastoreRestClient()
+    client.close()
+    assert not client.server_is_alive()
+    # Test that singleton is reset
+    assert not Singleton.has_instance(DatastoreRestClient)
+    assert not DatastoreRestClient() is client

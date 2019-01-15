@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Callable
+from typing import Callable, cast, MutableMapping, Type, TypeVar
 from uuid import uuid4, UUID
 
 from greensim import tagged
@@ -47,6 +47,38 @@ class AbstractITObject(ABC, ITObject):
         """
         self._bind_and_call_constructor(ABC)
         self._bind_and_call_constructor(ITObject)
+
+
+# As per https://mypy.readthedocs.io/en/latest/metaclasses.html#metaclass-usage-example
+T = TypeVar('T')
+
+
+# This is a metaclass. For more information, see
+# https://docs.python.org/3/reference/datamodel.html?highlight=metaclass#metaclasses
+#
+# This implementation was adapted from https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
+class Singleton(type):
+    # Global map of Singleton types to their single instances (or lack thereof)
+    # NB This can be accessed through Singleton._instances or type(obj)._instances where obj has Singleton
+    # as a metaclass. This fact is used in this implementation to aid typechecking
+    _instances: MutableMapping[type, object] = {}
+
+    # Since this is a metaclass, __call__ is called on construction of the class where this is applied
+    # (like __init__ in a superclass)
+    def __call__(cls: Type[T], *args, **kwargs) -> T:
+        # If no instance has yet been created
+        if cls not in Singleton._instances:
+            # super(Singleton, cls) returns the type (not the class) cls
+            # __call__(*args, **kwargs) calls the constructor (exactly like o = object())
+            Singleton._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cast(T, Singleton._instances[cls])
+
+    # Drop the Singleton instance of cls
+    def reset(cls: "Singleton") -> None:
+        del cls._instances[cls]
+
+    def has_instance(cls: "Singleton") -> bool:
+        return cls in cls._instances
 
 
 def malware(event: Callable) -> Callable:
