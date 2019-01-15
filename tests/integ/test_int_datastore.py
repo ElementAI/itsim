@@ -1,4 +1,5 @@
 import random
+from itsim import Singleton
 from itsim.schemas.items import create_json_node, create_json_network_event
 from itsim.datastore.datastore import DatastoreRestClient
 from itsim.time import now_iso8601
@@ -11,7 +12,8 @@ from pytest import fixture
 @fixture(autouse=True)
 def close_db():
     yield
-    DatastoreRestClient().close()
+    if Singleton.has_instance(DatastoreRestClient):
+        DatastoreRestClient().close()
 
 
 def test_datastore_logger():

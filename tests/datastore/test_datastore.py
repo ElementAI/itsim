@@ -11,7 +11,8 @@ from pytest import fixture
 @fixture(autouse=True)
 def close_db():
     yield
-    DatastoreRestClient().close()
+    if Singleton.has_instance(DatastoreRestClient):
+        DatastoreRestClient().close()
 
 
 def test_store_load_node():
