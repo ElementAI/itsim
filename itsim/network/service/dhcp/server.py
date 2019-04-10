@@ -71,7 +71,7 @@ class DHCPServer(Daemon):
                  dhcp_client_port: int = DHCP_CLIENT_PORT,
                  reservation_time: float = RESERVATION_TIME,
                  size_packet_dhcp: VarRandom[int] = num_bytes(
-                     normal(DHCP_SIZE_MEAN, DHCP_SIZE_STDEV), header = DHCP_HEADER_SIZE
+                     normal(DHCP_SIZE_MEAN, DHCP_SIZE_STDEV), header=DHCP_HEADER_SIZE
                  )) -> None:
 
         super().__init__(self.on_packet)
