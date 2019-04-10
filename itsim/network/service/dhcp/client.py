@@ -45,7 +45,7 @@ class DHCPClient(Daemon):
                  dhcp_client_retries: int = DHCP_CLIENT_RETRIES,
                  reservation_time: float = RESERVATION_TIME,
                  size_packet_dhcp: VarRandom[int] = num_bytes(
-                     normal(DHCP_SIZE_MEAN, DHCP_SIZE_STDEV), header = DHCP_HEADER_SIZE
+                     normal(DHCP_SIZE_MEAN, DHCP_SIZE_STDEV), header=DHCP_HEADER_SIZE
                  )) -> None:
         super().__init__(self.run_client)
         self._interface = interface
